@@ -1182,6 +1182,50 @@ status_t GC0308_Control(camera_device_handle_t *handle, camera_device_cmd_t cmd,
             GC0308_SetEffect(handle, kcam_effect_enc_normal);
         return kStatus_Success;
     }
+    else if ( cmd == kCAMERA_DeviceExposureMode)
+    {
+        switch(arg) {
+            case CAMERA_EXPOSURE_MODE_AUTO:
+                GC0308_Write(handle, 0xfe, 1U, 0x00);/* set page0 */
+                GC0308_Write(handle, 0xd2, 1U, 0x90);//open AEC
+                break;
+           case CAMERA_EXPOSURE_MODE_MANUAL_NORMAL:
+                GC0308_Write(handle, 0xfe, 1U, 0x00);/* set page0 */
+                GC0308_Write(handle, 0xd2, 1U, 0x10);/* close AEC */
+                GC0308_Write(handle, 0x03, 1U, 0x01);//exposure = 500
+                GC0308_Write(handle, 0x04, 1U, 0xF4);
+                GC0308_Write(handle, 0x51, 1U, 0x40);
+                GC0308_Write(handle, 0x52, 1U, 0x40);
+                break;
+           case CAMERA_EXPOSURE_MODE_MANUAL_LOW_LIGHT:
+                GC0308_Write(handle, 0xfe, 1U, 0x00);/* set page0 */
+                GC0308_Write(handle, 0xd2, 1U, 0x10);/* close AEC */
+                GC0308_Write(handle, 0x03, 1U, 0x02); //exposure = 600
+                GC0308_Write(handle, 0x04, 1U, 0x58);
+                GC0308_Write(handle, 0x51, 1U, 0x40);
+                GC0308_Write(handle, 0x52, 1U, 0x40);
+                break;
+           case CAMERA_EXPOSURE_MODE_MANUAL_MID_LOW_LIGHT:
+                GC0308_Write(handle, 0xfe, 1U, 0x00);/* set page0 */
+                GC0308_Write(handle, 0xd2, 1U, 0x10);/* close AEC */
+                GC0308_Write(handle, 0x03, 1U, 0x02); //exposure = 600
+                GC0308_Write(handle, 0x04, 1U, 0x58);
+                GC0308_Write(handle, 0x51, 1U, 0x60);
+                GC0308_Write(handle, 0x52, 1U, 0x60);
+                break;
+           case CAMERA_EXPOSURE_MODE_MANUAL_ULTRA_LOW_LIGHT:
+                GC0308_Write(handle, 0xfe, 1U, 0x00);/* set page0 */
+                GC0308_Write(handle, 0xd2, 1U, 0x10);/* close AEC */
+                GC0308_Write(handle, 0x03, 1U, 0x03);//exposure = 800
+                GC0308_Write(handle, 0x04, 1U, 0x20);
+                GC0308_Write(handle, 0x51, 1U, 0x80);
+                GC0308_Write(handle, 0x52, 1U, 0x80);
+                break;
+            default:
+                break;
+       }
+       return kStatus_Success;
+    }
     else
         return kStatus_InvalidArgument;
 }

@@ -68,9 +68,11 @@ typedef enum _camera_device_cmd
 #define CAMERA_MONO_MODE_ENABLED  1
 
     kCAMERA_DeviceExposureMode, /*!< Exposure Mode. */
-#define CAMERA_EXPOSURE_MODE_AUTO             0
-#define CAMERA_EXPOSURE_MODE_MANUAL_NORMAL    1
-#define CAMERA_EXPOSURE_MODE_MANUAL_LOW_LIGHT 2
+#define CAMERA_EXPOSURE_MODE_AUTO                   0
+#define CAMERA_EXPOSURE_MODE_MANUAL_NORMAL          1
+#define CAMERA_EXPOSURE_MODE_MANUAL_LOW_LIGHT       2
+#define CAMERA_EXPOSURE_MODE_MANUAL_MID_LOW_LIGHT   3
+#define CAMERA_EXPOSURE_MODE_MANUAL_ULTRA_LOW_LIGHT 4
 
 } camera_device_cmd_t;
 

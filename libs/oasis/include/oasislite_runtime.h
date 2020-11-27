@@ -15,9 +15,10 @@
 
 
 #define VERSION_MAJOR 4
-#define VERSION_MINOR 7
+#define VERSION_MINOR 20
 /*this version number only used for hot fix on frozen release or branch*/
-#define VERSION_HOTFIX 5
+#define VERSION_HOTFIX 0
+
 
 #define INVALID_FACE_ID (0xFFFFUL)
 
@@ -30,6 +31,9 @@ enum {
     OASIS_ENABLE_EMO = 1U << 2,
     OASIS_ENABLE_LIVENESS = 1U << 3,
     OASIS_ENABLE_MULTI_VIEW = 1U << 4,
+    OASIS_ENABLE_BRIGHTNESS_FAIL_CHECK = 1U << 5,
+    /*This flag is only valid for library with mask face support*/
+    OASIS_ENABLE_MASK_FACE_REC = 1U << 6,
     OASIS_ENABLE_INVALID = 0xFF
 };
 
@@ -86,6 +90,7 @@ typedef enum {
     OASIS_REG_RESULT_OK,
     OASIS_REG_RESULT_DUP,
     OASIS_REG_RESULT_CANCELED,
+    OASIS_REG_RESULT_WITHMASK,
     OASIS_REG_RESULT_DB_OP_FAILED,
     OASIS_REG_RESULT_INVALID = 0xFF
 } OASISLTRegisterRes_t;
@@ -93,16 +98,28 @@ typedef enum {
 
 typedef enum {
     /*these results are used by event OASISLT_EVT_QUALITY_CHK_COMPLETE*/
-    OASIS_QUALITY_RESULT_FACE_OK, /*for internal use only*/
-    OASIS_QUALITY_RESULT_FACE_OK_WITHOUT_GLASSES,
-    OASIS_QUALITY_RESULT_FACE_OK_WITH_GLASSES,
+    OASIS_QUALITY_RESULT_FACE_OK,
     OASIS_QUALITY_RESULT_FACE_TOO_SMALL,
     OASIS_QUALITY_RESULT_FACE_SIDE_FACE,
     OASIS_QUALITY_RESULT_FACE_BLUR,
     OASIS_QUALITY_RESULT_FAIL_LIVENESS_IR,
     OASIS_QUALITY_RESULT_FAIL_LIVENESS_RGB,
+    OASIS_QUALITY_RESULT_FAIL_BRIGHTNESS_DARK,
+    OASIS_QUALITY_RESULT_FAIL_BRIGHTNESS_OVEREXPOSURE,
     OASIS_QUALITY_RESULT_INVALID = 0xFF
 } OASISLTFaceQualityRes_t;
+
+typedef enum {
+    OASIS_GLASSES_CHECK_RESULT_FACE_WITHOUT_GLASSES,
+    OASIS_GLASSES_CHECK_RESULT_FACE_WITH_GLASSES,
+    OASIS_GLASSES_CHECK_RESULT_INVALID = 0xFF
+} OASISLTFaceGlassesCheckRes_t;
+
+typedef enum {
+    OASIS_MASK_CHECK_RESULT_FACE_WITHOUT_MASK,
+    OASIS_MASK_CHECK_RESULT_FACE_WITH_MASK,
+    OASIS_MASK_CHECK_RESULT_INVALID = 0xFF
+} OASISLTFaceMaskCheckRes_t;
 
 
 typedef enum {
@@ -153,10 +170,25 @@ enum {
     OASISLT_INT_FRAME_IDX_LAST
 };
 
+/*Landmark index*/
+enum {
+    OASISLT_LM_LEFT_EYE_X,
+    OASISLT_LM_RIGHT_EYE_X,
+    OASISLT_LM_NOSE_X,
+    OASISLT_LM_MOUTH_LEFT_CORNER_X,
+    OASISLT_LM_MOUTH_RIGHT_CORNER_X,
+    OASISLT_LM_LEFT_EYE_Y, /*5*/
+    OASISLT_LM_RIGHT_EYE_Y,
+    OASISLT_LM_NOSE_Y,
+    OASISLT_LM_MOUTH_LEFT_CORNER_Y,
+    OASISLT_LM_MOUTH_RIGHT_CORNER_Y,
+    OASISLT_LM_IDX_NUM
+};
+
 
 typedef struct FBox_ {
     int rect[4];    // left, top, right, bottom.
-    float fld[10];  // 5 laddmark point.
+    float fld[OASISLT_LM_IDX_NUM];  // 5 landmark point.
 } FBox;
 
 typedef struct {
@@ -176,7 +208,8 @@ typedef struct {
     OASISLTRegisterRes_t regResult; // only valid for registration
     OASISLTRecognizeRes_t recResult;//only valid for face recognition
     OASISLTFaceQualityRes_t qualityResult;//only valid for face quality check event.
-
+    OASISLTFaceMaskCheckRes_t maskResult;//only valid for face mask check event.
+    OASISLTFaceGlassesCheckRes_t glassesResult;//only valid for face glasses check event.
 #define OASISLT_CB_PARA_RESERVED_INT 16
     int reserved[OASISLT_CB_PARA_RESERVED_INT];//this field is reserved for debugging purpose
 } OASISLTCbPara_t;
@@ -196,6 +229,15 @@ typedef enum {
     /*Face quality check is done before face recognition*/
     OASISLT_EVT_QUALITY_CHK_START,
     OASISLT_EVT_QUALITY_CHK_COMPLETE,
+
+    /*Face mask check is done after quality check and before face recognition
+     * These events is only valid for library with mask face support*/
+    OASISLT_EVT_MASK_CHK_START,
+    OASISLT_EVT_MASK_CHK_COMPLETE,
+
+    /*Face glasses check is done after quality check and  before face recognition*/
+    OASISLT_EVT_GLASSES_CHK_START,
+    OASISLT_EVT_GLASSES_CHK_COMPLETE,
 
     /*Start of face recognition*/
     OASISLT_EVT_REC_START,
@@ -267,13 +309,19 @@ typedef void (*StringPrint)(const char* str);
 /*Used to get current system millisecond number*/
 typedef uint32_t (*GetSystemCurrentMS)(void);
 
+/*Used to dynamically adjust face brightness
+  * frame_idx: which frame is need to be adjusted on, OASISLT_INT_FRAME_IDX_RGB or OASISLT_INT_FRAME_IDX_IR ?
+  * direction: 1: up 0: down*/
+typedef void (*FaceBrightnessAdjust)(uint8_t frame_idx, uint8_t direction);
+
 typedef struct {
     OASISLTEvtCb EvtCb;
     GetRegisteredFaces GetFaces;
     FaceOperationAdd AddFace;
     FaceOperationUpdate UpdateFace;
+    FaceBrightnessAdjust AdjustBrightness;
 
-    //internel debugging use only
+    //internal debugging use only
     void* reserved;
 
 } InfCallbacks_t;

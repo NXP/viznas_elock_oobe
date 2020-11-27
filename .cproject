@@ -74,7 +74,7 @@
 									<listOptionValue builtIn="false" value="APP_MIN_VER=0"/>
 									<listOptionValue builtIn="false" value="APP_BLD_VER=0"/>
 									<listOptionValue builtIn="false" value="ADAPTIVE_WEIGHTED_AE=1"/>
-									<listOptionValue builtIn="false" value="CAMERA_DRIVE_STRENGTH_LOW=1"/>
+									<listOptionValue builtIn="false" value="CAMERA_DRIVE_STRENGTH_LOW=0"/>
 									<listOptionValue builtIn="false" value="CONFIG_FLEXRAM_AT_STARTUP=1"/>
 									<listOptionValue builtIn="false" value="SERIAL_PORT_TYPE_UART=1"/>
 									<listOptionValue builtIn="false" value="CPU_MIMXRT106FDVL6A"/>
@@ -264,7 +264,7 @@
 									<listOptionValue builtIn="false" value="APP_MIN_VER=0"/>
 									<listOptionValue builtIn="false" value="APP_BLD_VER=0"/>
 									<listOptionValue builtIn="false" value="ADAPTIVE_WEIGHTED_AE=1"/>
-									<listOptionValue builtIn="false" value="CAMERA_DRIVE_STRENGTH_LOW=1"/>
+									<listOptionValue builtIn="false" value="CAMERA_DRIVE_STRENGTH_LOW=0"/>
 									<listOptionValue builtIn="false" value="CONFIG_FLEXRAM_AT_STARTUP=1"/>
 									<listOptionValue builtIn="false" value="BOARD_USE_CODEC=1"/>
 									<listOptionValue builtIn="false" value="CODEC_TFA9XXX_ENABLE"/>
@@ -768,7 +768,7 @@
 									<listOptionValue builtIn="false" value="APP_MIN_VER=0"/>
 									<listOptionValue builtIn="false" value="APP_BLD_VER=0"/>
 									<listOptionValue builtIn="false" value="ADAPTIVE_WEIGHTED_AE=1"/>
-									<listOptionValue builtIn="false" value="CAMERA_DRIVE_STRENGTH_LOW=1"/>
+									<listOptionValue builtIn="false" value="CAMERA_DRIVE_STRENGTH_LOW=0"/>
 									<listOptionValue builtIn="false" value="CONFIG_FLEXRAM_AT_STARTUP=1"/>
 									<listOptionValue builtIn="false" value="SERIAL_PORT_TYPE_UART=1"/>
 									<listOptionValue builtIn="false" value="CPU_MIMXRT106FDVL6A"/>
@@ -966,7 +966,7 @@
 									<listOptionValue builtIn="false" value="APP_MIN_VER=0"/>
 									<listOptionValue builtIn="false" value="APP_BLD_VER=0"/>
 									<listOptionValue builtIn="false" value="ADAPTIVE_WEIGHTED_AE=1"/>
-									<listOptionValue builtIn="false" value="CAMERA_DRIVE_STRENGTH_LOW=1"/>
+									<listOptionValue builtIn="false" value="CAMERA_DRIVE_STRENGTH_LOW=0"/>
 									<listOptionValue builtIn="false" value="CONFIG_FLEXRAM_AT_STARTUP=1"/>
 									<listOptionValue builtIn="false" value="BOARD_USE_CODEC=1"/>
 									<listOptionValue builtIn="false" value="CODEC_TFA9XXX_ENABLE"/>

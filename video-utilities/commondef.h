@@ -148,6 +148,7 @@ typedef enum
 {
     QCMD_SET_LIVENESS_MODE,
     QCMD_CHANGE_RGB_IR_DISP_MODE,
+    QCMD_CHANGE_RGB_EXPOSURE_MODE,
     QCMD_SET_PWM,
     QCMD_CHANGE_INFO_DISP_MODE,
     QCMD_DEINIT_CAMERA,
@@ -168,6 +169,7 @@ typedef struct
         uint8_t liveness_mode;
         uint8_t display_mode;
         uint8_t led_pwm[2];
+        uint8_t exposure_mode;
         uint8_t enrolment_mode;
         uint8_t rec_face;
         uint8_t del_face;
@@ -192,10 +194,14 @@ typedef struct
     float detect_fps;
     float recognize_fps;
     int faceCount;
-    uint8_t rgbLive;  // color = 1 or gray = 0 or unkown = 0xff
+    uint8_t rgbLive;  // real = 1 or fake = 0 or unkown = 0xff
     uint8_t blur;  // blur = 1 or clean = 0 or unkown = 0xff
     uint8_t front;   // front =  1  or side = 0  or unknown = 0xff
     uint8_t irLive;    // real = 1  or fake = 0   or unknown = 0xff
+    uint8_t irBrightness;
+    uint8_t irPwm;
+    uint8_t rgbBrightness;
+    uint8_t rgbPwm;
 } QUIInfoMsg;
 
 typedef struct

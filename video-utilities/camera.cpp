@@ -126,6 +126,9 @@ static uint8_t s_PwmWhite;
 static int8_t s_CurrentCameraID = COLOR_CAMERA;
 static bool  isOddFrame = false;
 #endif
+static uint8_t s_CurRGBExposureMode = CAMERA_EXPOSURE_MODE_AUTO;
+
+static void Camera_SetRGBExposureMode(uint8_t mode);
 
 static csi_resource_t csiResource = {
     .csiBase = CSI,
@@ -269,6 +272,18 @@ int Camera_QMsgSetPWM(uint8_t led, uint8_t pulse_width)
     pQMsg->msg.cmd.data.led_pwm[1] = pulse_width;
     status                         = Camera_SendQMsg((void *)&pQMsg);
     return status;
+}
+
+void Camera_GetPWM(uint8_t led, uint8_t* pulse_width)
+{
+    if( led == LED_IR)
+    {
+        *pulse_width = s_PwmIR;
+    }
+    else
+    {
+        *pulse_width = s_PwmWhite;
+    }
 }
 
 static status_t Camera_SetPWM(uint8_t pulse_width)
@@ -450,6 +465,31 @@ int Camera_SetDispMode(uint8_t displayMode)
     pQMsg->msg.cmd.id                = QCMD_CHANGE_RGB_IR_DISP_MODE;
     pQMsg->msg.cmd.data.display_mode = displayMode;
     status                           = Camera_SendQMsg((void *)&pQMsg);
+    return status;
+}
+
+static void Camera_SetRGBExposureMode(uint8_t mode)
+{
+    static uint8_t lastMode = CAMERA_EXPOSURE_MODE_AUTO;
+    if (lastMode == mode)
+        return;
+    lastMode = mode;
+    CAMERA_DEVICE_Control(&cameraDevice[0], kCAMERA_DeviceExposureMode, mode);
+}
+
+uint8_t Camera_GetRGBExposureMode(void)
+{
+    return s_CurRGBExposureMode;
+}
+
+int Camera_QMsgSetExposureMode(uint8_t mode)
+{
+    int status = -1;
+    QMsg* pQMsg = (QMsg*)pvPortMalloc(sizeof(QMsg));
+    pQMsg->id = QMSG_CMD;
+    pQMsg->msg.cmd.id = QCMD_CHANGE_RGB_EXPOSURE_MODE;
+    pQMsg->msg.cmd.data.exposure_mode = mode;
+    status = Camera_SendQMsg((void*)&pQMsg);
     return status;
 }
 

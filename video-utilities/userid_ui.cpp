@@ -153,7 +153,7 @@ static void UIInfo_UpdateQualityInfo(uint16_t *pAsBufferAddr, QUIInfoMsg infoMsg
         return;
 
     memset(tstring, 0x0, 64);
-    sprintf(tstring, "sim:%d", (int)infoMsg.similar);
+    sprintf(tstring, "sim:%.2f",infoMsg.similar/100.0f);
 
     if ((int)infoMsg.similar > 0)
     {

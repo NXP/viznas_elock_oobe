@@ -13,6 +13,7 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "camera.h"
+#include "fsl_camera_device.h"
 #include "oasis.h"
 #include "stdio.h"
 #include <vector>
@@ -26,6 +27,17 @@
  * Definitions
  *******************************************************************************/
 #define OASIS_DETECT_MIN_FACE 100
+/* User can modify the pwm range according to the real hardware.
+ * To obtain good face brightness in different light conditions.
+ * Also balance power consumption and recognition distance.
+ */
+#define IR_PWM_MIN      20
+#define IR_PWM_MAX      100
+#define IR_PWM_INTERVAL 10
+
+#define WHITE_PWM_MIN      0
+#define WHITE_PWM_MAX      30
+#define WHITE_PWM_INTERVAL 5
 
 struct TimeStat
 {
@@ -113,6 +125,10 @@ static void clearFaceInfoMsg(QUIInfoMsg *info)
     info->rgbLive         = 0xFF;
     info->front           = 0xFF;
     info->irLive          = 0xFF;
+    info->irBrightness = 0xFF;
+    info->irPwm = 0xFF;
+    info->rgbBrightness = 0xFF;
+    info->rgbPwm = 0xFF;
 }
 
 static void clearFaceInfo(face_info_t *face_info)
@@ -204,9 +220,14 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
             pQMsg->msg.info.front   = para->reserved[1];
             pQMsg->msg.info.blur    = para->reserved[3];
             pQMsg->msg.info.rgbLive = para->reserved[8];
+            pQMsg->msg.info.irBrightness = para->reserved[11];
+            pQMsg->msg.info.rgbBrightness = para->reserved[13];
+            Camera_GetPWM(LED_IR,&pQMsg->msg.info.irPwm);
+            Camera_GetPWM(LED_WHITE,&pQMsg->msg.info.rgbPwm);
 
-            if (para->qualityResult == OASIS_QUALITY_RESULT_FACE_OK_WITHOUT_GLASSES ||
-                para->qualityResult == OASIS_QUALITY_RESULT_FACE_OK_WITH_GLASSES)
+            UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[irBrightness]:%d\r\n",pQMsg->msg.info.irBrightness);
+            UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[rgbBrightness]:%d\r\n",pQMsg->msg.info.rgbBrightness);
+            if (para->qualityResult == OASIS_QUALITY_RESULT_FACE_OK)
             {
                 UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[EVT]:ok!\r\n");
             }
@@ -229,6 +250,33 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
             else if (para->qualityResult == OASIS_QUALITY_RESULT_FAIL_LIVENESS_RGB)
             {
                 UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[EVT]: RGB Fake Face!\r\n");
+            }else if (para->qualityResult == OASIS_QUALITY_RESULT_FAIL_BRIGHTNESS_DARK
+                  || para->qualityResult == OASIS_QUALITY_RESULT_FAIL_BRIGHTNESS_OVEREXPOSURE) {
+                UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[EVT]: Face Brightness unfit!\r\n");
+            }
+        }
+        break;
+
+        case OASISLT_EVT_MASK_CHK_START:
+        break;
+
+        case OASISLT_EVT_MASK_CHK_COMPLETE: {
+            if (para->maskResult == OASIS_MASK_CHECK_RESULT_FACE_WITH_MASK) {
+                UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[EVT]:Face with mask!\r\n");
+            } else {
+                UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[EVT]:Face without mask!\r\n");
+            }
+        }
+        break;
+
+        case OASISLT_EVT_GLASSES_CHK_START:
+        break;
+
+        case OASISLT_EVT_GLASSES_CHK_COMPLETE: {
+            if (para->glassesResult == OASIS_GLASSES_CHECK_RESULT_FACE_WITH_GLASSES) {
+                UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[EVT]:Face with glasses!\r\n");
+            } else {
+                UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[EVT]:Face without glasses!\r\n");
             }
         }
         break;
@@ -432,6 +480,83 @@ static int UpdateFaceHandler(uint16_t face_id, void *face)
     }
 }
 
+/* PWM control LED's light intensity to adjust face brightness.
+ * led: which led needs to be adjusted?  LED_IR or LED_WHITE.
+ * curPWM:  current pwm value.
+ * direction: 1: up, need to increase brightness;  0: down, need to reduce brightness.
+ */
+static void Oasis_PWMControl(uint8_t led, uint8_t curPWM, uint8_t direction)
+{
+    uint8_t pwm;
+    uint8_t pwm_min      = ((led == LED_IR) ? IR_PWM_MIN : WHITE_PWM_MIN);
+    uint8_t pwm_max      = ((led == LED_IR) ? IR_PWM_MAX : WHITE_PWM_MAX);
+    uint8_t pwm_interval = ((led == LED_IR) ? IR_PWM_INTERVAL : WHITE_PWM_INTERVAL);
+    UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[LED:%d][curPWM:%d][dir:%d]\r\n", led, curPWM, direction);
+
+    if (direction)
+    {
+        pwm = curPWM + pwm_interval;
+        if (pwm >= pwm_max)
+            pwm = pwm_max;
+        Camera_QMsgSetPWM(led, pwm);
+    }
+    else
+    {
+        if (curPWM <= (pwm_interval + pwm_min))
+            pwm = pwm_min;
+        else
+            pwm = curPWM - pwm_interval;
+        Camera_QMsgSetPWM(led, pwm);
+    }
+}
+
+//For GC0308, we can combine maunal exposure and pwm to adjust rgb face brightness.
+//For MT9M114, only use pwm to adjust rgb face brightness.
+static void Oasis_RGBControl(uint8_t direction)
+{
+    uint8_t curMode = Camera_GetRGBExposureMode();
+    uint8_t pwm;
+    UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[RGB][curMode:%d] [dir:%d]\r\n", curMode, direction);
+    if (direction)
+    {
+        if (curMode < CAMERA_EXPOSURE_MODE_MANUAL_ULTRA_LOW_LIGHT)
+        {
+            curMode ++;
+            Camera_QMsgSetExposureMode(curMode);
+            //VIZN_GetPulseWidth(NULL, LED_WHITE, &pwm);
+            //Camera_QMsgSetPWM(LED_WHITE, pwm);
+        }
+    }
+    else
+    {
+        if (curMode > CAMERA_EXPOSURE_MODE_AUTO)
+        {
+            curMode --;
+            Camera_QMsgSetExposureMode(curMode);
+            //Camera_QMsgSetPWM(LED_WHITE, 0);
+        }
+    }
+}
+
+/* Used to dynamically adjust face brightness, user can adjust brightness by modifing LED's light intensity or using manual exposure.
+ *  frame_idx: which frame needs to be adjusted on, OASISLT_INT_FRAME_IDX_RGB or OASISLT_INT_FRAME_IDX_IR ?
+ *  direction: 1: up, need to increase brightness;  0: down, need to reduce brightness.
+ */
+static void AdjustBrightnessHandler(uint8_t frame_idx, uint8_t direction)
+{
+    uint8_t pwm;
+    if (frame_idx == OASISLT_INT_FRAME_IDX_IR)
+    {
+        Camera_GetPWM(LED_IR, &pwm);
+        Oasis_PWMControl(LED_IR, pwm, direction);
+    }
+    else
+    {
+        //There is a HW limitation to control LED_WHITE and LED_IR at the same time, so diable RGB part.
+        //Oasis_RGBControl(direction);
+    }
+}
+
 static int Oasis_Printf(const char *formatString)
 {
     UsbShell_DbgPrintf(VERBOSE_MODE_L2, formatString);
@@ -563,9 +688,11 @@ static void Oasis_Task(void *param)
 
                 case QMSG_FACEREC_START:
                 {
+                    uint8_t pwm  = 0;
                     s_lockstatus = 1;
                     UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[OASIS]:QMSG_FACEREC_START!\r\n");
-
+                    VIZN_GetPulseWidth(NULL, LED_IR, &pwm);
+                    Camera_QMsgSetPWM(LED_IR, pwm);
                     infoQMsg = &gFaceInfoMsg;
                     clearFaceInfoMsg(&infoQMsg->msg.info);
                     Camera_SendQMsg((void *)&infoQMsg);
@@ -653,14 +780,16 @@ int Oasis_Start()
     Oasis_SetModelClass(&s_InitPara.mod_class);
 
     s_InitPara.min_face = OASIS_DETECT_MIN_FACE;
-    s_InitPara.cbs      = {EvtHandler, GetRegisteredFacesHandler, AddNewFaceHandler, UpdateFaceHandler,
-                      (void *)Oasis_Printf};
+    s_InitPara.cbs      = {EvtHandler,        GetRegisteredFacesHandler, AddNewFaceHandler,
+                      UpdateFaceHandler, AdjustBrightnessHandler,   (void *)Oasis_Printf};
 
     s_InitPara.enable_flags = OASIS_ENABLE_DET | OASIS_ENABLE_REC;
     if (s_appType != APP_TYPE_USERID)
     {
         s_InitPara.enable_flags |= OASIS_ENABLE_MULTI_VIEW;
     }
+    //s_InitPara.enable_flags |= OASIS_ENABLE_BRIGHTNESS_FAIL_CHECK;
+	//s_InitPara.enable_flags |= OASIS_ENABLE_MASK_FACE_REC;
     s_InitPara.emo_mode          = OASIS_EMOTION_MODE_INVALID;
     s_InitPara.false_accept_rate = OASIS_FAR_1_1000000;
     s_InitPara.enable_flags |= (Cfg_AppDataGetLivenessMode() == LIVENESS_MODE_ON) ? OASIS_ENABLE_LIVENESS : 0;
