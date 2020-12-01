@@ -485,8 +485,6 @@ int FeatureDB::load_feature()
 {
     int ret;
     int index    = 0;
-    int item_max = FLASH_SECTOR_SIZE / sizeof(FeatureItem);
-
 #ifdef TEST_DB
 #define FLASH_SECTOR_SIZE 0x1000
     // copy the map
@@ -495,9 +493,11 @@ int FeatureDB::load_feature()
     memcpy(&s_FeatureData.item, test_db_bin + FLASH_SECTOR_SIZE, sizeof(s_FeatureData.item));
 #endif
 
-    memset(&s_FeatureData, 0xff, sizeof(FeatureData));
+    memset(&s_FeatureData, FEATUREDATA_MAGIC_UNUSE, sizeof(FeatureData));
 
     Flash_FacerecFsReadMapMagic(&s_FeatureData.map);
+
+    int item_max = FEATUREDATA_MAX_COUNT;
 
     // find valid item
     for (int i = 0; i < item_max; i++)
@@ -549,7 +549,7 @@ int FeatureDB::load_feature()
 int FeatureDB::reassign_feature()
 {
     int size     = 0;
-    int item_max = FLASH_SECTOR_SIZE / sizeof(FeatureItem);
+    int item_max = FEATUREDATA_MAX_COUNT;
     int count, reassign_index;
     // flash occupy size.
     for (int i = 0; i < item_max; i++)
@@ -570,7 +570,7 @@ int FeatureDB::reassign_feature()
     Flash_FacerecFsEraseItemBlock();
 
     count = feature_count();
-    memset(&s_FeatureData.map, 0xff, sizeof(s_FeatureData.map));
+    memset(&s_FeatureData.map, FEATUREDATA_MAGIC_UNUSE, sizeof(s_FeatureData.map));
     reassign_index = 0;
 
     for (int i = 0; i < FEATUREDATA_MAX_COUNT; i++)
@@ -595,8 +595,7 @@ int FeatureDB::reassign_feature()
 
 int FeatureDB::get_free_mapmagic()
 {
-    int item_max = FLASH_SECTOR_SIZE / sizeof(FeatureItem);
-
+    int item_max = FEATUREDATA_MAX_COUNT;
     // find new map index
     for (int i = 0; i < item_max; i++)
     {
@@ -609,7 +608,7 @@ int FeatureDB::get_free_mapmagic()
 
 int FeatureDB::get_remain_map()
 {
-    int item_max    = FLASH_SECTOR_SIZE / sizeof(FeatureItem);
+    int item_max    = FEATUREDATA_MAX_COUNT;
     int remain_size = 0;
 
     // find new map index

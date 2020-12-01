@@ -10,6 +10,7 @@
 #include "fsl_flexspi.h"
 #include "sln_flash_config.h"
 
+#if FLASH_TYPE == HYPER_FLASH
 /*******************************************************************************
  * Variables
  ******************************************************************************/
@@ -180,3 +181,4 @@ const uint32_t customLUT[CUSTOM_LUT_LENGTH] = {
         FLEXSPI_LUT_SEQ(kFLEXSPI_Command_DDR, kFLEXSPI_8PAD, 0xBB, kFLEXSPI_Command_STOP, kFLEXSPI_1PAD, 0x00),
 #endif
 };
+#endif

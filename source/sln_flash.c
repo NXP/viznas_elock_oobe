@@ -8,10 +8,15 @@
  */
 
 #include "sln_flash.h"
+#include "board.h"
+#if FLASH_TYPE == HYPER_FLASH
 #include "flexspi_hyper_flash_ops.h"
+#else
+#include "flexspi_qspi_flash_ops.h"
+#endif
 #include "fsl_flexspi.h"
 
-extern const uint32_t customLUT[CUSTOM_LUT_LENGTH];
+extern const uint32_t customLUT[];
 
 #ifdef __REDLIB__
 size_t safe_strlen(const char *ptr, size_t max)
@@ -148,8 +153,11 @@ void SLN_Flash_Init(void)
     SLN_ram_disable_d_cache();
 
     /* Update LUT table. */
+#if FLASH_TYPE == HYPER_FLASH
     FLEXSPI_UpdateLUT(FLEXSPI, 0, customLUT, CUSTOM_LUT_LENGTH);
-
+#else
+    FLEXSPI_UpdateLUT(FLEXSPI, 4, &customLUT[4], CUSTOM_LUT_LENGTH); 
+#endif
     /* Do software reset. */
     FLEXSPI_SoftwareReset(FLEXSPI);
 

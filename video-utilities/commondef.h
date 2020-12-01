@@ -24,7 +24,6 @@
 #include "sln_dev_cfg.h"
 #include "sln_rvdisp.h"
 
-//#include "MIMXRT1062.h"
 #include "oasislite_runtime.h"
 
 /*******************************************************************************
@@ -292,22 +291,26 @@ typedef struct
 #define FLASH_OK  0
 #define FLASH_ERR 1
 
-#define FACEREC_FS_FLASH_SIZE      0x8000 /* in KB */
-#define FACEREC_FS_FLASH_PAGE_SIZE 512
-#define FLASH_SECTOR_SIZE          0x40000
+#define FACEREC_FS_FLASH_SIZE      (FLASH_SIZE/1024) /* in KB */
+#define FACEREC_FS_FLASH_PAGE_SIZE FLASH_PAGE_SIZE
+#define FLASH_SECTOR_SIZE          SECTOR_SIZE
 #define FLASH_NPAGE_PER_SECTOR     (FLASH_SECTOR_SIZE / FACEREC_FS_FLASH_PAGE_SIZE)
 
+#if FLASH_TYPE == HYPER_FLASH
 /* use second half of the flash */
 #define FACEREC_FS_FIRST_SECTOR (((FACEREC_FS_FLASH_SIZE) * (1024) / (FLASH_SECTOR_SIZE)) * 1 / 4) // 0x60800000
 #define FACEREC_FS_SECTORS      (((FACEREC_FS_FLASH_SIZE) * (1024) / (FLASH_SECTOR_SIZE)) - FACEREC_FS_FIRST_SECTOR)
-
-/*database related*/
-#define FACEREC_THRESHOLD 0.8
-
 #define FEATUREDATA_FLASH_PAGE_SIZE FACEREC_FS_FLASH_PAGE_SIZE
-
-#define FACEREC_FS_MAP_ADDR  (FACEREC_FS_FIRST_SECTOR * FLASH_SECTOR_SIZE) // 0x60800000
-#define FACEREC_FS_ITEM_ADDR (FACEREC_FS_MAP_ADDR + FLASH_SECTOR_SIZE)     // 0x60840000
+#define FACEREC_FS_MAP_ADDR  (FACEREC_FS_FIRST_SECTOR * FLASH_SECTOR_SIZE)
+#define FACEREC_FS_ITEM_ADDR (FACEREC_FS_MAP_ADDR + FLASH_SECTOR_SIZE)
+#else
+#define FACEREC_FS_MAP_ADDR      0x820000 //0x60420000 -> 0x60820000
+#define FACEREC_FS_ITEM_ADDR     (FACEREC_FS_MAP_ADDR + FLASH_SECTOR_SIZE)
+#define FACEREC_FS_FIRST_SECTOR ((FACEREC_FS_MAP_ADDR) / (FLASH_SECTOR_SIZE))
+//#define FACEREC_FS_SECTORS ((FEATUREDATA_MAX_COUNT * 2*1024) / (FLASH_SECTOR_SIZE))
+#define FACEREC_FS_SECTORS ((FEATUREDATA_MAX_COUNT * 1024) / (FLASH_SECTOR_SIZE))
+#define FEATUREDATA_FLASH_PAGE_SIZE FACEREC_FS_FLASH_PAGE_SIZE
+#endif
 
 #define FEATUREDATA_MAGIC_UNUSE 0xFF
 #define FEATUREDATA_MAGIC_VALID 0x79
@@ -324,6 +327,12 @@ typedef struct
  * FeatureMap  | 0x61800000 |      1       |
  * FeatureItem | 0x61840000 |      1       |
  */
+/********************************************************
+ * item        |  address   |  size/sector | for RT106F_ELOCK_BOARD
+ * FeatureMap  | 0x60820000 |      1      |
+ * FeatureItem | 0x60821000~0x6083A000 |       25      |
+ */
+
 typedef union
 {
     struct
@@ -339,17 +348,24 @@ typedef union
          * (FEATUREDATA_FLASH_PAGE_SIZE * 2 - 1 - FEATUREDATA_NAME_MAX_LEN - 4 - 4)/4*/
         float feature[0];
     };
+#if FLASH_TYPE == HYPER_FLASH
+    //unsigned char raw[FEATUREDATA_FLASH_PAGE_SIZE * 4];
     unsigned char raw[FEATUREDATA_FLASH_PAGE_SIZE * 2];
+#else
+    //unsigned char raw[FEATUREDATA_FLASH_PAGE_SIZE * 8];
+    unsigned char raw[FEATUREDATA_FLASH_PAGE_SIZE * 4];
+#endif
 } FeatureItem; // 1kB
 
 typedef union
 {
     struct
     {
-        char magic[FEATUREDATA_FLASH_PAGE_SIZE];
+        char magic[FEATUREDATA_MAX_COUNT];
     };
-    unsigned char raw[FEATUREDATA_FLASH_PAGE_SIZE];
-} FeatureMap; // 512B
+    unsigned char raw[((FEATUREDATA_MAX_COUNT + (FEATUREDATA_FLASH_PAGE_SIZE - 1)) / FEATUREDATA_FLASH_PAGE_SIZE)
+                      * FEATUREDATA_FLASH_PAGE_SIZE];
+} FeatureMap;
 
 typedef struct
 {

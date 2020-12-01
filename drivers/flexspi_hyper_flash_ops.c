@@ -10,9 +10,13 @@
 #include "fsl_flexspi.h"
 #include "board.h"
 #include "clock_config.h"
+#if FLASH_TYPE == HYPER_FLASH
 #include "flexspi_hyper_flash_ops.h"
+#endif
 #include "fsl_common.h"
 #include "pin_mux.h"
+
+#if FLASH_TYPE == HYPER_FLASH
 
 /*******************************************************************************
  * Definitions
@@ -500,3 +504,4 @@ status_t flexspi_nor_hyperflash_id(FLEXSPI_Type *base, uint8_t *pid)
 
     return status;
 }
+#endif

@@ -20,6 +20,24 @@
 /*! @brief The board name */
 #define BOARD_NAME "SLN-VIZNAS-IOT"
 
+//Flash type
+#define HYPER_FLASH 0
+#define QSPI_FLASH  1
+#define FLASH_TYPE HYPER_FLASH
+
+#if FLASH_TYPE == HYPER_FLASH
+/*! @brief The board flash size */
+#define BOARD_FLASH_SIZE (0x2000000U)
+#else
+//#define QSPI_FLASH_W25Q128
+#define QSPI_FLASH_W25Q256
+#ifdef QSPI_FLASH_W25Q256
+#define BOARD_FLASH_SIZE (0x2000000U)
+#else
+#define BOARD_FLASH_SIZE (0x1000000U)
+#endif
+#endif
+
 /* The UART to use for debug messages. */
 #define BOARD_DEBUG_UART_TYPE     kSerialPort_Uart
 #define BOARD_DEBUG_UART_BASEADDR (uint32_t) LPUART3
@@ -98,9 +116,6 @@
 /* @brief BLE PWR Pins*/
 #define BOARD_INITPINS_BT_REG_ON_GPIO GPIO2 // former  BOARD_BT_REG_ON_port
 #define BOARD_INITPINS_BT_REG_ON_PIN  30U   // former  BOARD_BT_REG_ON_pin
-
-/*! @brief The board flash size */
-#define BOARD_FLASH_SIZE (0x2000000U)
 
 /*! @brief The ENET PHY address. */
 #define BOARD_ENET0_PHY_ADDRESS (0x01U) /* Phy address of enet port 0. */
