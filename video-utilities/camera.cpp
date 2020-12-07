@@ -152,8 +152,8 @@ static gc0308_resource_t gc0308Resource[2] = {
         .inputClockFreq_Hz = 24000000,
     },
     {   // IR
-        .i2cSendFunc       = BOARD_Camera_I2C_Send,
-        .i2cReceiveFunc    = BOARD_Camera_I2C_Receive,
+        .i2cSendFunc       = BOARD_Camera_IR_I2C_Send,
+        .i2cReceiveFunc    = BOARD_Camera_IR_I2C_Receive,
         .pullResetPin      = BOARD_PullCameraResetPin,
         .pullPowerDownPin  = BOARD_PullCameraIRPowerDownPin,
         .inputClockFreq_Hz = 24000000,
@@ -181,8 +181,8 @@ static mt9m114_resource_t mt9m114Resource[2] = {
         .i2cAddr            = MT9M114_I2C_ADDR,
     },
     {//IR
-        .i2cSendFunc        = BOARD_Camera_I2C_Send,
-        .i2cReceiveFunc     = BOARD_Camera_I2C_Receive,
+        .i2cSendFunc        = BOARD_Camera_IR_I2C_Send,
+        .i2cReceiveFunc     = BOARD_Camera_IR_I2C_Receive,
         .pullResetPin       = BOARD_PullCameraResetPin,
         .pullPowerDownPin   = BOARD_PullCameraIRPowerDownPin,
         .inputClockFreq_Hz  = 24000000,
@@ -573,7 +573,7 @@ static void Camera_Callback(camera_receiver_handle_t *handle, status_t status, v
 
 static void CameraDevice_Init_Task(void *param)
 {
-#if (APP_CAMERA_TYPE == APP_CAMERA_MT9M114)
+#if (CAMERA_DIFF_I2C_BUS || (APP_CAMERA_TYPE == APP_CAMERA_MT9M114))
     camera_config_t *cameraConfig = (camera_config_t *)param;
     // IR camera
     CAMERA_DEVICE_Init(&cameraDevice[1], cameraConfig);
@@ -630,7 +630,22 @@ static void Camera_Init_Task(void *param)
     NVIC_SetPriority(CSI_IRQn, configMAX_SYSCALL_INTERRUPT_PRIORITY - 1);
     CAMERA_RECEIVER_Init(&cameraReceiver, &cameraConfig, Camera_Callback, NULL);
 
-#if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
+#if (CAMERA_DIFF_I2C_BUS || (APP_CAMERA_TYPE == APP_CAMERA_MT9M114))
+    if (xTaskCreate(CameraDevice_Init_Task, "Camera_Init", CAMERAINITTASK_STACKSIZE, &cameraConfig,
+                    CAMERAINITTASK_PRIORITY, NULL) != pdPASS)
+    {
+        LOGE("[ERROR]CameraDevice  Init created failed\r\n");
+
+        while (1)
+            ;
+    }
+    // RGB camera
+    CAMERA_DEVICE_Init(&cameraDevice[0], &cameraConfig);
+    CAMERA_DEVICE_Control(&cameraDevice[0], kCAMERA_DeviceMonoMode, CAMERA_MONO_MODE_DISABLED);
+    // RGB camera on
+    CAMERA_DEVICE_Start(&cameraDevice[0]);
+    xEventGroupWaitBits(g_SyncVideoEvents, 1 << SYNC_VIDEO_CAMERADEVICE_INIT_BIT, pdTRUE, pdTRUE, portMAX_DELAY);
+#else
     CAMERA_RECEIVER_SwapBytes(&cameraReceiver);
     // RGB camera off
     CAMERA_DEVICE_Stop(&cameraDevice[0]);
@@ -644,21 +659,6 @@ static void Camera_Init_Task(void *param)
     CAMERA_DEVICE_Control(&cameraDevice[0], kCAMERA_DeviceMonoMode, CAMERA_MONO_MODE_DISABLED);
     // RGB camera on
     CAMERA_DEVICE_Start(&cameraDevice[0]);
-#else
-    if (xTaskCreate(CameraDevice_Init_Task, "Camera_Init", CAMERAINITTASK_STACKSIZE, &cameraConfig,
-                    CAMERAINITTASK_PRIORITY, NULL) != pdPASS)
-    {
-        LOGE("[ERROR]CameraDevice  Init created failed\r\n");
-
-        while (1)
-            ;
-    }
-    // RGB camera
-    CAMERA_DEVICE_Init(&cameraDevice[0], &cameraConfig);
-    // RGB camera on
-    CAMERA_DEVICE_Start(&cameraDevice[0]);
-
-    xEventGroupWaitBits(g_SyncVideoEvents, 1 << SYNC_VIDEO_CAMERADEVICE_INIT_BIT, pdTRUE, pdTRUE, portMAX_DELAY);
 #endif
     /* Submit the empty frame buffers to buffer queue. */
     for (i = 0; i < APP_FRAME_BUFFER_COUNT; i++)

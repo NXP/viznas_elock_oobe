@@ -28,6 +28,8 @@
 #if FLASH_TYPE == HYPER_FLASH
 /*! @brief The board flash size */
 #define BOARD_FLASH_SIZE (0x2000000U)
+#define BOARD_FLASH_PAGE_SIZE (512)
+#define BOARD_FLASH_SECTOR_SIZE (0x40000)
 #else
 //#define QSPI_FLASH_W25Q128
 #define QSPI_FLASH_W25Q256
@@ -36,7 +38,12 @@
 #else
 #define BOARD_FLASH_SIZE (0x1000000U)
 #endif
+#define BOARD_FLASH_PAGE_SIZE 256
+#define BOARD_FLASH_SECTOR_SIZE 0x1000
 #endif
+
+//Are RGB and IR dual cameras using different i2c bus lines ?
+#define CAMERA_DIFF_I2C_BUS     (0)
 
 /* The UART to use for debug messages. */
 #define BOARD_DEBUG_UART_TYPE     kSerialPort_Uart
@@ -357,6 +364,14 @@
     (CLOCK_GetFreq(kCLOCK_Usb1PllClk) / 8 / (BOARD_CAMERA_I2C_CLOCK_SOURCE_DIVIDER + 1U))
 #define BOARD_CAMERA_I2C_INSTANCE             (1U)
 
+#if CAMERA_DIFF_I2C_BUS
+#define BOARD_CAMERA_IR_I2C_BASEADDR          LPI2C4
+#define BOARD_CAMERA_IR_I2C_INSTANCE          (4U)
+#else
+#define BOARD_CAMERA_IR_I2C_BASEADDR          BOARD_CAMERA_I2C_BASEADDR
+#define BOARD_CAMERA_IR_I2C_INSTANCE          BOARD_CAMERA_I2C_INSTANCE
+#endif
+
 /* @Brief Board PCAL configuration */
 #define BOARD_PCAL_I2C_BASEADDR             LPI2C1
 #define BOARD_PCAL_I2C_CLOCK_SOURCE_DIVIDER (5U)
@@ -461,6 +476,10 @@ void BOARD_Camera_I2C_Init(void);
 status_t BOARD_Camera_I2C_Send(
     uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, const uint8_t *txBuff, uint8_t txBuffSize);
 status_t BOARD_Camera_I2C_Receive(
+    uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, uint8_t *rxBuff, uint8_t rxBuffSize);
+status_t BOARD_Camera_IR_I2C_Send(
+    uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, const uint8_t *txBuff, uint8_t txBuffSize);
+status_t BOARD_Camera_IR_I2C_Receive(
     uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, uint8_t *rxBuff, uint8_t rxBuffSize);
 void BOARD_PCAL_I2C_Init(void);
 status_t BOARD_PCAL_I2C_Send(

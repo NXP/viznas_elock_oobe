@@ -12,7 +12,7 @@
 #if defined(SDK_I2C_BASED_COMPONENT_USED) && SDK_I2C_BASED_COMPONENT_USED
 #include "i2c.h"
 #if defined(SDK_I2C_FREERTOS) && SDK_I2C_FREERTOS
-#include "fsl_lpi2c_freertos.h"
+#include "i2c_freertos.h"
 #else
 #include "fsl_lpi2c.h"
 #endif /* SDK_I2C_FREERTOS */
@@ -306,6 +306,9 @@ void BOARD_Camera_I2C_Init(void)
     CLOCK_SetMux(kCLOCK_Lpi2cMux, BOARD_CAMERA_I2C_CLOCK_SOURCE_SELECT);
     CLOCK_SetDiv(kCLOCK_Lpi2cDiv, BOARD_CAMERA_I2C_CLOCK_SOURCE_DIVIDER);
     BOARD_LPI2C_Init(BOARD_CAMERA_I2C_INSTANCE, BOARD_CAMERA_I2C_CLOCK_FREQ);
+#if CAMERA_DIFF_I2C_BUS
+    BOARD_LPI2C_Init(BOARD_CAMERA_IR_I2C_INSTANCE, BOARD_CAMERA_I2C_CLOCK_FREQ);
+#endif
 }
 
 status_t BOARD_Camera_I2C_Send(
@@ -319,6 +322,20 @@ status_t BOARD_Camera_I2C_Receive(
     uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, uint8_t *rxBuff, uint8_t rxBuffSize)
 {
     return BOARD_LPI2C_Receive(BOARD_CAMERA_I2C_INSTANCE, deviceAddress, subAddress, subAddressSize, rxBuff,
+                               rxBuffSize);
+}
+
+status_t BOARD_Camera_IR_I2C_Send(
+    uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, const uint8_t *txBuff, uint8_t txBuffSize)
+{
+    return BOARD_LPI2C_Send(BOARD_CAMERA_IR_I2C_INSTANCE, deviceAddress, subAddress, subAddressSize, (uint8_t *)txBuff,
+                            txBuffSize);
+}
+
+status_t BOARD_Camera_IR_I2C_Receive(
+    uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, uint8_t *rxBuff, uint8_t rxBuffSize)
+{
+    return BOARD_LPI2C_Receive(BOARD_CAMERA_IR_I2C_INSTANCE, deviceAddress, subAddress, subAddressSize, rxBuff,
                                rxBuffSize);
 }
 
@@ -338,20 +355,6 @@ status_t BOARD_PCAL_I2C_Receive(
     uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, uint8_t *rxBuff, uint8_t rxBuffSize)
 {
     return BOARD_LPI2C_Receive(BOARD_PCAL_I2C_INSTANCE, deviceAddress, subAddress, subAddressSize, rxBuff, rxBuffSize);
-}
-
-status_t BOARD_Camera_I2C_SendSCCB(
-    uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, const uint8_t *txBuff, uint8_t txBuffSize)
-{
-    return BOARD_LPI2C_SendSCCB(BOARD_CAMERA_I2C_BASEADDR, deviceAddress, subAddress, subAddressSize, (uint8_t *)txBuff,
-                                txBuffSize);
-}
-
-status_t BOARD_Camera_I2C_ReceiveSCCB(
-    uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, uint8_t *rxBuff, uint8_t rxBuffSize)
-{
-    return BOARD_LPI2C_ReceiveSCCB(BOARD_CAMERA_I2C_BASEADDR, deviceAddress, subAddress, subAddressSize, rxBuff,
-                                   rxBuffSize);
 }
 
 #endif /* SDK_I2C_BASED_COMPONENT_USED */

@@ -1004,6 +1004,14 @@ void BOARD_InitCSIPins(void) {
   IOMUXC_SetPinMux(
       IOMUXC_GPIO_AD_B1_01_LPI2C1_SDA,        /* GPIO_AD_B1_01 is configured as LPI2C1_SDA */
       1U);                                    /* Software Input On Field: Force input path of pad GPIO_AD_B1_01 */
+#if CAMERA_DIFF_I2C_BUS
+  IOMUXC_SetPinMux(
+      IOMUXC_GPIO_AD_B0_12_LPI2C4_SCL,        /* GPIO_AD_B0_12 is configured as LPI2C4_SCL */
+      1U);                                    /* Software Input On Field: Input Path is determined by functionality */
+  IOMUXC_SetPinMux(
+      IOMUXC_GPIO_AD_B0_13_LPI2C4_SDA,        /* GPIO_AD_B0_13 is configured as LPI2C4_SDA */
+      1U);                                    /* Software Input On Field: Input Path is determined by functionality */
+#endif
   IOMUXC_SetPinMux(
       IOMUXC_GPIO_AD_B1_04_CSI_PIXCLK,        /* GPIO_AD_B1_04 is configured as CSI_PIXCLK */
       0U);                                    /* Software Input On Field: Input Path is determined by functionality */
@@ -1060,6 +1068,28 @@ void BOARD_InitCSIPins(void) {
                                                  Pull / Keep Select Field: Keeper
                                                  Pull Up / Down Config. Field: 22K Ohm Pull Up
                                                  Hyst. Enable Field: Hysteresis Disabled */
+#if CAMERA_DIFF_I2C_BUS
+  IOMUXC_SetPinConfig(
+      IOMUXC_GPIO_AD_B0_12_LPI2C4_SCL,        /* GPIO_AD_B0_12 PAD functional properties : */
+      0x98B0U);                               /* Slew Rate Field: Slow Slew Rate
+                                                 Drive Strength Field: R0/6
+                                                 Speed Field: medium(100MHz)
+                                                 Open Drain Enable Field: Open Drain Enabled
+                                                 Pull / Keep Enable Field: Pull/Keeper Enabled
+                                                 Pull / Keep Select Field: Keeper
+                                                 Pull Up / Down Config. Field: 100K Ohm Pull Up
+                                                 Hyst. Enable Field: Hysteresis Disabled */
+  IOMUXC_SetPinConfig(
+      IOMUXC_GPIO_AD_B0_13_LPI2C4_SDA,        /* GPIO_AD_B0_13 PAD functional properties : */
+      0x98B0U);                               /* Slew Rate Field: Slow Slew Rate
+                                                 Drive Strength Field: R0/6
+                                                 Speed Field: medium(100MHz)
+                                                 Open Drain Enable Field: Open Drain Enabled
+                                                 Pull / Keep Enable Field: Pull/Keeper Enabled
+                                                 Pull / Keep Select Field: Keeper
+                                                 Pull Up / Down Config. Field: 100K Ohm Pull Up
+                                                 Hyst. Enable Field: Hysteresis Disabled */
+#endif
     IOMUXC_SetPinConfig(
     IOMUXC_GPIO_AD_B1_05_CSI_MCLK,          /* GPIO_AD_B1_05 PAD functional properties : */
     0x1008U);                               /* Slew Rate Field: Slow Slew Rate

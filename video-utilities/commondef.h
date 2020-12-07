@@ -16,9 +16,8 @@
 #include "task.h"
 #include "queue.h"
 #include "timers.h"
-
 #include "board.h"
-#include "peripherals.h"
+//#include "peripherals.h"
 #include "pin_mux.h"
 #include "clock_config.h"
 #include "sln_dev_cfg.h"
@@ -291,9 +290,9 @@ typedef struct
 #define FLASH_OK  0
 #define FLASH_ERR 1
 
-#define FACEREC_FS_FLASH_SIZE      (FLASH_SIZE/1024) /* in KB */
-#define FACEREC_FS_FLASH_PAGE_SIZE FLASH_PAGE_SIZE
-#define FLASH_SECTOR_SIZE          SECTOR_SIZE
+#define FACEREC_FS_FLASH_SIZE      (BOARD_FLASH_SIZE/1024) /* in KB */
+#define FACEREC_FS_FLASH_PAGE_SIZE BOARD_FLASH_PAGE_SIZE
+#define FLASH_SECTOR_SIZE          BOARD_FLASH_SECTOR_SIZE
 #define FLASH_NPAGE_PER_SECTOR     (FLASH_SECTOR_SIZE / FACEREC_FS_FLASH_PAGE_SIZE)
 
 #if FLASH_TYPE == HYPER_FLASH

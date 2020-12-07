@@ -245,10 +245,17 @@ static void GC0308_SensorInitialSetting(camera_device_handle_t *handle, const ca
 
     GC0308_Write(handle, 0x22, 1U, 0x57); /* Open AWB */
 
-    /* fps = 24M/2/(694+306)/(488+312)=15 */
+#if (CAMERA_DIFF_I2C_BUS)
+    //fps = 24M/2/(694+106)/(488+12)=30
+    GC0308_Write(handle, 0x01, 1U, 0x6a);  //694 + 106 = 800
+    GC0308_Write(handle, 0x02, 1U, 0x0c); //488 +  12 = 500
+    GC0308_Write(handle, 0x0f, 1U, 0x00);
+#else
+    /* fps = 24M/2/(694+306)/(488+112)=20 */
     GC0308_Write(handle, 0x01, 1U, 0x32); // 694 + 306 = 1000
-    GC0308_Write(handle, 0x02, 1U, 0x38); // 488 + 312 = 800
-    GC0308_Write(handle, 0x0f, 1U, 0x11);
+    GC0308_Write(handle, 0x02, 1U, 0x70); // 488 + 112 = 600
+    GC0308_Write(handle, 0x0f, 1U, 0x01);
+#endif
 
     GC0308_Write(handle, 0x03, 1U, 0x01); // 300
     GC0308_Write(handle, 0x04, 1U, 0x2c);
@@ -266,16 +273,25 @@ static void GC0308_SensorInitialSetting(camera_device_handle_t *handle, const ca
         GC0308_Write(handle, 0xea, 1U, 0x09);    exp level 3  4.00fps
         GC0308_Write(handle, 0xeb, 1U, 0xc4);
     */
-
-    GC0308_Write(handle, 0xe4, 1U, 0x03); /* exp level 0  15fps  800 */
-    GC0308_Write(handle, 0xe5, 1U, 0x20);
-    GC0308_Write(handle, 0xe6, 1U, 0x03); /* exp level 1 */
-    GC0308_Write(handle, 0xe7, 1U, 0x20);
-    GC0308_Write(handle, 0xe8, 1U, 0x03); /* exp level 2 */
-    GC0308_Write(handle, 0xe9, 1U, 0x20);
-    GC0308_Write(handle, 0xea, 1U, 0x03); /* exp level 3 */
-    GC0308_Write(handle, 0xeb, 1U, 0x20);
-
+#if (CAMERA_DIFF_I2C_BUS)
+    GC0308_Write(handle, 0xe4, 1U, 0x01);	/* exp level 0*/
+    GC0308_Write(handle, 0xe5, 1U, 0xF4);
+    GC0308_Write(handle, 0xe6, 1U, 0x01);	/* exp level 1*/
+    GC0308_Write(handle, 0xe7, 1U, 0xF4);
+    GC0308_Write(handle, 0xe8, 1U, 0x01);	/* exp level 2 */
+    GC0308_Write(handle, 0xe9, 1U, 0xF4);
+    GC0308_Write(handle, 0xea, 1U, 0x01);	/* exp level 3 */
+    GC0308_Write(handle, 0xeb, 1U, 0xF4);
+#else
+    GC0308_Write(handle, 0xe4, 1U, 0x02); /* exp level 0 */
+    GC0308_Write(handle, 0xe5, 1U, 0x58);
+    GC0308_Write(handle, 0xe6, 1U, 0x02); /* exp level 1 */
+    GC0308_Write(handle, 0xe7, 1U, 0x58);
+    GC0308_Write(handle, 0xe8, 1U, 0x02); /* exp level 2 */
+    GC0308_Write(handle, 0xe9, 1U, 0x58);
+    GC0308_Write(handle, 0xea, 1U, 0x02); /* exp level 3 */
+    GC0308_Write(handle, 0xeb, 1U, 0x58);
+#endif
     GC0308_Write(handle, 0x05, 1U, 0x00);
     GC0308_Write(handle, 0x06, 1U, 0x00);
     GC0308_Write(handle, 0x07, 1U, 0x00);
@@ -438,7 +454,7 @@ static void GC0308_SensorInitialSetting(camera_device_handle_t *handle, const ca
     GC0308_Write(handle, 0xe0, 1U, 0x09);
     GC0308_Write(handle, 0xec, 1U, 0x20);
     GC0308_Write(handle, 0xed, 1U, 0x04);
-    GC0308_Write(handle, 0xee, 1U, 0x40);
+    GC0308_Write(handle, 0xee, 1U, 0xa0);
     GC0308_Write(handle, 0xef, 1U, 0x40);
     GC0308_Write(handle, 0x80, 1U, 0x03);
     GC0308_Write(handle, 0x80, 1U, 0x03);
@@ -1146,7 +1162,11 @@ status_t GC0308_Deinit(camera_device_handle_t *handle)
  */
 status_t GC0308_Start(camera_device_handle_t *handle)
 {
+#if (CAMERA_DIFF_I2C_BUS)
+    GC0308_Write(handle, 0x25, 1U, 0x0f);
+#else
     GC0308_PowerDown(handle, false);
+#endif
     return kStatus_Success;
 }
 
@@ -1160,7 +1180,11 @@ status_t GC0308_Start(camera_device_handle_t *handle)
  */
 status_t GC0308_Stop(camera_device_handle_t *handle)
 {
+#if (CAMERA_DIFF_I2C_BUS)
+    GC0308_Write(handle, 0x25, 1U, 0x00);
+#else
     GC0308_PowerDown(handle, true);
+#endif
     return kStatus_Success;
 }
 
