@@ -32,22 +32,22 @@
 #include "unlock_80_80.h"
 #include "greenlock_30x38.h"
 #include "redlock_30x38.h"
-#include "welcomehome_320x122.h"
 #include "wifi_16x16.h"
 #include "ble_16x16.h"
 
-#if !SCREEN_PORTRAIT_MODE
+#if SCREEN_PORTRAIT_MODE
+#include "welcomehome_240x131.h"
 #if !AUTO_CALIBRATION
 /*******************************************************************************
  * Definitions
  *******************************************************************************/
 #define LINE_DIMS 5
 
-#define LOCK_SPACING 8
+#define LOCK_SPACING 2
 #define LOCK_WIDTH   greenlock_W
 
 #define POS_QUALITY_INFO_X 2
-#define POS_QUALITY_INFO_Y 90
+#define POS_QUALITY_INFO_Y 170
 
 #define POS_NAME_X 240
 #define POS_NAME_Y 20
@@ -55,7 +55,7 @@
 #define POS_EMOTION_X 240
 #define POS_EMOTION_Y 45
 
-#define POS_REGISTRATION_X 100
+#define POS_REGISTRATION_X 70
 #define POS_REGISTRATION_Y 10
 
 #define RGB565_RED   0xf800
@@ -76,7 +76,7 @@
 #define POS_NXPBLUE_RECT_X  (POS_NXPRED_RECT_X + RED_RECT_WIDTH)
 #define POS_NXPGREEN_RECT_X (POS_NXPBLUE_RECT_X + BLUE_RECT_WIDTH)
 
-#define WIFI_ICON_RELATIVE_X    10
+#define WIFI_ICON_RELATIVE_X    2
 #define BLE_ICON_RELATIVE_X     WIFI_ICON_RELATIVE_X + WIFI_W + LOCK_SPACING / 2
 #define REGISTRATION_RELATIVE_X 2
 #define MODE_RELATIVE_X         (LOCK_SPACING + LOCK_WIDTH)
@@ -283,7 +283,7 @@ static void UIInfo_UpdateBottomInfoBar(uint16_t *pBufferAddr, QUIInfoMsg infoMsg
     {
         pIcon = (uint16_t *)no_wifi16x16_data;
     }
-    draw_icon(pIcon, POS_NXPBLUE_RECT_X + WIFI_ICON_RELATIVE_X, 223, WIFI_W, WIFI_H, 0xE000, pBufferAddr);
+    draw_icon(pIcon, POS_NXPBLUE_RECT_X + WIFI_ICON_RELATIVE_X, 223+80, WIFI_W, WIFI_H, 0xE000, pBufferAddr);
     if (SLN_Connection_BLE_isOn())
     {
         pIcon = (uint16_t *)bluetooth16x16_data;
@@ -292,7 +292,7 @@ static void UIInfo_UpdateBottomInfoBar(uint16_t *pBufferAddr, QUIInfoMsg infoMsg
     {
         pIcon = (uint16_t *)no_bluetooth16x16_data;
     }
-    draw_icon(pIcon, POS_NXPBLUE_RECT_X + BLE_ICON_RELATIVE_X, 223, BLE_W, BLE_H, 0xE000, pBufferAddr);
+    draw_icon(pIcon, POS_NXPBLUE_RECT_X + BLE_ICON_RELATIVE_X, 223+80, BLE_W, BLE_H, 0xE000, pBufferAddr);
     // draw lock icon
 
     if (!name.empty())
@@ -303,7 +303,7 @@ static void UIInfo_UpdateBottomInfoBar(uint16_t *pBufferAddr, QUIInfoMsg infoMsg
     {
         pIcon = (uint16_t *)redlock_30x38;
     }
-    draw_icon(pIcon, LOCK_SPACING / 2 + POS_NXPRED_RECT_X, 202, 30, 38, 0xfc00, pBufferAddr);
+    draw_icon(pIcon, LOCK_SPACING / 2 + POS_NXPRED_RECT_X, 202+80, 30, 38, 0xfc00, pBufferAddr);
 }
 
 static void UIInfo_UpdateOasisState(uint16_t *pBufferAddr)
@@ -337,8 +337,8 @@ static void UIInfo_FaceGuideLines(uint16_t *pBufferAddr)
         //  need mask both side during face adding and removing
         if ((g_AddNewFace || g_RemoveExistingFace))
         {
-            draw_fillrect(CAMERA_SURFACE_SHIFT, 0, 60, 240, RGB565_NXPBLUE, pBufferAddr);
-            draw_fillrect(CAMERA_SURFACE_SHIFT + 260, 0, 60, 240, RGB565_NXPBLUE, pBufferAddr);
+            draw_fillrect(0, 0, 30, 320, RGB565_NXPBLUE, pBufferAddr);
+            draw_fillrect(210, 0, 30, 320, RGB565_NXPBLUE, pBufferAddr);
         }
 
         if (g_AddNewFace)
@@ -348,15 +348,15 @@ static void UIInfo_FaceGuideLines(uint16_t *pBufferAddr)
         else
             reg_rect_color = RGB565_NXPBLUE;
 
-        draw_fillrect(70 + CAMERA_SURFACE_SHIFT, 10, 2, 60, reg_rect_color, pBufferAddr);
-        draw_fillrect(70 + CAMERA_SURFACE_SHIFT, 150, 2, 60, reg_rect_color, pBufferAddr);
-        draw_fillrect(250 + CAMERA_SURFACE_SHIFT, 10, 2, 60, reg_rect_color, pBufferAddr);
-        draw_fillrect(250 + CAMERA_SURFACE_SHIFT, 150, 2, 60, reg_rect_color, pBufferAddr);
+        draw_fillrect(30, 10+20, 2, 60, reg_rect_color, pBufferAddr);
+        draw_fillrect(30, 150+20, 2, 60, reg_rect_color, pBufferAddr);
+        draw_fillrect(210, 10+20, 2, 60, reg_rect_color, pBufferAddr);
+        draw_fillrect(210, 150+20, 2, 60, reg_rect_color, pBufferAddr);
 
-        draw_fillrect(70 + CAMERA_SURFACE_SHIFT, 10, 60, 2, reg_rect_color, pBufferAddr);
-        draw_fillrect(70 + CAMERA_SURFACE_SHIFT, 208, 60, 2, reg_rect_color, pBufferAddr);
-        draw_fillrect(190 + CAMERA_SURFACE_SHIFT, 10, 60, 2, reg_rect_color, pBufferAddr);
-        draw_fillrect(190 + CAMERA_SURFACE_SHIFT, 208, 60, 2, reg_rect_color, pBufferAddr);
+        draw_fillrect(30, 10+20, 60, 2, reg_rect_color, pBufferAddr);
+        draw_fillrect(30, 208+20, 60, 2, reg_rect_color, pBufferAddr);
+        draw_fillrect(150, 10+20, 60, 2, reg_rect_color, pBufferAddr);
+        draw_fillrect(150, 208+20, 60, 2, reg_rect_color, pBufferAddr);
     }
 }
 
@@ -372,40 +372,40 @@ static void UIInfo_UpdateFaceInfo(uint16_t *pBufferAddr, QUIInfoMsg infoMsg)
         case 1 << kEvents_API_Layer_FaceExist:
         {
             sprintf(tstring, "Already Registered");
-            draw_text(tstring, CAMERA_SURFACE_SHIFT + 70, 10, 0x0, RGB565_RED, OPENSANS16, pBufferAddr);
+            draw_text(tstring, CAMERA_SURFACE_SHIFT +10, 10, 0x0, RGB565_RED, OPENSANS16, pBufferAddr);
         }
         break;
         case 1 << kEvents_API_Layer_DeregFailed:
         {
             sprintf(tstring, "Remove Failed");
-            draw_text(tstring, CAMERA_SURFACE_SHIFT + 70, 10, 0x0, RGB565_RED, OPENSANS16, pBufferAddr);
+            draw_text(tstring, CAMERA_SURFACE_SHIFT + 10, 10, 0x0, RGB565_RED, OPENSANS16, pBufferAddr);
         }
         break;
         case 1 << kEvents_API_Layer_DeregSuccess:
         {
             sprintf(tstring, "%s removed", name.c_str());
-            draw_text(tstring, CAMERA_SURFACE_SHIFT + 70, 10, 0x0, RGB565_GREEN, OPENSANS16, pBufferAddr);
+            draw_text(tstring, CAMERA_SURFACE_SHIFT + 30, 10, 0x0, RGB565_GREEN, OPENSANS16, pBufferAddr);
         }
         break;
         case 1 << kEvents_API_Layer_RegSuccess:
         {
             sprintf(tstring, "%s Added", name.c_str());
-            draw_text(tstring, CAMERA_SURFACE_SHIFT + 100, 100, 0x0, RGB565_GREEN, OPENSANS16, pBufferAddr);
+            draw_text(tstring, CAMERA_SURFACE_SHIFT + 30, 10, 0x0, RGB565_GREEN, OPENSANS16, pBufferAddr);
         }
         break;
         case 1 << kEvents_API_Layer_RegFailed:
         {
             sprintf(tstring, "Registration Failed");
-            draw_text(tstring, CAMERA_SURFACE_SHIFT + 70, 10, 0x0, RGB565_RED, OPENSANS16, pBufferAddr);
+            draw_text(tstring, CAMERA_SURFACE_SHIFT + 10, 10, 0x0, RGB565_RED, OPENSANS16, pBufferAddr);
         }
         break;
         case 1 << kEvents_API_Layer_RecSuccess:
         {
             uint16_t *pIcon;
-            sprintf(tstring, "Unlocked");
-            draw_text(tstring, CAMERA_SURFACE_SHIFT + 120, 10, 0, RGB565_GREEN, OPENSANS16, pBufferAddr);
+            sprintf(tstring, "%s:Unlocked", name.c_str());
+            draw_text(tstring, CAMERA_SURFACE_SHIFT+10, 10, 0, RGB565_GREEN, OPENSANS16, pBufferAddr);
 
-            pIcon = (uint16_t *)welcomehome_320x122;
+            pIcon = (uint16_t *)welcomehome_240x131;
             draw_icon(pIcon, CAMERA_SURFACE_SHIFT, 60, welcomehome_W, welcomehome_H, 0xffff, pBufferAddr);
         }
         break;
@@ -413,7 +413,7 @@ static void UIInfo_UpdateFaceInfo(uint16_t *pBufferAddr, QUIInfoMsg infoMsg)
         case 1 << kEvents_API_Layer_RecFailed:
         {
             sprintf(tstring, "Recognition Timeout");
-            draw_text(tstring, CAMERA_SURFACE_SHIFT + 70, 10, 0x0, RGB565_RED, OPENSANS16, pBufferAddr);
+            draw_text(tstring, CAMERA_SURFACE_SHIFT + 10, 10, 0x0, RGB565_RED, OPENSANS16, pBufferAddr);
         }
         break;
         default:
@@ -604,4 +604,4 @@ void UIInfo_Update(uint16_t *pBufferAddr, QUIInfoMsg infoMsg, uint8_t p_DisplayI
 }
 
 #endif //#if !AUTO_CALIBRATION
-#endif //#if !SCREEN_PORTRAIT_MODE
+#endif //SCREEN_PORTRAIT_MODE

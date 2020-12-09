@@ -11,13 +11,16 @@
 #include "App_Common.h"
 #include "fsl_log.h"
 #include "sln_rvdisp.h"
+#include "board.h"
+
+#define RVDISP_SW_ROTATE    (SCREEN_PORTRAIT_MODE ? 1 : 0)
 
 /* Global used for buffer optimization */
 Gpu_Hal_Context_t host, *phost;
 
 void RVDisp_CopyFrameToDisplayBuffer(uint16_t *pFrameAddr, uint16_t *pDispBuffer)
 {
-#ifdef SW_ROTATE
+#if RVDISP_SW_ROTATE
     int i, j;
     for (i = 0; i < RVDISP_WIDTH; i++)
         for (j = RVDISP_HEIGHT - 1; j >= 0; j--)
@@ -99,7 +102,7 @@ void RVDisp_SendFrame(uint16_t *pFrame)
     static uint8_t execCoInit = 1;
 
     // Upload the framebuffer as a bitmap/texture
-#ifdef SW_ROTATE
+#if RVDISP_SW_ROTATE
     Gpu_Hal_WrMem(phost, RAM_G, (uint8_t *)pFrame, RVDISP_WIDTH * RVDISP_HEIGHT * 2);
 #else
     Gpu_Hal_WrMem(phost, RAM_G, (uint8_t *)pFrame, RVDISP_HEIGHT * RVDISP_WIDTH * 2);
@@ -146,7 +149,7 @@ void RVDisp_SendFrame(uint16_t *pFrame)
     App_WrCoCmd_Buffer(phost, CLEAR(1, 1, 1));
     App_WrCoCmd_Buffer(phost, BITMAP_HANDLE(0));
     App_WrCoCmd_Buffer(phost, BITMAP_SOURCE(0));
-#ifdef SW_ROTATE
+#if RVDISP_SW_ROTATE
     App_WrCoCmd_Buffer(phost, BITMAP_LAYOUT(RGB565, RVDISP_WIDTH * 2, RVDISP_HEIGHT));
     App_WrCoCmd_Buffer(phost, BITMAP_SIZE(NEAREST, BORDER, BORDER, RVDISP_WIDTH, RVDISP_HEIGHT));
     App_WrCoCmd_Buffer(phost, BEGIN(BITMAPS));

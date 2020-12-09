@@ -23,7 +23,19 @@
 //Flash type
 #define HYPER_FLASH 0
 #define QSPI_FLASH  1
+#ifndef FLASH_TYPE
 #define FLASH_TYPE HYPER_FLASH
+#endif
+//Are RGB and IR dual cameras using different i2c bus lines ?
+#ifndef CAMERA_DIFF_I2C_BUS
+#define CAMERA_DIFF_I2C_BUS     (0)
+#endif
+//screen orientation: portrait  or landscape
+#ifndef SCREEN_PORTRAIT_MODE
+#define SCREEN_PORTRAIT_MODE    (0)
+#endif
+//we need 90deg rotated camera module for portrait display.
+#define CAMERA_ROTATE_FLAG  (SCREEN_PORTRAIT_MODE ? 1 : 0)
 
 #if FLASH_TYPE == HYPER_FLASH
 /*! @brief The board flash size */
@@ -38,12 +50,9 @@
 #else
 #define BOARD_FLASH_SIZE (0x1000000U)
 #endif
-#define BOARD_FLASH_PAGE_SIZE 256
-#define BOARD_FLASH_SECTOR_SIZE 0x1000
+#define BOARD_FLASH_PAGE_SIZE (256)
+#define BOARD_FLASH_SECTOR_SIZE (0x1000)
 #endif
-
-//Are RGB and IR dual cameras using different i2c bus lines ?
-#define CAMERA_DIFF_I2C_BUS     (0)
 
 /* The UART to use for debug messages. */
 #define BOARD_DEBUG_UART_TYPE     kSerialPort_Uart

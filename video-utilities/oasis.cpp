@@ -800,8 +800,8 @@ int Oasis_Start()
         s_InitPara.enable_flags |= OASIS_ENABLE_EMO;
     }
 
-    s_InitPara.height = APP_CAMERA_HEIGHT;
-    s_InitPara.width  = APP_CAMERA_WIDTH;
+    s_InitPara.height = REC_RECT_HEIGHT;
+    s_InitPara.width  = REC_RECT_WIDTH;
 
     ret = OASISLT_init(&s_InitPara);
 

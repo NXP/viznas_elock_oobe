@@ -20,8 +20,11 @@
 
 #include "sln_pcal.h"
 #include "sln_rvdisp.h"
+#if SCREEN_PORTRAIT_MODE
+#include "nxp_vertical_logo.h"
+#else
 #include "nxp_facemanager.h"
-
+#endif
 /*******************************************************************************
  * Variables
  *******************************************************************************/
@@ -174,9 +177,11 @@ void Display_Init_Task(void *param)
     {
         RVDisp_Init(NULL);
     }
-
+#if SCREEN_PORTRAIT_MODE
+    Display_Update((uint32_t)nxp_vertical_logo);
+#else
     Display_Update((uint32_t)nxp_facemanager);
-
+#endif
     vTaskDelay(1200);
 
     xEventGroupSetBits(g_SyncVideoEvents, 1 << SYNC_VIDEO_DISPLAY_INIT_BIT);

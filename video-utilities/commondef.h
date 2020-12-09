@@ -21,7 +21,6 @@
 #include "pin_mux.h"
 #include "clock_config.h"
 #include "sln_dev_cfg.h"
-#include "sln_rvdisp.h"
 
 #include "oasislite_runtime.h"
 
@@ -37,50 +36,44 @@
 #define APP_CAMERA_HEIGHT (Cfg_AppDataGetDetectResolutionMode() == DETECT_RESOLUTION_VGA ? 480 : 240)
 #define APP_CAMERA_WIDTH  (Cfg_AppDataGetDetectResolutionMode() == DETECT_RESOLUTION_VGA ? 640 : 320)
 
+#define LCD_WIDTH  (SCREEN_PORTRAIT_MODE ? 240 : 320)
+#define LCD_HEIGHT (SCREEN_PORTRAIT_MODE ? 320 : 240)
+
 // Rotation done in PXP
 // #define DISPLAY_PITCH_BYTES  (Cfg_AppDataGetOutputMode() == DISPLAY_USB ? LCD_WIDTH * 2:LCD_HEIGHT * 2)
 // #define DISPLAY_ROTATION     (Cfg_AppDataGetOutputMode() == DISPLAY_USB ? 0 : 90)
 
 // Rotation done on Riverdi side
 #define DISPLAY_PITCH_BYTES (LCD_WIDTH * 2)
-#define DISPLAY_ROTATION    0
+#define DISPLAY_ROTATION    (0)
 
 // face recognize parameter
 #define MINFACE_SIZE 100 // should fine tuning with the face images input.
 
-#if RTVISION_BOARD
-#if RTFFI_RV_DISP_DRIVER
-#define LCD_WIDTH  RVDISP_HEIGHT // APP_IMG_WIDTH
-#define LCD_HEIGHT RVDISP_WIDTH  // APP_IMG_HEIGHT
-#else
-#define LCD_WIDTH  320 // APP_IMG_WIDTH
-#define LCD_HEIGHT 240 // APP_IMG_HEIGHT
-#endif
-#endif
+
+
+
 // AX surface
-#if RTVISION_BOARD
 #define FACEICON_WIDTH  80
 #define FACEICON_HEIGHT 80
-
 #define CAMERA_SURFACE_SHIFT 0
 
-#endif
 
 #define APP_PXP       PXP
-#define APP_PS_WIDTH  (LCD_WIDTH - CAMERA_SURFACE_SHIFT) //(APP_IMG_WIDTH / 2U)
-#define APP_PS_HEIGHT LCD_HEIGHT                         //(APP_IMG_HEIGHT / 2U)
+#define APP_PS_WIDTH  (LCD_WIDTH - CAMERA_SURFACE_SHIFT)
+#define APP_PS_HEIGHT LCD_HEIGHT
 
 #define APP_AS_WIDTH  LCD_WIDTH
 #define APP_AS_HEIGHT LCD_HEIGHT
 
 // ROI Box RECT for detect and recognize
-#define REC_RECT_HEIGHT APP_CAMERA_HEIGHT
-#define REC_RECT_WIDTH  APP_CAMERA_WIDTH
+#define REC_RECT_HEIGHT (CAMERA_ROTATE_FLAG ? APP_CAMERA_WIDTH  : APP_CAMERA_HEIGHT)
+#define REC_RECT_WIDTH  (CAMERA_ROTATE_FLAG ? APP_CAMERA_HEIGHT : APP_CAMERA_WIDTH)
 
-#define REC_RECT_X1 (APP_CAMERA_WIDTH - REC_RECT_WIDTH) / 2
-#define REC_RECT_Y1 (APP_CAMERA_HEIGHT - REC_RECT_HEIGHT) / 2
-#define REC_RECT_X2 (APP_CAMERA_WIDTH + REC_RECT_WIDTH) / 2
-#define REC_RECT_Y2 (APP_CAMERA_HEIGHT + REC_RECT_HEIGHT) / 2
+#define REC_RECT_X1  0
+#define REC_RECT_Y1  0
+#define REC_RECT_X2  REC_RECT_WIDTH
+#define REC_RECT_Y2  REC_RECT_HEIGHT
 
 // snapshot image
 #define SNAPSHOT_WIDTH  96

@@ -132,13 +132,6 @@ void APP_PXPInit()
     s_AsBufferConfig.pixelFormat = kPXP_AsPixelFormatRGB565;
     s_AsBufferConfig.bufferAddr  = (uint32_t)s_asBufferPxp;
     s_AsBufferConfig.pitchBytes  = APP_AS_WIDTH * 2;
-    s_AsBlendConfig.alpha        = 0xFU;          /* Don't care. */
-    s_AsBlendConfig.invertAlpha  = false;         /* Don't care. */
-    s_AsBlendConfig.alphaMode    = kPXP_AlphaRop; // kPXP_AlphaRop;
-    s_AsBlendConfig.ropMode      = kPXP_RopMergeAs;
-    PXP_SetAlphaSurfaceBufferConfig(APP_PXP, &s_AsBufferConfig);
-    PXP_SetAlphaSurfaceBlendConfig(APP_PXP, &s_AsBlendConfig);
-
     s_AsBlendConfig.alpha       = 0xb0U; /* Don't care. */
     s_AsBlendConfig.invertAlpha = false; /* Don't care. */
     s_AsBlendConfig.alphaMode   = kPXP_AlphaOverride;
@@ -158,7 +151,7 @@ void APP_PXPInit()
 
     PXP_SetOutputBufferConfig(APP_PXP, &s_OutputBufferConfig);
 
-    /* Disable CSC1, it is enabled by default. */
+    /* Enable CSC1, it is enabled by default. */
     PXP_SetCsc1Mode(APP_PXP, kPXP_Csc1YCbCr2RGB);
     PXP_EnableCsc1(APP_PXP, true);
 }
@@ -267,15 +260,94 @@ static void APP_PXPStart(uint32_t psBuffer, uint32_t outBuffer, uint32_t rotate)
     xEventGroupWaitBits(g_SyncVideoEvents, 1 << SYNC_VIDEO_PXP_COMPLET_BIT, pdTRUE, pdTRUE, portMAX_DELAY);
 }
 
+void APP_SetPxpRotate(uint32_t psBuffer, uint32_t rotateBuf)
+{
+    s_PsBufferConfig.pixelFormat = kPXP_PsPixelFormatUYVY1P422;
+    s_PsBufferConfig.swapByte = false;
+    s_PsBufferConfig.bufferAddr  = psBuffer,
+    s_PsBufferConfig.bufferAddrU = 0U;
+    s_PsBufferConfig.bufferAddrV = 0U;
+    s_PsBufferConfig.pitchBytes  = APP_CAMERA_WIDTH*2,
+
+    PXP_SetProcessSurfaceBackGroundColor(APP_PXP, 0U);
+
+    PXP_SetProcessSurfaceBufferConfig(APP_PXP, &s_PsBufferConfig);
+
+    PXP_SetProcessSurfaceScaler(APP_PXP, APP_CAMERA_WIDTH, APP_CAMERA_HEIGHT, APP_CAMERA_WIDTH, APP_CAMERA_HEIGHT);
+    PXP_SetProcessSurfacePosition(APP_PXP, 0, 0, APP_CAMERA_HEIGHT - 1, APP_CAMERA_WIDTH - 1);
+
+    /* Disable AS. */
+    PXP_SetAlphaSurfacePosition(APP_PXP, 0xFFFFU, 0xFFFFU, 0U, 0U);
+
+    /* Output config. */  //    640*480   ------->  480*640
+    s_OutputBufferConfig.pixelFormat    = kPXP_OutputPixelFormatUYVY1P422;
+    s_OutputBufferConfig.interlacedMode = kPXP_OutputProgressive;
+    s_OutputBufferConfig.buffer0Addr    = rotateBuf;
+    s_OutputBufferConfig.buffer1Addr    = 0U;
+    s_OutputBufferConfig.pitchBytes     = APP_CAMERA_HEIGHT*2;
+    s_OutputBufferConfig.width          = APP_CAMERA_HEIGHT;
+    s_OutputBufferConfig.height         = APP_CAMERA_WIDTH;
+    PXP_SetOutputBufferConfig(APP_PXP, &s_OutputBufferConfig);
+
+    /* Disable CSC1, it is enabled by default. */
+    PXP_EnableCsc1(APP_PXP, false);
+    APP_PXP->CSC1_COEF0 |= (1<<31);
+
+    PXP_SetRotateConfig(APP_PXP, kPXP_RotateProcessSurface, kPXP_Rotate270, kPXP_FlipDisable);
+    PXP_Start(APP_PXP);
+    /* Wait for PXP process complete. */
+    xEventGroupWaitBits(g_SyncVideoEvents, 1 << SYNC_VIDEO_PXP_COMPLET_BIT, pdTRUE, pdTRUE, portMAX_DELAY);
+
+}
+
+void APP_SetPxpInCommomMode(uint32_t psBuffer, uint32_t outputBuf)
+{
+    /* PS configure. */
+    s_PsBufferConfig.pixelFormat = kPXP_PsPixelFormatUYVY1P422;
+    s_PsBufferConfig.swapByte = false;
+    s_PsBufferConfig.bufferAddr = psBuffer;
+    s_PsBufferConfig.bufferAddrU = 0U;
+    s_PsBufferConfig.bufferAddrV = 0U;
+    s_PsBufferConfig.pitchBytes  = APP_CAMERA_HEIGHT*2;//camera rotated data as PS input data
+
+    PXP_SetProcessSurfaceBackGroundColor(APP_PXP, 0x1U);
+    PXP_SetProcessSurfaceBufferConfig(APP_PXP, &s_PsBufferConfig);
+
+    /* AS config. */
+    s_AsBufferConfig.pixelFormat = kPXP_AsPixelFormatRGB565;
+    s_AsBufferConfig.bufferAddr = (uint32_t)s_asBufferPxp;
+    s_AsBufferConfig.pitchBytes = APP_AS_WIDTH * 2;
+    s_AsBlendConfig.alpha       = 0xb0U; /* Don't care. */
+    s_AsBlendConfig.invertAlpha = false; /* Don't care. */
+    s_AsBlendConfig.alphaMode   = kPXP_AlphaOverride;
+    s_AsBlendConfig.ropMode     = kPXP_RopMaskAs;
+    PXP_SetAlphaSurfaceBufferConfig(APP_PXP, &s_AsBufferConfig);
+    PXP_SetAlphaSurfaceBlendConfig(APP_PXP, &s_AsBlendConfig);
+
+    /* Output config. */
+    s_OutputBufferConfig.pixelFormat =  kPXP_OutputPixelFormatUYVY1P422;
+    s_OutputBufferConfig.interlacedMode = kPXP_OutputProgressive;
+    s_OutputBufferConfig.buffer0Addr    =  outputBuf;
+    s_OutputBufferConfig.buffer1Addr    = 0U;
+    s_OutputBufferConfig.pitchBytes     = LCD_WIDTH * 2;
+    s_OutputBufferConfig.width          = LCD_WIDTH;
+    s_OutputBufferConfig.height         = LCD_HEIGHT;
+
+    PXP_SetOutputBufferConfig(APP_PXP, &s_OutputBufferConfig);
+    PXP_SetCsc1Mode(APP_PXP, kPXP_Csc1YCbCr2RGB);
+    PXP_EnableCsc1(APP_PXP, true);
+}
+
 void APP_PXPStartCamera2Display(uint32_t cameraBuffer,
                                 QUIInfoMsg infoMsg,
                                 uint8_t displayInterfaceMode,
                                 uint32_t outBuffer)
 {
     pxp_output_pixel_format_t output_format = kPXP_OutputPixelFormatRGB565;
-    int scale_factor                        = APP_CAMERA_WIDTH / APP_PS_WIDTH;
-
     infoMsg.fps = getFPS();
+#if CAMERA_ROTATE_FLAG
+    APP_SetPxpInCommomMode(cameraBuffer, outBuffer);
+#endif
     if (displayInterfaceMode == DISPLAY_INTERFACE_LOOPBACK)
     {
         APP_PXPAlpha(0, 0, 0, 0, 0, 0, 0);
@@ -299,20 +371,33 @@ void APP_PXPStartCamera2Display(uint32_t cameraBuffer,
         output_format = kPXP_OutputPixelFormatRGB565;
     }
 
-    APP_PXPOut(LCD_WIDTH, LCD_HEIGHT, LCD_WIDTH - APP_CAMERA_WIDTH / scale_factor,
-               LCD_HEIGHT - APP_CAMERA_HEIGHT / scale_factor, LCD_WIDTH - 1, LCD_HEIGHT - 1, APP_CAMERA_WIDTH,
-               APP_CAMERA_HEIGHT, APP_CAMERA_WIDTH / scale_factor, APP_CAMERA_HEIGHT / scale_factor, output_format,
-               DISPLAY_PITCH_BYTES);
+    APP_PXPOut(LCD_WIDTH, LCD_HEIGHT,
+                0, 0,
+                LCD_WIDTH - 1, LCD_HEIGHT - 1,
+#if CAMERA_ROTATE_FLAG
+                APP_CAMERA_HEIGHT, APP_CAMERA_WIDTH, APP_PS_WIDTH, APP_PS_HEIGHT,
+#else
+                APP_CAMERA_WIDTH, APP_CAMERA_HEIGHT, APP_PS_WIDTH, APP_PS_HEIGHT,
+#endif
+                output_format, DISPLAY_PITCH_BYTES);
     APP_PXPStart((uint32_t)cameraBuffer, outBuffer, DISPLAY_ROTATION);
 }
 
 void APP_PXPStartCamera2DetBuf(uint32_t cameraBuffer, uint32_t detBuffer)
 {
+#if CAMERA_ROTATE_FLAG
+    APP_SetPxpInCommomMode(cameraBuffer, detBuffer);
+#endif
     PXP_EnableCsc1(APP_PXP, true);
     APP_PXPAlpha(0, 0, 0, 0, 0, 0, 0);
-    APP_PXPOut(APP_CAMERA_WIDTH, APP_CAMERA_HEIGHT, 0, 0, APP_CAMERA_WIDTH - 1, APP_CAMERA_HEIGHT - 1, APP_CAMERA_WIDTH,
-               APP_CAMERA_HEIGHT, APP_CAMERA_WIDTH, APP_CAMERA_HEIGHT, kPXP_OutputPixelFormatRGB888P,
-               APP_CAMERA_WIDTH * 3);
+    APP_PXPOut(REC_RECT_WIDTH, REC_RECT_HEIGHT,
+               0, 0, REC_RECT_WIDTH - 1, REC_RECT_HEIGHT - 1,
+#if CAMERA_ROTATE_FLAG
+                APP_CAMERA_HEIGHT, APP_CAMERA_WIDTH, REC_RECT_WIDTH, REC_RECT_HEIGHT,
+#else
+                APP_CAMERA_WIDTH, APP_CAMERA_HEIGHT, REC_RECT_WIDTH, REC_RECT_HEIGHT,
+#endif
+                kPXP_OutputPixelFormatRGB888P, REC_RECT_WIDTH * 3);
     APP_PXPStart(cameraBuffer, detBuffer, 0);
 }
 
@@ -347,7 +432,7 @@ static void PXP_Task(void *param)
                 {
 #if CAMERA_ROTATE_FLAG
                     APP_SetPxpRotate(pQMsg->msg.pxp.in_buffer, (uint32_t)g_pRotateBuff);
-                    APP_PXPStartCamera2Display((uint32_t)g_pRotateBuff, *pQMsg->msg.pxp.info, 1,
+                    APP_PXPStartCamera2Display((uint32_t)g_pRotateBuff, *pQMsg->msg.pxp.info, s_DisplayInterfaceMode,
                                                pQMsg->msg.pxp.out_buffer);
 #else
                     APP_PXPStartCamera2Display(pQMsg->msg.pxp.in_buffer, *pQMsg->msg.pxp.info, s_DisplayInterfaceMode,
