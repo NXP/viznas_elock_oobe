@@ -31,6 +31,7 @@
  * so agrees to indemnify Cypress against all liability.
  */
 
+#if RTVISION_BOARD
 #include <stdint.h>
 
 const char brcm_patch_version[] = "BCM4343A1_001.002.009.0065.0000_Generic_UART_37_4MHz_wlbga_wiced_hcd";
@@ -2335,3 +2336,4 @@ const uint8_t brcm_patchram_buf[] =
 };
 
 const int brcm_patch_ram_length = sizeof(brcm_patchram_buf);
+#endif

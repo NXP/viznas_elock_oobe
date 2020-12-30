@@ -5,6 +5,11 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+#if RTVISION_BOARD
+#define WIFI_ENABLE      0
+#define VOICE_PROMPT     0
+#endif
+
 #include "fsl_device_registers.h"
 #include "fsl_debug_console.h"
 #include "fsl_dcp.h"
@@ -27,7 +32,6 @@
 #endif
 #include "sln_lpm.h"
 #include "sln_api_init.h"
-#include "sln_pcal.h"
 #include "sln_shell.h"
 #include "sln_flash.h"
 #include "sln_flash_mgmt.h"
@@ -41,6 +45,7 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
+
 
 /*******************************************************************************
  * Prototypes
@@ -83,7 +88,6 @@ int main(void)
 
     uart_shell_init();
     USB_CompositeInit();
-
 #if WIFI_ENABLE
     SLN_Connections_Init();
     TCP_Connection_Start();

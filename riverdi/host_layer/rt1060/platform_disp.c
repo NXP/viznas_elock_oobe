@@ -4,6 +4,8 @@
  * Copyright (c) Skalski Embedded Technologies <contact@lukasz-skalski.com>
  */
 
+#if RTVISION_BOARD
+
 #include "platform_disp.h"
 
 #include "board.h"
@@ -84,9 +86,9 @@ static const IRQn_Type s_lpspiIRQ[] = LPSPI_IRQS;
 
 #define DISP_LPSPI_DMA_TRANSFER_COMPLETED   ( 1 << 0 )
 
-lpspi_master_edma_handle_t g_lpspiDispMasterEdmaHandle;
-edma_handle_t g_lpspiDispTxEdmaHandle;
-EventGroupHandle_t g_lpspiDispTransferCompleted;
+static lpspi_master_edma_handle_t g_lpspiDispMasterEdmaHandle;
+static edma_handle_t g_lpspiDispTxEdmaHandle;
+static EventGroupHandle_t g_lpspiDispTransferCompleted;
 
 /* LPSPI EDMA callback */
 static void DISP_LPSPI_CallbackEDMA(LPSPI_Type *base, lpspi_master_edma_handle_t *handle, status_t status, void *userData)
@@ -367,7 +369,9 @@ case   GPIO_SDO:
 	  }
 case   GPIO_PD:
 	  {
+#if BOARD_HAS_PCAL
 		  set_iox_pin_dir(13, PCAL_PIN_DIR_OUTPUT);
+#endif
 		  break;
 	  }
 case   GPIO_INT:
@@ -426,7 +430,9 @@ platform_gpio_value (Gpu_Hal_Context_t  *host,
 	  }
   case   GPIO_PD:
 	  {
+#if BOARD_HAS_PCAL
 		  set_iox_port_pin(OUTPUT_PORT1, 5, vgpio);
+#endif
 		  break;
 	  }
   case   GPIO_INT:
@@ -564,4 +570,5 @@ platform_gpio_value (Gpu_Hal_Context_t  *host,
   }
   return TRUE;
 }
+#endif
 #endif

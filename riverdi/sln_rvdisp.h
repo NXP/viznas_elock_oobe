@@ -10,6 +10,7 @@
 #ifndef __RVDISPLAY_H__
 #define __RVDISPLAY_H__
 
+#if RTVISION_BOARD
 /*******************************************************************************
  * Includes
  ******************************************************************************/
@@ -100,4 +101,5 @@ void RVDisp_SendFrame(uint16_t *pFrame);
 }
 #endif
 
+#endif
 #endif /* __RVDISPLAY_H__ */

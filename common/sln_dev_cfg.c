@@ -57,7 +57,7 @@ static int32_t CfgData_SanityCheck(sln_cfg_data_t *cfg)
 #if !(RTFFI_RV_DISP_DRIVER)
     if (cfg->output_mode != DISPLAY_USB)
 #else
-    if (cfg->output_mode != DISPLAY_USB && cfg->output_mode != DISPLAY_RIVERDI)
+    if (cfg->output_mode != DISPLAY_USB && cfg->output_mode != DISPLAY_LCD)
 #endif
     {
         cfg->output_mode = DISPLAY_USB;
@@ -114,7 +114,7 @@ void CfgData_GetDefault(sln_cfg_data_t *cfg)
             .liveness_mode              = LIVENESS_MODE_ON,
             .display_mode               = DISPLAY_MODE_RGB,
             .detect_resolution_mode     = DETECT_RESOLUTION_VGA,
-            .output_mode                = DISPLAY_USB,
+            .output_mode                = DISPLAY_LCD,
             .display_interface          = DISPLAY_INTERFACE_INFOBAR,
             .app_type                   = APP_TYPE_ELOCK_LIGHT,
             .audio_amp_calibration_state= 0,

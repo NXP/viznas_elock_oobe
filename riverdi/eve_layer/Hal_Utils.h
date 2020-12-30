@@ -28,6 +28,8 @@
 #ifndef _HAL_UTILS_H_
 #define _HAL_UTILS_H_
 
+#if RTVISION_BOARD
+
 /* Enable sin()/cos() calculator utilities */
 #define POLAR_UTIL
 
@@ -68,4 +70,5 @@ float_t da(float_t i, int16_t degree);
 
 #endif /* POLAR_UTIL */
 
+#endif
 #endif /* _HAL_UTILS_H_ */

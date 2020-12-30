@@ -6,13 +6,15 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+#include "board.h"
+
+#if BOARD_AUDIO_CODEC_TFA9894
 #include "FreeRTOS.h"
 #include "event_groups.h"
 #include "queue.h"
 #include "task.h"
 #include "timers.h"
 
-#include "board.h"
 #include "fsl_dmamux.h"
 #include "fsl_edma.h"
 #include "fsl_sai.h"
@@ -711,3 +713,4 @@ void SLN_AMP_LoopbackDisable(void)
     NVIC_DisableIRQ(SAI3_RX_IRQn);
     DMAMUX_DisableChannel(DMAMUX, 3U);
 }
+#endif

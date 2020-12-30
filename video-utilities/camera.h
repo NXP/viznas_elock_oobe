@@ -12,56 +12,12 @@
 #ifndef _CAMERA_H_
 #define _CAMERA_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/*******************************************************************************
- * Definitions
- *******************************************************************************/
-
-/* Camera definition. */
-#define APP_CAMERA_CONTROL_FLAGS (kCAMERA_HrefActiveHigh | kCAMERA_DataLatchOnRisingEdge)
-
-#define APP_CAMERA_MT9M114 1
-#define APP_CAMERA_GC0308  2
-
-#ifndef APP_CAMERA_TYPE
-#define APP_CAMERA_TYPE APP_CAMERA_MT9M114
-#endif
-
-/* Frame buffer data alignment. */
-#define FRAME_BUFFER_ALIGN 64
-
-#define APP_FRAME_BUFFER_COUNT 4
-
-/* Pixel format RGB565, bytesPerPixel is 2. */
-#define APP_BPP 2
-
-#define CAMERA_MSG_Q_COUNT 10
-
-#define COLOR_CAMERA 0
-#define IR_CAMERA    1
-
-/*******************************************************************************
- * API
- *******************************************************************************/
-void BOARD_I2C_ReleaseBus(void);
-void BOARD_InitCameraResource(void);
-void Camera_ELCDIF_Init(void);
-void Camera_InitPxp(void);
-int Camera_Start();
-int Camera_SendQMsg(void *msg);
-int Camera_QMsgSetPWM(uint8_t led, uint8_t pulse_width);
-void Camera_GetPWM(uint8_t led, uint8_t *pulse_width);
-int Camera_SetMonoMode(uint8_t enable);
-int Camera_SetDispMode(uint8_t displayMode);
-int Camera_SelectLED(uint8_t led);
-uint8_t Camera_GetRGBExposureMode(void);
-int Camera_QMsgSetExposureMode(uint8_t mode);
-
-#ifdef __cplusplus
-}
+#if RTVISION_BOARD
+	#include "camera_rtvision.h"
+#elif RT106F_ELOCK_BOARD
+	#include "camera_rt106f_elock.h"
+#else
+	#error "***ERROR***"
 #endif
 
 #endif /* _CAMERA_H_ */

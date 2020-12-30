@@ -340,7 +340,7 @@ void TCP_Connection_Start()
     if (NULL == xTaskCreateStatic(TCP_Connection_Server, "TCP_Server", TCPTASK_STACKSIZE, NULL, TCPTASK_PRIORITY,
                                   s_TCPTaskStack, &s_TCPTaskTCB))
 #else
-    if (xTaskCreate(FWUpdate_TCP_server, "TCP_Server", TCPTASK_STACKSIZE, NULL, TCPTASK_PRIORITY, NULL) != pdPASS)
+    if (xTaskCreate(TCP_Connection_Server, "TCP_Server", TCPTASK_STACKSIZE, NULL, TCPTASK_PRIORITY, NULL) != pdPASS)
 #endif
     {
         LOGE("[ERROR]TCP Task created failed\r\n");

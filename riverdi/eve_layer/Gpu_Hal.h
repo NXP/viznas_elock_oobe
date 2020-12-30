@@ -28,6 +28,8 @@
 #ifndef _GPU_HAL_H_
 #define _GPU_HAL_H_
 
+#if RTVISION_BOARD
+
 #define DUMMY_BYTE 			0x00
 #define FIFO_SIZE_MASK			(4095)
 #define FIFO_BYTE_ALIGNMENT_MASK	(0xFFC)
@@ -306,4 +308,5 @@ void Gpu_SetBacklightBrightness(Gpu_Hal_Context_t *host, uint8_t brightness);
 
 /*******************************************************************************/
 
+#endif
 #endif  /* _GPU_HAL_H_ */

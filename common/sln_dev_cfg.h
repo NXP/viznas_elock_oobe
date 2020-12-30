@@ -83,7 +83,7 @@ typedef enum _cfg_led
 typedef enum _cfg_displayoutput
 {
     DISPLAY_USB     = 0,
-    DISPLAY_RIVERDI = 1,
+    DISPLAY_LCD     = 1,
 } cfg_displayoutput_t;
 
 typedef enum _cfg_apptype

@@ -367,7 +367,7 @@ vizn_api_status_t VIZN_SetDispMode(VIZN_api_client_t *clientHandle, cfg_displaym
  * @brief Select output device between usb and a possible display device.
  *
  * @param clientHandle    The client handler which required this action
- * @param mode            The value of output device . Values supported DISPLAY_USB, DISPLAY_Riverdi
+ * @param mode            The value of output device . Values supported DISPLAY_USB, DISPLAY_LCD
  * @return                Status of VIZN_SetDispOutputDevice
  */
 vizn_api_status_t VIZN_SetDispOutputDevice(VIZN_api_client_t *clientHandle, cfg_displayoutput_t output_mode);

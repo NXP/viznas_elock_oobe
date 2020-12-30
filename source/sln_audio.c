@@ -58,10 +58,12 @@ void offline_audio_task(void *arg)
                 /* Need to set the alerting state, put individual assignments as this may change depending on the type of alert
                 ** This needs to be set to ensure that the resume UX shows alerting when offline
                 */
+#if BOARD_AUDIO_CODEC_TFA9894
                 SLN_AMP_SetVolume(100);
                 SLN_AMP_WriteBlocking((uint8_t *)welcome_female_friendly_wav,
                         MIN(welcome_female_friendly_wav_len, AUDIO_LENGTH_MAX));
                 SLN_AMP_SetVolume(0);
+#endif
             }
             if ((1 << AUDIO_REGISTRATION_FAILED) & offlineAudioEventBits)
             {
@@ -69,9 +71,11 @@ void offline_audio_task(void *arg)
                 /* Need to set the alerting state, put individual assignments as this may change depending on the type of alert
                 ** This needs to be set to ensure that the resume UX shows alerting when offline
                 */
+#if BOARD_AUDIO_CODEC_TFA9894
                 SLN_AMP_SetVolume(100);
                 SLN_AMP_WriteBlocking((uint8_t *)regFailed_wav, MIN(regFailed_wav_len, AUDIO_LENGTH_MAX));
                 SLN_AMP_SetVolume(0);
+#endif
             }
             if ((1 << AUDIO_REGISTRATION_SUCCESSFUL) & offlineAudioEventBits)
             {
@@ -79,9 +83,11 @@ void offline_audio_task(void *arg)
                 /* Need to set the alerting state, put individual assignments as this may change depending on the type of alert
                 ** This needs to be set to ensure that the resume UX shows alerting when offline
                 */
+#if BOARD_AUDIO_CODEC_TFA9894
                 SLN_AMP_SetVolume(100);
                 SLN_AMP_WriteBlocking((uint8_t *)regSuccessful_wav, MIN(regSuccessful_wav_len, AUDIO_LENGTH_MAX));
                 SLN_AMP_SetVolume(0);
+#endif
             }
 
             s_offlineAudioPlayerCurrentStatus = 0;

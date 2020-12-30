@@ -25,6 +25,8 @@
  * AND SUBSEQUENT WHQL RE-CERTIFICATION AS A RESULT OF MAKING THESE CHANGES.
  */
 
+#if RTVISION_BOARD
+
 #include "platform_disp.h"
 
 /*****************************************************************************/
@@ -1124,3 +1126,5 @@ Gpu_SetBacklightBrightness(Gpu_Hal_Context_t *host, uint8_t brightness)
     int regValue = brightness * 128 / 100;
     Gpu_Hal_Wr8(host, REG_PWM_DUTY, regValue);
 }
+
+#endif

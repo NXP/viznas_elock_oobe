@@ -30,11 +30,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 #include "sln_pcal.h"
-#include "board.h"
+
 #include "fsl_gpio.h"
 #include "fsl_debug_console.h"
+
 
 /*******************************************************************************
  * Global variables

@@ -1,0 +1,1164 @@
+/*
+ * Copyright 2019-2020 NXP.
+ * This software is owned or controlled by NXP and may only be used strictly in accordance with the
+ * license terms that accompany it. By expressly accepting such terms or by downloading, installing,
+ * activating and/or otherwise using the software, you are agreeing that you have read, and that you
+ * agree to comply with and are bound by, such license terms. If you do not agree to be bound by the
+ * applicable license terms, then you may not retain, install, activate or otherwise use the software.d
+ *
+ * Created by: NXP China Solution Team.
+ */
+
+#if RT106F_ELOCK_BOARD
+
+#include <facerecicon.h>
+#include <nxplogo.h>
+#include "FreeRTOS.h"
+#include "queue.h"
+#include "event_groups.h"
+#include "camera.h"
+#include "board.h"
+#include "pin_mux.h"
+
+#include "fsl_camera.h"
+#include "fsl_camera_receiver.h"
+#include "fsl_camera_device.h"
+
+#include "fsl_gpio.h"
+#include "fsl_csi.h"
+#include "fsl_csi_camera_adapter.h"
+#if (APP_CAMERA_TYPE == APP_CAMERA_MT9M114)
+#include "fsl_mt9m114.h"
+#elif (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
+#include "fsl_gc0308.h"
+#endif
+#include "fsl_iomuxc.h"
+#include "fsl_log.h"
+#include "fsl_pxp.h"
+
+#include "commondef.h"
+#include "oasis.h"
+#include "util.h"
+#include "pxp.h"
+#include "font.h"
+#include "display.h"
+
+#include "sln_dev_cfg.h"
+#include "sln_api.h"
+#include "fsl_common.h"
+#include "fsl_qtmr.h"
+
+/*******************************************************************************
+ * Definitions
+ *******************************************************************************/
+
+#define PWM_USE_QTMR  (BOARD_SUPPORT_PARALLEL_LCD ? 0 : 1)
+
+#if PWM_USE_QTMR
+#define CAMERA_QTMR_BASEADDR     TMR4
+#define CAMERA_QTMR_PWM_CHANNEL  kQTMR_Channel_2
+#define CAMERA_QTMR_SOURCE_CLOCK CLOCK_GetFreq(kCLOCK_IpgClk)
+#define CAMERA_QTMR_PWM_FREQ     3000
+#else
+#include "fsl_pwm.h"
+#include "fsl_xbara.h"
+
+#define PWM_SRC_CLK_FREQ CLOCK_GetFreq(kCLOCK_IpgClk)
+#define LED_PWM PWM4
+#define LED_PWM_MOD_IR			kPWM_Module_3
+#define LED_PWM_MOD_RGB			kPWM_Module_2
+#define LED_PWM_CTRL_MOD_IR		kPWM_Control_Module_3
+#define LED_PWM_CTRL_MOD_RGB	kPWM_Control_Module_2
+uint32_t pwmSourceClockInHz;
+#endif
+
+
+#define RGB_IR_FRAME_RATIO 2
+
+/*******************************************************************************
+ * Prototypes
+ *******************************************************************************/
+static void BOARD_PullCameraPowerDownPin(bool pullUp);
+static void BOARD_PullCameraIRPowerDownPin(bool pullUp);
+static void BOARD_PullCameraResetPin(bool pullUp);
+static void Camera_Deinit(void);
+static void Camera_RgbIrSwitch(int8_t cameraID);
+static uint32_t Camera_getAnotherRxBuf(uint32_t activeAddr);
+static void Camera_Callback(camera_receiver_handle_t *handle, status_t status, void *userData);
+static void Camera_CheckOverRun();
+static void CameraDevice_Init_Task(void *param);
+static void Camera_Init_Task(void *param);
+static void Camera_Task(void *param);
+
+/*******************************************************************************
+ * Variables
+ *******************************************************************************/
+/*!< Event handler used for synchronization
+   bit 0  sync display
+   bit 1  sync camera
+   bit 2  sync pxp
+*/
+EventGroupHandle_t g_SyncVideoEvents;
+
+/*!< Queue used by Camera Task to receive messages*/
+static QueueHandle_t CameraMsgQ = NULL;
+/*!< Message sent from CameraISR to  Camera task to signal that a frame is available */
+static QMsg DQMsg;
+/*!< Message sent to Oasis Task by Camera task to signal that a frame is available */
+static QMsg FResMsg;
+/*!< Message sent to Display Task by Camera task to signal that a frame is available */
+static QMsg DResMsg;
+/*!< Message sent to PXP Task by Camera task to signal that a frame is available */
+static QMsg FPxpMsg; // for facerec
+/*!< Message sent to PXP Task by Camera task to signal that a frame is available */
+static QMsg DPxpMsg; // for display
+/*!< TBD */
+static QMsg CmdMsg;
+/*!< Message sent by Camera task to signal the interface mode for which the next frame will be processed */
+static QMsg DIntMsg;
+
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+DTC_BSS static StackType_t s_CameraTaskStack[CAMERATASK_STACKSIZE];
+DTC_BSS static StaticTask_t s_CameraTaskTCB;
+#endif
+
+static uint32_t s_ActiveFrameAddr;
+static uint32_t s_InactiveFrameAddr;
+static uint8_t s_appType;
+static unsigned int EQIndex = 0;
+static unsigned int DQIndex = 0;
+
+/*!< Pointer to the buffer that stores camera frames */
+static uint16_t *s_pBufferQueue = NULL;
+uint16_t *g_pRotateBuff         = NULL;
+
+static uint8_t s_PwmIR;
+static uint8_t s_PwmWhite;
+
+#if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
+static int8_t s_CurrentCameraID = COLOR_CAMERA;
+static bool  isOddFrame = false;
+#endif
+static uint8_t s_CurRGBExposureMode = CAMERA_EXPOSURE_MODE_AUTO;
+
+static void Camera_SetRGBExposureMode(uint8_t mode);
+
+static csi_resource_t csiResource = {
+    .csiBase = CSI,
+};
+
+static csi_private_data_t csiPrivateData;
+
+static camera_receiver_handle_t cameraReceiver = {
+    .resource    = &csiResource,
+    .ops         = &csi_ops,
+    .privateData = &csiPrivateData,
+};
+
+#if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
+static gc0308_resource_t gc0308Resource[2] = {
+    {   // RGB
+        .i2cSendFunc       = BOARD_Camera_I2C_Send,
+        .i2cReceiveFunc    = BOARD_Camera_I2C_Receive,
+        .pullResetPin      = BOARD_PullCameraResetPin,
+        .pullPowerDownPin  = BOARD_PullCameraPowerDownPin,
+        .inputClockFreq_Hz = 24000000,
+    },
+    {   // IR
+        .i2cSendFunc       = BOARD_Camera_IR_I2C_Send,
+        .i2cReceiveFunc    = BOARD_Camera_IR_I2C_Receive,
+        .pullResetPin      = BOARD_PullCameraResetPin,
+        .pullPowerDownPin  = BOARD_PullCameraIRPowerDownPin,
+        .inputClockFreq_Hz = 24000000,
+    }
+};
+camera_device_handle_t cameraDevice[2]     = {
+    {
+        .resource = &gc0308Resource[0],
+        .ops      = &gc0308_ops,
+    },
+    {
+        .resource = &gc0308Resource[1],
+         .ops = &gc0308_ops
+    }
+};
+
+#else
+static mt9m114_resource_t mt9m114Resource[2] = {
+    {//RGB
+        .i2cSendFunc        = BOARD_Camera_I2C_Send,
+        .i2cReceiveFunc     = BOARD_Camera_I2C_Receive,
+        .pullResetPin       = BOARD_PullCameraResetPin,
+        .pullPowerDownPin   = BOARD_PullCameraPowerDownPin,
+        .inputClockFreq_Hz  = 24000000,
+        .i2cAddr            = MT9M114_I2C_ADDR,
+    },
+    {//IR
+        .i2cSendFunc        = BOARD_Camera_IR_I2C_Send,
+        .i2cReceiveFunc     = BOARD_Camera_IR_I2C_Receive,
+        .pullResetPin       = BOARD_PullCameraResetPin,
+        .pullPowerDownPin   = BOARD_PullCameraIRPowerDownPin,
+        .inputClockFreq_Hz  = 24000000,
+        .i2cAddr            = MT9M114_I2C_ADDR_IR,
+    }
+};
+camera_device_handle_t cameraDevice[2] = {
+    {.resource = &mt9m114Resource[0], .ops = &mt9m114_ops,},
+    {.resource = &mt9m114Resource[1], .ops = &mt9m114_ops}
+};
+
+#endif
+
+/*******************************************************************************
+ * Code
+ *******************************************************************************/
+// Allocates an aligned memory buffer
+static void *alignedMalloc(size_t size)
+{
+    uint8_t **adata;
+    uint8_t *udata = (uint8_t *)pvPortMalloc(size + sizeof(void *) + FRAME_BUFFER_ALIGN);
+    if (!udata)
+    {
+        return NULL;
+    }
+    adata     = (uint8_t **)((uint32_t)(udata + FRAME_BUFFER_ALIGN) & (int32_t)(-FRAME_BUFFER_ALIGN));
+    adata[-1] = udata;
+    return adata;
+}
+
+// Deallocates a memory buffer
+static void alignedFree(void *ptr)
+{
+    uint8_t *udata;
+    if (ptr)
+    {
+        udata = ((uint8_t **)ptr)[-1];
+        vPortFree(udata);
+    }
+}
+
+int Camera_SelectLED(uint8_t led){
+    return 0;
+}
+
+#if PWM_USE_QTMR
+static void Camera_LedTimer_Init()
+{
+    qtmr_config_t qtmrConfig;
+
+    QTMR_GetDefaultConfig(&qtmrConfig);
+    qtmrConfig.primarySource   = kQTMR_ClockDivide_64;
+    qtmrConfig.secondarySource = kQTMR_Counter2InputPin;
+    QTMR_Init(CAMERA_QTMR_BASEADDR, CAMERA_QTMR_PWM_CHANNEL, &qtmrConfig);
+
+    QTMR_SetupPwm(CAMERA_QTMR_BASEADDR, CAMERA_QTMR_PWM_CHANNEL, CAMERA_QTMR_PWM_FREQ, 0, false,
+                  CAMERA_QTMR_SOURCE_CLOCK / 64);
+
+    /* Start the counter */
+    QTMR_StartTimer(CAMERA_QTMR_BASEADDR, CAMERA_QTMR_PWM_CHANNEL, kQTMR_PriSrcRiseEdge);
+    return;
+}
+
+static void Camera_LedTimer_Deinit()
+{
+    QTMR_StopTimer(CAMERA_QTMR_BASEADDR, CAMERA_QTMR_PWM_CHANNEL);
+    QTMR_Deinit(CAMERA_QTMR_BASEADDR, CAMERA_QTMR_PWM_CHANNEL);
+    return;
+}
+
+int Camera_QMsgSetPWM(uint8_t led, uint8_t pulse_width)
+{
+    int status                     = -1;
+    QMsg *pQMsg                    = &CmdMsg;
+    pQMsg->msg.cmd.id              = QCMD_SET_PWM;
+    pQMsg->msg.cmd.data.led_pwm[0] = led;
+    pQMsg->msg.cmd.data.led_pwm[1] = pulse_width;
+    status                         = Camera_SendQMsg((void *)&pQMsg);
+    return status;
+}
+
+static status_t Camera_SetPWM(uint8_t pwm_index, uint8_t pulse_width)
+{
+    status_t status = kStatus_Fail;
+    QTMR_StopTimer(CAMERA_QTMR_BASEADDR, CAMERA_QTMR_PWM_CHANNEL);
+    status = QTMR_SetupPwm(CAMERA_QTMR_BASEADDR, CAMERA_QTMR_PWM_CHANNEL, CAMERA_QTMR_PWM_FREQ, pulse_width, false,
+                           CAMERA_QTMR_SOURCE_CLOCK / 64);
+    QTMR_StartTimer(CAMERA_QTMR_BASEADDR, CAMERA_QTMR_PWM_CHANNEL, kQTMR_PriSrcRiseEdge);
+    return status;
+}
+
+#else
+static void Camera_LedTimer_Init()
+{
+    uint16_t deadTimeVal;
+    pwm_config_t pwmConfig;
+    pwm_signal_param_t pwmSignal;
+    //uint32_t pwmSourceClockInHz;
+    uint32_t pwmFrequencyInHz = 1000;
+
+    /* Set the PWM Fault inputs to a low value */
+    XBARA_Init(XBARA1);
+    XBARA_SetSignalsConnection(XBARA1, kXBARA1_InputLogicHigh, kXBARA1_OutputFlexpwm4Fault0);
+    XBARA_SetSignalsConnection(XBARA1, kXBARA1_InputLogicHigh, kXBARA1_OutputFlexpwm4Fault1);
+    XBARA_SetSignalsConnection(XBARA1, kXBARA1_InputLogicHigh, kXBARA1_OutputFlexpwm1234Fault2);
+    XBARA_SetSignalsConnection(XBARA1, kXBARA1_InputLogicHigh, kXBARA1_OutputFlexpwm1234Fault3);
+
+    PWM_GetDefaultConfig(&pwmConfig);
+    pwmConfig.reloadLogic = kPWM_ReloadPwmFullCycle;
+    pwmConfig.pairOperation   = kPWM_Independent;//kPWM_ComplementaryPwmA;
+    pwmConfig.enableDebugMode = true;
+    pwmConfig.clockSource = kPWM_BusClock;//kPWM_Submodule0Clock;
+    pwmConfig.initializationControl = kPWM_Initialize_MasterSync;
+    PWM_Init(LED_PWM, LED_PWM_MOD_IR, &pwmConfig);
+    PWM_Init(LED_PWM, LED_PWM_MOD_RGB, &pwmConfig);
+
+    pwmSourceClockInHz = PWM_SRC_CLK_FREQ;
+    deadTimeVal = ((uint64_t)pwmSourceClockInHz * 650) / 1000000000;
+    pwmSignal.pwmChannel       = kPWM_PwmA;
+    pwmSignal.level            = kPWM_HighTrue;
+    pwmSignal.dutyCyclePercent = 50;
+    pwmSignal.deadtimeValue    = deadTimeVal;
+    PWM_SetupPwm(LED_PWM, LED_PWM_MOD_IR, &pwmSignal, 1, kPWM_SignedCenterAligned, pwmFrequencyInHz, pwmSourceClockInHz);
+    pwmSignal.dutyCyclePercent = 0;
+    PWM_SetupPwm(LED_PWM, LED_PWM_MOD_RGB, &pwmSignal, 1, kPWM_SignedCenterAligned, pwmFrequencyInHz, pwmSourceClockInHz);
+
+    PWM_SetPwmLdok(LED_PWM, LED_PWM_CTRL_MOD_IR | LED_PWM_CTRL_MOD_RGB, true);
+    PWM_StartTimer(LED_PWM, LED_PWM_CTRL_MOD_IR | LED_PWM_CTRL_MOD_RGB);
+    return;
+}
+
+static void Camera_LedTimer_Deinit()
+{
+    PWM_StopTimer(LED_PWM, LED_PWM_CTRL_MOD_IR | LED_PWM_CTRL_MOD_RGB);
+    PWM_Deinit(LED_PWM, LED_PWM_MOD_IR);
+    PWM_Deinit(LED_PWM, LED_PWM_MOD_RGB);
+    return;
+}
+
+int Camera_QMsgSetPWM(uint8_t led, uint8_t pulse_width)
+{
+    int status = -1;
+    QMsg *pQMsg                    = &CmdMsg;
+    pQMsg->msg.cmd.id = QCMD_SET_PWM;
+    pQMsg->msg.cmd.data.led_pwm[0] = led;
+    pQMsg->msg.cmd.data.led_pwm[1] = pulse_width;
+    status = Camera_SendQMsg((void*)&pQMsg);
+    return status;
+}
+
+/*
+ * pwm_index:
+ * 0:IR PWM
+ * 1:RGB PWM
+ * pulse_width:
+ * 0~100
+ * */
+static status_t Camera_SetPWM(uint8_t pwm_index, uint8_t pulse_width)
+{
+    status_t status = kStatus_Success;
+    if(pwm_index == LED_IR){
+        //PWM_StopTimer(LED_PWM, LED_PWM_MOD_IR);
+        PWM_UpdatePwmDutycycle(LED_PWM, LED_PWM_MOD_IR, kPWM_PwmA, kPWM_SignedCenterAligned, pulse_width);
+        PWM_SetPwmLdok(LED_PWM, LED_PWM_CTRL_MOD_IR, true);
+        //PWM_StartTimer(LED_PWM, LED_PWM_MOD_IR);
+    }else if(pwm_index == LED_WHITE){
+        //PWM_StopTimer(LED_PWM, LED_PWM_MOD_RGB);
+        PWM_UpdatePwmDutycycle(LED_PWM, LED_PWM_MOD_RGB, kPWM_PwmA, kPWM_SignedCenterAligned, pulse_width);
+        PWM_SetPwmLdok(LED_PWM, LED_PWM_CTRL_MOD_RGB, true);
+        //PWM_StartTimer(LED_PWM, LED_PWM_MOD_RGB);
+    }else{
+        status = kStatus_Fail;
+    }
+    return status;
+}
+#endif
+
+void Camera_GetPWM(uint8_t led, uint8_t* pulse_width)
+{
+    if( led == LED_IR)
+    {
+        *pulse_width = s_PwmIR;
+    }
+    else
+    {
+        *pulse_width = s_PwmWhite;
+    }
+}
+
+
+/* MT9M114 camera module has PWDN pin, but the pin is not
+ * connected internally, MT9M114 does not have power down pin.
+ * The reset pin is connected to high, so the module could
+ * not be reseted, so at the begining, use GPIO to let camera
+ * release the I2C bus.
+ */
+static void i2c_release_bus_delay(void)
+{
+    uint32_t i = 0;
+
+    for (i = 0; i < 0x200; i++)
+    {
+        __NOP();
+    }
+}
+
+static void BOARD_PullCameraResetPin(bool pullUp)
+{
+    return;
+}
+
+static void BOARD_PullCameraPowerDownPin(bool pullUp)
+{
+    if (pullUp)
+    {
+        GPIO_PinWrite(BOARD_CAMERA_PWD_GPIO, BOARD_CAMERA_PWD_GPIO_PIN, 1);
+    }
+    else
+    {
+        GPIO_PinWrite(BOARD_CAMERA_PWD_GPIO, BOARD_CAMERA_PWD_GPIO_PIN, 0);
+    }
+}
+
+static void BOARD_PullCameraIRPowerDownPin(bool pullUp)
+{
+    if (pullUp)
+    {
+        GPIO_PinWrite(BOARD_CAMERA_IR_PWD_GPIO, BOARD_CAMERA_IR_PWD_GPIO_PIN, 1);
+    }
+    else
+    {
+        GPIO_PinWrite(BOARD_CAMERA_IR_PWD_GPIO, BOARD_CAMERA_IR_PWD_GPIO_PIN, 0);
+    }
+}
+
+#if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
+/*!
+ * @brief Enables the swap of image data fields in the CSI module.
+ *
+ * To support the endianess of GC0308 camera data output, this function enables the byte swap in the CSI module.
+ *
+ */
+static void CAMERA_RECEIVER_SwapBytes(camera_receiver_handle_t *handle)
+{
+    uint32_t regvalue;
+
+    /* in CSICR1 (0x402BC000) set SWAP16_EN & PACK_DIR fields to 1 */
+    regvalue = (((csi_resource_t *)handle->resource)->csiBase)->CSICR1;
+    *((volatile uint32_t *)(&(((csi_resource_t *)handle->resource)->csiBase)->CSICR1)) = regvalue | 0x80000080;
+}
+#endif
+
+static uint32_t Camera_getAnotherRxBuf(uint32_t activeAddr)
+{
+    if (activeAddr == (uint32_t)s_pBufferQueue)
+    {
+        return (uint32_t)(s_pBufferQueue + APP_CAMERA_HEIGHT * APP_CAMERA_WIDTH);
+    }
+    else
+    {
+        return (uint32_t)s_pBufferQueue;
+    }
+}
+
+static void Camera_RgbIrSwitch(int8_t cameraID)
+{
+    static int8_t last_id = -1;
+    if (last_id == cameraID)
+        return;
+    last_id = cameraID;
+
+    if (cameraID == COLOR_CAMERA)
+    {
+        CAMERA_DEVICE_Stop(&cameraDevice[1]);
+        GPIO_PinWrite(BOARD_CAMERA_SWITCH_GPIO, BOARD_CAMERA_SWITCH_GPIO_PIN, 1);
+        CAMERA_DEVICE_Start(&cameraDevice[0]);
+#if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
+        Camera_SetRGBExposureMode(s_CurRGBExposureMode);
+#endif
+    }
+    else if (cameraID == IR_CAMERA)
+    {
+        CAMERA_DEVICE_Stop(&cameraDevice[0]);
+        GPIO_PinWrite(BOARD_CAMERA_SWITCH_GPIO, BOARD_CAMERA_SWITCH_GPIO_PIN, 0);
+        CAMERA_DEVICE_Start(&cameraDevice[1]);
+    }
+    else
+    {
+        CAMERA_DEVICE_Stop(&cameraDevice[0]);
+        CAMERA_DEVICE_Stop(&cameraDevice[1]);
+    }
+}
+
+int Camera_SetMonoMode(uint8_t enable)
+{
+    int status;
+    QMsg *pQMsg                       = &CmdMsg;
+    pQMsg->msg.cmd.id                 = QCMD_SET_LIVENESS_MODE;
+    pQMsg->msg.cmd.data.liveness_mode = enable;
+    status                            = Camera_SendQMsg((void *)&pQMsg);
+    return status;
+}
+
+int Camera_SetDispMode(uint8_t displayMode)
+{
+    int status;
+    QMsg *pQMsg                      = &CmdMsg;
+    pQMsg->msg.cmd.id                = QCMD_CHANGE_RGB_IR_DISP_MODE;
+    pQMsg->msg.cmd.data.display_mode = displayMode;
+    status                           = Camera_SendQMsg((void *)&pQMsg);
+    return status;
+}
+
+static void Camera_SetRGBExposureMode(uint8_t mode)
+{
+    static uint8_t lastMode = CAMERA_EXPOSURE_MODE_AUTO;
+    if (lastMode == mode)
+        return;
+    lastMode = mode;
+    CAMERA_DEVICE_Control(&cameraDevice[0], kCAMERA_DeviceExposureMode, mode);
+}
+
+uint8_t Camera_GetRGBExposureMode(void)
+{
+    return s_CurRGBExposureMode;
+}
+
+int Camera_QMsgSetExposureMode(uint8_t mode)
+{
+    int status = -1;
+    QMsg* pQMsg = (QMsg*)pvPortMalloc(sizeof(QMsg));
+    pQMsg->id = QMSG_CMD;
+    pQMsg->msg.cmd.id = QCMD_CHANGE_RGB_EXPOSURE_MODE;
+    pQMsg->msg.cmd.data.exposure_mode = mode;
+    status = Camera_SendQMsg((void*)&pQMsg);
+    return status;
+}
+
+void BOARD_InitCameraResource(void)
+{
+    BOARD_Camera_I2C_Init();
+
+#if CAMERA_DRIVE_STRENGTH_LOW
+    /* CSI MCLK select 24M. */
+    /*
+     * CSI clock source:
+     *
+     * 00 derive clock from osc_clk (24M)
+     * 01 derive clock from PLL2 PFD2
+     * 10 derive clock from pll3_120M
+     * 11 derive clock from PLL3 PFD1
+     */
+    CLOCK_SetMux(kCLOCK_CsiMux, 2);
+    /*
+     * CSI clock divider:
+     *
+     * 000 divide by 1
+     * 001 divide by 2
+     * 010 divide by 3
+     * 011 divide by 4
+     * 100 divide by 5
+     * 101 divide by 6
+     * 110 divide by 7
+     * 111 divide by 8
+     */
+    CLOCK_SetDiv(kCLOCK_CsiDiv, 7);
+#else
+    CLOCK_SetMux(kCLOCK_CsiMux, 0);
+    CLOCK_SetDiv(kCLOCK_CsiDiv, 0);
+#endif
+
+    /*
+     * For RT1060, there is not dedicate clock gate for CSI MCLK, it use CSI
+     * clock gate.
+     */
+
+    /* Set the pins for CSI reset and power down. */
+#if (APP_CAMERA_TYPE == APP_CAMERA_MT9M114)
+    gpio_pin_config_t pinConfig = {
+        kGPIO_DigitalOutput, 1,
+    };
+    pinConfig.outputLogic = 0;
+    GPIO_PinInit(BOARD_CAMERA_SWITCH_GPIO, BOARD_CAMERA_SWITCH_GPIO_PIN, &pinConfig);
+    GPIO_PinInit(BOARD_CAMERA_PWD_GPIO, BOARD_CAMERA_PWD_GPIO_PIN, &pinConfig);
+
+    pinConfig.outputLogic = 1;
+    GPIO_PinInit(BOARD_CAMERA_IR_PWD_GPIO, BOARD_CAMERA_IR_PWD_GPIO_PIN, &pinConfig);
+
+#else
+    gpio_pin_config_t pinConfig = {
+        kGPIO_DigitalOutput, 0,
+    };
+    pinConfig.outputLogic = 1;
+    GPIO_PinInit(BOARD_CAMERA_SWITCH_GPIO, BOARD_CAMERA_SWITCH_GPIO_PIN, &pinConfig);
+
+    pinConfig.outputLogic = 1;
+    GPIO_PinInit(BOARD_CAMERA_PWD_GPIO, BOARD_CAMERA_PWD_GPIO_PIN, &pinConfig);
+
+    pinConfig.outputLogic = 0;
+    GPIO_PinInit(BOARD_CAMERA_IR_PWD_GPIO, BOARD_CAMERA_IR_PWD_GPIO_PIN, &pinConfig);
+
+#endif
+
+    CLOCK_EnableClock(kCLOCK_Iomuxc);           /* iomuxc clock (iomuxc_clk_enable): 0x03u */
+
+    /* DISP_EXTCOMIN pin */
+#if PWM_USE_QTMR
+    IOMUXC_SetPinMux(
+            IOMUXC_GPIO_B0_11_QTIMER4_TIMER2,        /* GPIO_B0_05 is configured as QTIMER2_TIMER2 */
+            0U);                                    /* Software Input On Field: Input Path is determined by functionality */
+    IOMUXC_SetPinConfig(
+            IOMUXC_GPIO_B0_11_QTIMER4_TIMER2,       /* GPIO_B0_05 PAD functional properties : */
+            0x10B0u);                               /* Slew Rate Field: Slow Slew Rate
+                                                                                                                                     Drive Strength Field: R0/6
+                                                                                                                                     Speed Field: medium(100MHz)
+                                                                                                                                     Open Drain Enable Field: Open Drain Disabled
+                                                                                                                                     Pull / Keep Enable Field: Pull/Keeper Enabled
+                                                                                                                                     Pull / Keep Select Field: Keeper
+                                                                                                                                     Pull Up / Down Config. Field: 100K Ohm Pull Down
+                                                                                                                                     Hyst. Enable Field: Hysteresis Disabled */
+
+     Camera_LedTimer_Init();
+#else
+    IOMUXC_SetPinMux(
+            IOMUXC_GPIO_B1_14_FLEXPWM4_PWMA02,      /* GPIO_B1_14 is configured as FLEXPWM4_PWMA02 */
+            0U);                                    /* Software Input On Field: Input Path is determined by functionality */
+    IOMUXC_SetPinMux(
+            IOMUXC_GPIO_B1_15_FLEXPWM4_PWMA03,      /* GPIO_B1_15 is configured as FLEXPWM4_PWMA03 */
+            0U);                                    /* Software Input On Field: Input Path is determined by functionality */
+    IOMUXC_SetPinConfig(
+            IOMUXC_GPIO_B1_14_FLEXPWM4_PWMA02,      /* GPIO_SD_B0_00 PAD functional properties : */
+            0x10B0u);                               /* Slew Rate Field: Slow Slew Rate
+                                                                                                                                        Drive Strength Field: R0/6
+                                                                                                                                        Speed Field: medium(100MHz)
+                                                                                                                                        Open Drain Enable Field: Open Drain Disabled
+                                                                                                                                        Pull / Keep Enable Field: Pull/Keeper Enabled
+                                                                                                                                        Pull / Keep Select Field: Keeper
+                                                                                                                                        Pull Up / Down Config. Field: 100K Ohm Pull Down
+                                                                                                                                        Hyst. Enable Field: Hysteresis Disabled */
+    IOMUXC_SetPinConfig(
+            IOMUXC_GPIO_B1_15_FLEXPWM4_PWMA03,      /* GPIO_SD_B0_01 PAD functional properties : */
+            0x10B0u);                               /* Slew Rate Field: Slow Slew Rate
+                                                                                                                                        Drive Strength Field: R0/6
+                                                                                                                                        Speed Field: medium(100MHz)
+                                                                                                                                        Open Drain Enable Field: Open Drain Disabled
+                                                                                                                                        Pull / Keep Enable Field: Pull/Keeper Enabled
+                                                                                                                                        Pull / Keep Select Field: Keeper
+                                                                                                                                        Pull Up / Down Config. Field: 100K Ohm Pull Down
+                                                                                                                                        Hyst. Enable Field: Hysteresis Disabled */
+    Camera_LedTimer_Init();
+#endif
+}
+
+static void Camera_Callback(camera_receiver_handle_t *handle, status_t status, void *userData)
+{
+    BaseType_t HigherPriorityTaskWoken = pdFALSE;
+    QMsg *pQMsg                        = &DQMsg;
+    xQueueSendToBackFromISR(CameraMsgQ, (void *)&pQMsg, &HigherPriorityTaskWoken);
+    portYIELD_FROM_ISR(HigherPriorityTaskWoken);
+
+    // LOGD("[DQ:%d]\r\n", DQIndex);
+    if (DQIndex < EQIndex)
+    {
+        LOGE("Camera BQ overrun [%d:%d]\r\n", EQIndex, DQIndex);
+    }
+
+    DQIndex++;
+}
+
+static void CameraDevice_Init_Task(void *param)
+{
+#if (CAMERA_DIFF_I2C_BUS || (APP_CAMERA_TYPE == APP_CAMERA_MT9M114))
+    camera_config_t *cameraConfig = (camera_config_t *)param;
+    // IR camera
+    CAMERA_DEVICE_Init(&cameraDevice[1], cameraConfig);
+    CAMERA_DEVICE_Control(&cameraDevice[1], kCAMERA_DeviceMonoMode, CAMERA_MONO_MODE_ENABLED);
+    CAMERA_DEVICE_Stop(&cameraDevice[1]);
+
+    xEventGroupSetBits(g_SyncVideoEvents, 1 << SYNC_VIDEO_CAMERADEVICE_INIT_BIT);
+    vTaskDelete(NULL);
+#endif
+}
+
+static void Camera_Deinit(void)
+{
+    Camera_SelectLED(LED_IR);
+    Camera_SetPWM(LED_IR,0);
+
+    Camera_SelectLED(LED_WHITE);
+    Camera_SetPWM(LED_WHITE,0);
+
+    Camera_LedTimer_Deinit();
+    DisableIRQ(CSI_IRQn);
+
+    CAMERA_DEVICE_Stop(&cameraDevice[0]);
+    CAMERA_DEVICE_Deinit(&cameraDevice[0]);
+
+    CAMERA_DEVICE_Stop(&cameraDevice[1]);
+    CAMERA_DEVICE_Deinit(&cameraDevice[1]);
+
+    CAMERA_RECEIVER_Stop(&cameraReceiver);
+    CAMERA_RECEIVER_Deinit(&cameraReceiver);
+    xEventGroupClearBits(g_SyncVideoEvents, 1 << SYNC_VIDEO_CAMERA_INIT_BIT);
+    xEventGroupSetBits(g_SyncVideoEvents, 1 << SYNC_VIDEO_CAMERA_DEINIT_BIT);
+    vTaskSuspend(NULL);
+}
+
+static void Camera_Init_Task(void *param)
+{
+    int32_t i = 0;
+    camera_config_t cameraConfig;
+    memset(&cameraConfig, 0, sizeof(cameraConfig));
+    cameraConfig.pixelFormat   = kVIDEO_PixelFormatYUYV; // kVIDEO_PixelFormatRGB888;//kVIDEO_PixelFormatRGB565;
+    cameraConfig.bytesPerPixel = APP_BPP;
+    cameraConfig.resolution    = FSL_VIDEO_RESOLUTION(
+        APP_CAMERA_WIDTH,
+        APP_CAMERA_HEIGHT); // kVIDEO_ResolutionQVGA;//FSL_VIDEO_RESOLUTION(APP_CAMERA_WIDTH, APP_CAMERA_HEIGHT);
+    cameraConfig.frameBufferLinePitch_Bytes = APP_CAMERA_WIDTH * APP_BPP;
+    cameraConfig.interface                  = kCAMERA_InterfaceGatedClock;
+    cameraConfig.controlFlags               = APP_CAMERA_CONTROL_FLAGS;
+#if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
+    cameraConfig.framePerSec = 15; // 20
+#else
+    cameraConfig.framePerSec = 15;
+#endif
+    NVIC_SetPriority(CSI_IRQn, configMAX_SYSCALL_INTERRUPT_PRIORITY - 1);
+    CAMERA_RECEIVER_Init(&cameraReceiver, &cameraConfig, Camera_Callback, NULL);
+
+#if (CAMERA_DIFF_I2C_BUS || (APP_CAMERA_TYPE == APP_CAMERA_MT9M114))
+    if (xTaskCreate(CameraDevice_Init_Task, "Camera_Init", CAMERAINITTASK_STACKSIZE, &cameraConfig,
+                    CAMERAINITTASK_PRIORITY, NULL) != pdPASS)
+    {
+        LOGE("[ERROR]CameraDevice  Init created failed\r\n");
+
+        while (1)
+            ;
+    }
+    // RGB camera
+    CAMERA_DEVICE_Init(&cameraDevice[0], &cameraConfig);
+    CAMERA_DEVICE_Control(&cameraDevice[0], kCAMERA_DeviceMonoMode, CAMERA_MONO_MODE_DISABLED);
+    // RGB camera on
+    CAMERA_DEVICE_Start(&cameraDevice[0]);
+    xEventGroupWaitBits(g_SyncVideoEvents, 1 << SYNC_VIDEO_CAMERADEVICE_INIT_BIT, pdTRUE, pdTRUE, portMAX_DELAY);
+#else
+    CAMERA_RECEIVER_SwapBytes(&cameraReceiver);
+    // RGB camera off
+    CAMERA_DEVICE_Stop(&cameraDevice[0]);
+    // IR camera
+    CAMERA_DEVICE_Init(&cameraDevice[1], &cameraConfig);
+    CAMERA_DEVICE_Control(&cameraDevice[1], kCAMERA_DeviceMonoMode, CAMERA_MONO_MODE_ENABLED);
+    // IR camera off
+    CAMERA_DEVICE_Stop(&cameraDevice[1]);
+    // RGB camera
+    CAMERA_DEVICE_Init(&cameraDevice[0], &cameraConfig);
+    CAMERA_DEVICE_Control(&cameraDevice[0], kCAMERA_DeviceMonoMode, CAMERA_MONO_MODE_DISABLED);
+    // RGB camera on
+    CAMERA_DEVICE_Start(&cameraDevice[0]);
+#endif
+    /* Submit the empty frame buffers to buffer queue. */
+    for (i = 0; i < APP_FRAME_BUFFER_COUNT; i++)
+    {
+        CAMERA_RECEIVER_SubmitEmptyBuffer(&cameraReceiver,
+                                          (uint32_t)(s_pBufferQueue + i * APP_CAMERA_HEIGHT * APP_CAMERA_WIDTH));
+    }
+
+    CAMERA_RECEIVER_Start(&cameraReceiver);
+
+    LOGD("[Camera]:running\r\n");
+
+    xEventGroupSetBits(g_SyncVideoEvents, 1 << SYNC_VIDEO_CAMERA_INIT_BIT);
+    vTaskDelete(NULL);
+}
+
+static void Camera_CheckOverRun()
+{
+    if (DQIndex < EQIndex)
+    {
+        LOGE("Camera BQ overrun [%d:%d]\r\n", EQIndex, DQIndex);
+    }
+}
+
+static void Camera_Task(void *param)
+{
+    BaseType_t ret;
+    QMsg *pQMsg;
+    QUIInfoMsg infoMsgIn, infoMsgOut;
+
+    uint8_t *pDetIR     = NULL;
+    uint8_t *pDetRGB    = NULL;
+    bool irReady        = false;
+    uint16_t *pDispData = NULL;
+    uint8_t dispMode    = Cfg_AppDataGetDisplayMode();
+    memset(&infoMsgIn, 0x0, sizeof(infoMsgIn));
+    memset(&infoMsgOut, 0x0, sizeof(infoMsgOut));
+
+    VIZN_GetPulseWidth(NULL, LED_IR, &s_PwmIR);
+    VIZN_GetPulseWidth(NULL, LED_WHITE, &s_PwmWhite);
+
+    Camera_SelectLED(LED_IR);
+    Camera_SetPWM(LED_IR,s_PwmIR);
+
+    xEventGroupWaitBits(g_SyncVideoEvents, 1 << SYNC_VIDEO_CAMERA_INIT_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
+    while (1)
+    {
+        /* pick up message */
+        ret = xQueueReceive(CameraMsgQ, (void *)&pQMsg, portMAX_DELAY);
+
+        if (ret == pdTRUE)
+        {
+            switch (pQMsg->id)
+            {
+                case QMSG_CAMERA_USERID:
+                {
+                    /* This is used for single camera apptype userid */
+                    if (kStatus_Success == CAMERA_RECEIVER_GetFullBuffer(&cameraReceiver, &s_ActiveFrameAddr))
+                    {
+                        // RBG frame
+                        if (pDispData)
+                        {
+                            memcpy(&infoMsgOut, &infoMsgIn, sizeof(QUIInfoMsg));
+                            if (infoMsgOut.rect2[0] > 0) // means can detect face in the RGB frame, so use RGB facebox to display
+                            {
+                                memcpy(infoMsgOut.rect, infoMsgOut.rect2, sizeof(infoMsgOut.rect));
+                            }
+                            DPxpMsg.msg.pxp.out_buffer = (uint32_t)pDispData;
+                            DPxpMsg.msg.pxp.in_buffer  = s_ActiveFrameAddr;
+                            DPxpMsg.msg.pxp.info       = &infoMsgOut;
+                            pQMsg                      = &DPxpMsg;
+                            PXP_SendQMsg((void *)&pQMsg);
+                            pDispData = NULL;
+                        }
+
+                        if (pDetRGB)
+                        {
+                            FPxpMsg.msg.pxp.out_buffer = (uint32_t)pDetRGB;
+                            FPxpMsg.msg.pxp.in_buffer  = s_ActiveFrameAddr;
+                            pQMsg                      = &FPxpMsg;
+                            PXP_SendQMsg((void *)&pQMsg);
+                            pDetRGB = NULL;
+                        }
+
+                        s_InactiveFrameAddr = s_ActiveFrameAddr;
+                        CAMERA_RECEIVER_SubmitEmptyBuffer(&cameraReceiver, s_InactiveFrameAddr);
+                        Camera_CheckOverRun();
+                        EQIndex++;
+                    }
+                }
+                break;
+                case QMSG_CAMERA_DQ:
+                {
+                    if (kStatus_Success == CAMERA_RECEIVER_GetFullBuffer(&cameraReceiver, &s_ActiveFrameAddr))
+                    {
+#if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
+                        isOddFrame = false;
+                        if ((DQIndex & 0x03) == 0) // 0 4 8
+                        {
+                            s_CurrentCameraID = IR_CAMERA;
+                            Camera_RgbIrSwitch(COLOR_CAMERA);
+                        }
+                        else if ((DQIndex & 0x01) == 0) // 2 6 10
+                        {
+                            s_CurrentCameraID = COLOR_CAMERA;
+                            Camera_RgbIrSwitch(IR_CAMERA);
+                        }
+                        else // drop odd frames
+                        {
+                            isOddFrame = true;
+                        }
+#endif
+
+#if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
+                        if ((false == isOddFrame) && (COLOR_CAMERA == s_CurrentCameraID))
+#else
+                        if (EQIndex % (RGB_IR_FRAME_RATIO + 1) < RGB_IR_FRAME_RATIO)
+#endif
+                        { // RBG frame
+                            if ((dispMode == DISPLAY_MODE_RGB) && pDispData)
+                            {
+                                memcpy(&infoMsgOut, &infoMsgIn, sizeof(QUIInfoMsg));
+                                if (infoMsgOut.rect2[0] > 0) // means can detect face in the RGB frame, so use RGB facebox to display
+                                {
+                                    memcpy(infoMsgOut.rect, infoMsgOut.rect2, sizeof(infoMsgOut.rect));
+                                }
+                                DPxpMsg.msg.pxp.out_buffer = (uint32_t)pDispData;
+                                DPxpMsg.msg.pxp.in_buffer  = s_ActiveFrameAddr;
+                                DPxpMsg.msg.pxp.info       = &infoMsgOut;
+                                pQMsg                      = &DPxpMsg;
+                                PXP_SendQMsg((void *)&pQMsg);
+                                pDispData = NULL;
+                            }
+
+                            if (pDetRGB && irReady)
+                            {
+                                FPxpMsg.msg.pxp.out_buffer = (uint32_t)pDetRGB;
+                                FPxpMsg.msg.pxp.in_buffer  = s_ActiveFrameAddr;
+                                pQMsg                      = &FPxpMsg;
+                                PXP_SendQMsg((void *)&pQMsg);
+                                irReady = false;
+                                pDetRGB = NULL;
+                                pDetIR  = NULL;
+                            }
+                        }
+#if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
+                        else if ((false == isOddFrame) && (IR_CAMERA == s_CurrentCameraID))
+#else
+                        else if (EQIndex % (RGB_IR_FRAME_RATIO + 1) == RGB_IR_FRAME_RATIO)
+#endif
+                        { // IR frame
+                            if ((dispMode == DISPLAY_MODE_IR) && pDispData)
+                            {
+                                memcpy(&infoMsgOut, &infoMsgIn, sizeof(QUIInfoMsg));
+                                DPxpMsg.msg.pxp.out_buffer = (uint32_t)pDispData;
+                                DPxpMsg.msg.pxp.in_buffer  = s_ActiveFrameAddr;
+                                DPxpMsg.msg.pxp.info       = &infoMsgOut;
+                                pQMsg                      = &DPxpMsg;
+                                PXP_SendQMsg((void *)&pQMsg);
+                                pDispData = NULL;
+                            }
+
+                            if (pDetIR && (!irReady))
+                            {
+                                FPxpMsg.msg.pxp.out_buffer = (uint32_t)pDetIR;
+                                FPxpMsg.msg.pxp.in_buffer  = s_ActiveFrameAddr;
+                                pQMsg                      = &FPxpMsg;
+                                PXP_SendQMsg((void *)&pQMsg);
+                                irReady = true;
+                            }
+                        }
+
+#if (APP_CAMERA_TYPE == APP_CAMERA_MT9M114)
+                        DisableIRQ(CSI_IRQn);
+                        if (DQIndex % (RGB_IR_FRAME_RATIO + 1) == RGB_IR_FRAME_RATIO)
+                        {
+                            Camera_RgbIrSwitch(IR_CAMERA);
+                        }
+                        else
+                        {
+                            Camera_RgbIrSwitch(COLOR_CAMERA);
+                        }
+                        EnableIRQ(CSI_IRQn);
+#endif
+
+                        s_InactiveFrameAddr = s_ActiveFrameAddr;
+                        CAMERA_RECEIVER_SubmitEmptyBuffer(&cameraReceiver, s_InactiveFrameAddr);
+                        Camera_CheckOverRun();
+                        EQIndex++;
+                    }
+                    else
+                    {
+                        LOGE("[ERROR]:Camera DQ buffer\r\n");
+                    }
+                }
+                break;
+
+                case QMSG_PXP_DISPLAY:
+                {
+                    pQMsg = &DResMsg;
+                    Display_SendQMsg((void *)&pQMsg);
+                }
+                break;
+
+                case QMSG_PXP_FACEREC:
+                {
+                    if (!pDetIR && !pDetRGB)
+                    {
+                        pQMsg = &FResMsg;
+                        Oasis_SendQMsg((void *)&pQMsg);
+                    }
+                }
+                break;
+
+                case QMSG_FACEREC_FRAME_REQ:
+                {
+                    if (pQMsg->msg.raw.data)
+                    {
+                        pDetIR = (uint8_t *)pQMsg->msg.raw.data;
+                    }
+                    if (pQMsg->msg.raw.data2)
+                    {
+                        pDetRGB = (uint8_t *)pQMsg->msg.raw.data2;
+                    }
+                }
+                break;
+
+                case QMSG_DISPLAY_FRAME_REQ:
+                {
+                    if (pQMsg->msg.raw.data)
+                    {
+                        pDispData = (uint16_t *)pQMsg->msg.raw.data;
+                    }
+                }
+                break;
+
+                case QMSG_FACEREC_INFO_UPDATE:
+                {
+                    memcpy(&infoMsgIn, &pQMsg->msg.info, sizeof(QUIInfoMsg));
+                    // LOGD("[rect:%d/%d/%d/%d]\r\n", infoMsg.rect[0], infoMsg.rect[1], infoMsg.rect[2],
+                    // infoMsg.rect[3]); LOGD("[name:%s/%f]\r\n", pQMsg->msg.info.name, pQMsg->msg.info.similar);
+                }
+                break;
+
+                case QMSG_CMD:
+                {
+                    if (pQMsg->msg.cmd.id == QCMD_DEINIT_CAMERA)
+                    {
+                        vPortFree(pQMsg);
+                        Camera_Deinit();
+                    }
+                    else if (pQMsg->msg.cmd.id == QCMD_CHANGE_RGB_IR_DISP_MODE)
+                    {
+                        dispMode = pQMsg->msg.cmd.data.display_mode;
+                    }
+                    else if (pQMsg->msg.cmd.id == QCMD_SET_PWM)
+                    {
+                        if (pQMsg->msg.cmd.data.led_pwm[0] == LED_IR)
+                        {
+                            s_PwmIR = pQMsg->msg.cmd.data.led_pwm[1];
+                            Camera_SelectLED(LED_IR);
+                            Camera_SetPWM(LED_IR,s_PwmIR);
+                        }
+                        else
+                        {
+                            s_PwmWhite = pQMsg->msg.cmd.data.led_pwm[1];
+                            Camera_SelectLED(LED_WHITE);
+                            Camera_SetPWM(LED_WHITE,s_PwmWhite);
+                        }
+                    }
+                    else if(pQMsg->msg.cmd.id == QCMD_CHANGE_RGB_EXPOSURE_MODE)
+                    {
+                    	s_CurRGBExposureMode = pQMsg->msg.cmd.data.exposure_mode;
+                        vPortFree(pQMsg);
+                    }
+					else if (pQMsg->msg.cmd.id == QCMD_CHANGE_INFO_DISP_MODE)
+                    {
+                        QMsg *pInfoDispMode;
+                        const uint8_t display_interface = pQMsg->msg.cmd.data.interface_mode;
+                        vPortFree(pQMsg);
+
+                        pInfoDispMode                              = (QMsg *)pvPortMalloc(sizeof(QMsg));
+                        pInfoDispMode->id                          = QMSG_DISPLAY_INTERFACE;
+                        pInfoDispMode->msg.cmd.data.interface_mode = display_interface;
+                        PXP_SendQMsg((void *)&pInfoDispMode);
+
+                        pInfoDispMode                              = (QMsg *)pvPortMalloc(sizeof(QMsg));
+                        pInfoDispMode->id                          = QMSG_DISPLAY_INTERFACE;
+                        pInfoDispMode->msg.cmd.data.interface_mode = display_interface;
+                        Display_SendQMsg((void *)&pInfoDispMode);
+                    }
+                }
+                break;
+
+                default:
+                    break;
+            }
+        }
+    }
+    // end if while (1)
+    if (s_pBufferQueue)
+        alignedFree(s_pBufferQueue);
+#if CAMERA_ROTATE_FLAG
+    if (g_pRotateBuff)
+        alignedFree(g_pRotateBuff);
+#endif
+}
+
+int Camera_Start()
+{
+    LOGD("[Camera]:starting...\r\n");
+    // BOARD_InitCameraResource();
+    s_appType = Cfg_AppDataGetApplicationType();
+    if (APP_TYPE_USERID == s_appType)
+    {
+        DQMsg.id = QMSG_CAMERA_USERID;
+    }
+    else
+    {
+        DQMsg.id = QMSG_CAMERA_DQ;
+    }
+
+    FResMsg.id = QMSG_FACEREC_FRAME_RES;
+    DResMsg.id = QMSG_DISPLAY_FRAME_RES;
+    FPxpMsg.id = QMSG_PXP_FACEREC;
+    DPxpMsg.id = QMSG_PXP_DISPLAY;
+
+    CmdMsg.id  = QMSG_CMD;
+    DIntMsg.id = QMSG_DISPLAY_INTERFACE;
+    CameraMsgQ = xQueueCreate(CAMERA_MSG_Q_COUNT, sizeof(QMsg *));
+
+    int buffersize = 0;
+
+    if (CameraMsgQ == NULL)
+    {
+        LOGE("[ERROR]:xQueueCreate camera queue\r\n");
+        return -1;
+    }
+    g_SyncVideoEvents = xEventGroupCreate();
+    if (g_SyncVideoEvents == NULL)
+    {
+        LOGE("[ERROR]Event Group failed\r\n");
+        while (1)
+            ;
+    }
+
+    buffersize     = APP_FRAME_BUFFER_COUNT * APP_CAMERA_HEIGHT * APP_CAMERA_WIDTH;
+    s_pBufferQueue = (uint16_t *)alignedMalloc(buffersize * sizeof(uint16_t));
+    if (s_pBufferQueue == NULL)
+    {
+        while (1)
+            ;
+    }
+#if CAMERA_ROTATE_FLAG
+    buffersize    = APP_CAMERA_HEIGHT * APP_CAMERA_WIDTH;
+    g_pRotateBuff = (uint16_t *)alignedMalloc(buffersize * sizeof(uint16_t));
+    if (g_pRotateBuff == NULL)
+    {
+        LOGE("get rotate buff failed\n");
+        while (1)
+            ;
+    }
+#else
+    g_pRotateBuff = NULL;
+#endif
+
+    if (xTaskCreate(Camera_Init_Task, "Camera_Init", CAMERAINITTASK_STACKSIZE, NULL, CAMERAINITTASK_PRIORITY, NULL) !=
+        pdPASS)
+
+    {
+        LOGE("[ERROR]Camera Init created failed\r\n");
+
+        while (1)
+            ;
+    }
+
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+    if (NULL == xTaskCreateStatic(Camera_Task, "Camera_Init", CAMERATASK_STACKSIZE, NULL, CAMERATASK_PRIORITY,
+                                  s_CameraTaskStack, &s_CameraTaskTCB))
+#else
+    if (xTaskCreate(Camera_Task, "Camera Task", CAMERATASK_STACKSIZE, NULL, CAMERATASK_PRIORITY, NULL) != pdPASS)
+#endif
+    {
+        LOGE("[ERROR]Camera Task created failed\r\n");
+
+        while (1)
+            ;
+    }
+
+    LOGD("[Camera]:started\r\n");
+    return 0;
+}
+
+int Camera_SendQMsg(void *msg)
+{
+    BaseType_t ret;
+
+    ret = xQueueSend(CameraMsgQ, msg, (TickType_t)0);
+
+    if (ret != pdPASS)
+    {
+        LOGE("[ERROR]:Camera_SendQMsg failed %d\r\n", ret);
+        return -1;
+    }
+
+    return 0;
+}
+
+#endif

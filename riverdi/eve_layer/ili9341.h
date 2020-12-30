@@ -24,7 +24,7 @@
  * IT IS THE RESPONSIBILITY OF THE PRODUCT MANUFACTURER TO MAINTAIN ANY CHANGES
  * AND SUBSEQUENT WHQL RE-CERTIFICATION AS A RESULT OF MAKING THESE CHANGES.
  */
-
+#if RTVISION_BOARD
 #include "platform_disp.h"
 
 typedef enum{
@@ -33,3 +33,5 @@ typedef enum{
 } DC;
 
 void ILI_init (Gpu_Hal_Context_t *host);
+
+#endif

@@ -27,6 +27,7 @@
 
 #ifndef _COPRO_CMDS_H_
 #define _COPRO_CMDS_H_
+#if RTVISION_BOARD
 
 void Gpu_CoCmd_Text(Gpu_Hal_Context_t *phost,int16_t x, int16_t y, int16_t font, uint16_t options, const char8_t* s, ...);
 void Gpu_CoCmd_Number(Gpu_Hal_Context_t *phost,int16_t x, int16_t y, int16_t font, uint16_t options, int32_t n);
@@ -159,4 +160,5 @@ void Gpu_CoCmd_SendStr(Gpu_Hal_Context_t *phost,const char8_t *s);
 void Gpu_CoCmd_StartFunc(Gpu_Hal_Context_t *phost,uint16_t count);
 void Gpu_CoCmd_EndFunc(Gpu_Hal_Context_t *phost,uint16_t count);
 
+#endif
 #endif  /*COPRO_CMDS_H*/

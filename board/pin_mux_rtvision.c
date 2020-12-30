@@ -21,6 +21,7 @@ processor_version: 0.0.0
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 
+#if RTVISION_BOARD
 #include "fsl_common.h"
 #include "fsl_iomuxc.h"
 #include "fsl_gpio.h"
@@ -1809,6 +1810,7 @@ void BOARD_InitPIRSensorPin(void)
 }
 
 
+#endif
 /***********************************************************************************************************************
  * EOF
  **********************************************************************************************************************/

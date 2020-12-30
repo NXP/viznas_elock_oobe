@@ -44,6 +44,7 @@
 									<listOptionValue builtIn="false" value="SDK_I2C_FREERTOS=1"/>
 									<listOptionValue builtIn="false" value="SDK_SAI_BASED_COMPONENT_USED=1"/>
 									<listOptionValue builtIn="false" value="RTVISION_BOARD=1"/>
+									<listOptionValue builtIn="false" value="RT106F_ELOCK_BOARD=0"/>
 									<listOptionValue builtIn="false" value="NXP_MCU_FACE_SECURE_DEBUG"/>
 									<listOptionValue builtIn="false" value="SDK_DEBUGCONSOLE=1"/>
 									<listOptionValue builtIn="false" value="CTP_28"/>
@@ -62,14 +63,12 @@
 									<listOptionValue builtIn="false" value="FSL_SDK_ENABLE_DRIVER_CACHE_CONTROL=1"/>
 									<listOptionValue builtIn="false" value="SLN_ENABLE_DRIVER_CACHE_CONTROL=1"/>
 									<listOptionValue builtIn="false" value="LPUART1_NON_BLOCKING_MODE=1"/>
-									<listOptionValue builtIn="false" value="WIFI_ENABLE=1"/>
 									<listOptionValue builtIn="false" value="USE_WIFI_CONNECTION=1"/>
 									<listOptionValue builtIn="false" value="MBEDTLS_CONFIG_FILE=\&quot;aws_mbedtls_config.h\&quot;"/>
 									<listOptionValue builtIn="false" value="FSL_RTOS_FREE_RTOS=1"/>
 									<listOptionValue builtIn="false" value="SDK_DELAY_USE_DWT=1"/>
 									<listOptionValue builtIn="false" value="DCP_USE_DCACHE=1"/>
 									<listOptionValue builtIn="false" value="HAL_UART_TRANSFER_MODE=1"/>
-									<listOptionValue builtIn="false" value="VOICE_PROMPT=1"/>
 									<listOptionValue builtIn="false" value="APP_MAJ_VER=2"/>
 									<listOptionValue builtIn="false" value="APP_MIN_VER=0"/>
 									<listOptionValue builtIn="false" value="APP_BLD_VER=0"/>
@@ -232,6 +231,7 @@
 									<listOptionValue builtIn="false" value="SDK_I2C_FREERTOS=1"/>
 									<listOptionValue builtIn="false" value="SDK_SAI_BASED_COMPONENT_USED=1"/>
 									<listOptionValue builtIn="false" value="RTVISION_BOARD=1"/>
+									<listOptionValue builtIn="false" value="RT106F_ELOCK_BOARD=0"/>
 									<listOptionValue builtIn="false" value="NXP_MCU_FACE_SECURE_DEBUG"/>
 									<listOptionValue builtIn="false" value="CTP_28"/>
 									<listOptionValue builtIn="false" value="EVE_1"/>
@@ -252,14 +252,12 @@
 									<listOptionValue builtIn="false" value="FSL_SDK_ENABLE_DRIVER_CACHE_CONTROL=1"/>
 									<listOptionValue builtIn="false" value="SLN_ENABLE_DRIVER_CACHE_CONTROL=1"/>
 									<listOptionValue builtIn="false" value="LPUART1_NON_BLOCKING_MODE=1"/>
-									<listOptionValue builtIn="false" value="WIFI_ENABLE=1"/>
 									<listOptionValue builtIn="false" value="USE_WIFI_CONNECTION=1"/>
 									<listOptionValue builtIn="false" value="MBEDTLS_CONFIG_FILE='&quot;aws_mbedtls_config.h&quot;'"/>
 									<listOptionValue builtIn="false" value="FSL_RTOS_FREE_RTOS"/>
 									<listOptionValue builtIn="false" value="SDK_DELAY_USE_DWT=1"/>
 									<listOptionValue builtIn="false" value="DCP_USE_DCACHE=1"/>
 									<listOptionValue builtIn="false" value="HAL_UART_TRANSFER_MODE=1"/>
-									<listOptionValue builtIn="false" value="VOICE_PROMPT=1"/>
 									<listOptionValue builtIn="false" value="APP_MAJ_VER=2"/>
 									<listOptionValue builtIn="false" value="APP_MIN_VER=0"/>
 									<listOptionValue builtIn="false" value="APP_BLD_VER=0"/>

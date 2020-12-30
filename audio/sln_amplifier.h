@@ -9,11 +9,13 @@
 #ifndef __SLN_AMPLIFIER_H__
 #define __SLN_AMPLIFIER_H__
 
+#include "board.h"
 #include "FreeRTOS.h"
 #include "event_groups.h"
 #include "fsl_common.h"
 #include "fsl_edma.h"
 
+#if BOARD_AUDIO_CODEC_TFA9894
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -182,4 +184,5 @@ void SLN_AMP_SetDefaultAudioData(uint8_t *data, uint32_t len);
 }
 #endif /*_cplusplus*/
 
+#endif
 #endif //__SLN_AMPLIFIER_H__

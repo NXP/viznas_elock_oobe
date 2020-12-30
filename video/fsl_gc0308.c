@@ -306,7 +306,7 @@ static void GC0308_SensorInitialSetting(camera_device_handle_t *handle, const ca
     GC0308_Write(handle, 0x11, 1U, 0xfd);
     GC0308_Write(handle, 0x12, 1U, 0x2a);
     GC0308_Write(handle, 0x13, 1U, 0x00);
-#if (DUAL_CAMERA)
+#if RTVISION_BOARD
     GC0308_Write(handle, 0x14, 1U, 0x12);
 #else
     GC0308_Write(handle, 0x14, 1U, 0x11);

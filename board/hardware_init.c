@@ -33,10 +33,14 @@ void BOARD_InitHardware(void)
     // BOARD_ConfigUSBMPU();
     BOARD_BootClockRUN();
     BOARD_InitPins();
+#if RTVISION_BOARD
     BOARD_InitFlash();
     BOARD_InitBluetooth();
     BOARD_InitWifi();
     BOARD_InitAudio();
+#else
+    BOARD_InitWicedBLE();
+#endif
 }
 
 void USB_DeviceClockInit(void)

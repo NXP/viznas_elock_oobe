@@ -9,15 +9,27 @@
  * Created by: NXP China Solution Team.
  */
 
-#ifndef _SWITCH_H_
-#define _SWITCH_H_
+#ifndef _SWITCH_RTVISION_H_
+#define _SWITCH_RTVISION_H_
 
 #if RTVISION_BOARD
-	#include "switch_rtvision.h"
-#elif RT106F_ELOCK_BOARD
-	#include "switch_rt106f_elock.h"
-#else
-	#error "***ERROR***"
+#if defined(__cplusplus)
+extern "C" {
 #endif
 
-#endif /* _SWITCH_H_ */
+
+
+int Switch_Start(void);
+void GPIO2_Combined_0_15_IRQHandler(void);
+int Switch_SendQMsg(void *msg);
+int Switch_SendQMsgFromISR(void *msg);
+void KW41Reset(void);
+
+
+
+#if defined(__cplusplus)
+}
+#endif
+
+#endif
+#endif /* _SWITCH_RTVISION_H_ */

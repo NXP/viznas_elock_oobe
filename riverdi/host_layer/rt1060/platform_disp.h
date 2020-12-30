@@ -7,6 +7,8 @@
 #ifndef _PLATFORM_H_
 #define _PLATFORM_H_
 
+#if RTVISION_BOARD
+
 /* C library inclusions */
 #include <stdarg.h>
 #include <string.h>
@@ -74,5 +76,5 @@ bool_t platform_gpio_init (Gpu_Hal_Context_t*, gpio_name);
 bool_t platform_gpio_value (Gpu_Hal_Context_t*, gpio_name, gpio_val);
 
 /*****************************************************************************/
-
+#endif
 #endif /*_PLATFORM_H_*/

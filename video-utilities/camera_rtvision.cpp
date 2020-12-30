@@ -9,6 +9,8 @@
  * Created by: NXP China Solution Team.
  */
 
+#if RTVISION_BOARD
+
 #include <facerecicon.h>
 #include <nxplogo.h>
 #include "FreeRTOS.h"
@@ -286,7 +288,7 @@ void Camera_GetPWM(uint8_t led, uint8_t* pulse_width)
     }
 }
 
-static status_t Camera_SetPWM(uint8_t pulse_width)
+static status_t Camera_SetPWM(uint8_t pwm_index, uint8_t pulse_width)
 {
     status_t status = kStatus_Fail;
     QTMR_StopTimer(CAMERA_QTMR_BASEADDR, CAMERA_QTMR_PWM_CHANNEL);
@@ -588,10 +590,10 @@ static void CameraDevice_Init_Task(void *param)
 static void Camera_Deinit(void)
 {
     Camera_SelectLED(LED_IR);
-    Camera_SetPWM(0);
+    Camera_SetPWM(LED_IR,0);
 
     Camera_SelectLED(LED_WHITE);
-    Camera_SetPWM(0);
+    Camera_SetPWM(LED_WHITE,0);
 
     Camera_LedTimer_Deinit();
     DisableIRQ(CSI_IRQn);
@@ -701,7 +703,7 @@ static void Camera_Task(void *param)
     VIZN_GetPulseWidth(NULL, LED_WHITE, &s_PwmWhite);
 
     Camera_SelectLED(LED_IR);
-    Camera_SetPWM(s_PwmIR);
+    Camera_SetPWM(LED_IR,s_PwmIR);
 
     xEventGroupWaitBits(g_SyncVideoEvents, 1 << SYNC_VIDEO_CAMERA_INIT_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
     while (1)
@@ -920,16 +922,21 @@ static void Camera_Task(void *param)
                         {
                             s_PwmIR = pQMsg->msg.cmd.data.led_pwm[1];
                             Camera_SelectLED(LED_IR);
-                            Camera_SetPWM(s_PwmIR);
+                            Camera_SetPWM(LED_IR,s_PwmIR);
                         }
                         else
                         {
                             s_PwmWhite = pQMsg->msg.cmd.data.led_pwm[1];
                             Camera_SelectLED(LED_WHITE);
-                            Camera_SetPWM(s_PwmWhite);
+                            Camera_SetPWM(LED_WHITE,s_PwmWhite);
                         }
                     }
-                    else if (pQMsg->msg.cmd.id == QCMD_CHANGE_INFO_DISP_MODE)
+                    else if(pQMsg->msg.cmd.id == QCMD_CHANGE_RGB_EXPOSURE_MODE)
+                    {
+                    	s_CurRGBExposureMode = pQMsg->msg.cmd.data.exposure_mode;
+                        vPortFree(pQMsg);
+                    }
+					else if (pQMsg->msg.cmd.id == QCMD_CHANGE_INFO_DISP_MODE)
                     {
                         QMsg *pInfoDispMode;
                         const uint8_t display_interface = pQMsg->msg.cmd.data.interface_mode;
@@ -1061,3 +1068,5 @@ int Camera_SendQMsg(void *msg)
 
     return 0;
 }
+
+#endif

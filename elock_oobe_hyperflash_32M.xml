@@ -1,0 +1,14 @@
+ <chip>
+  <memory id='Flash' type='Flash' is_ro='true' can_program='true'></memory>
+  <memory id='RAM' type='RAM'></memory>
+   <memoryInstance id='BOARD_FLASH' derived_from='Flash' location='0x60000000' size='0xa00000' driver='MIMXRT106F-SLN-VIZNAS-IOT_S26KS512S.cfx'  edited='true'  />
+   <memoryInstance id='BOARD_FLASH_LICENSES' derived_from='Flash' location='0x61b00000' size='0x200000'   edited='true'  />
+   <memoryInstance id='BOARD_FLASH_FACERECSNAPSHOT_DB' derived_from='Flash' location='0x61d00000' size='0x80000'   edited='true'  />
+   <memoryInstance id='BOARD_SDRAM' derived_from='RAM' location='0x80000000' size='0x1000000'   edited='true'  />
+   <memoryInstance id='SRAM_DTC' derived_from='RAM' location='0x20000000' size='0x30000'   edited='true'  />
+   <memoryInstance id='SRAM_ITC' derived_from='RAM' location='0x0' size='0x8000'   edited='true'  />
+   <memoryInstance id='SRAM_OC_NON_CACHEABLE' derived_from='RAM' location='0x20200000' size='0x8000'   edited='true'  />
+   <memoryInstance id='SRAM_OC_CACHEABLE' derived_from='RAM' location='0x20208000' size='0xc0000'   edited='true'  />
+   <memoryInstance id='BOARD_SDRAM_FACERECSNAPSHOT_DB' derived_from='RAM' location='0x81000000' size='0xe00000'   edited='true'  />
+   <memoryInstance id='BOARD_SDRAM_NONCACHEABLE' derived_from='RAM' location='0x81e00000' size='0x200000'   edited='true'  />
+ </chip>

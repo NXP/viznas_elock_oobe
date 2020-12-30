@@ -6,6 +6,7 @@
 #ifndef _MODULES_H_
 #define _MODULES_H_
 
+#if RTVISION_BOARD
 /*
  * Embedded Video Engine Series
  */
@@ -138,4 +139,5 @@
   #define DispDither     x
 #endif
 
+#endif
 #endif /*_MODULES_H_*/

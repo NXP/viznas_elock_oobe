@@ -26,6 +26,8 @@ Revision History:
 0.1 - date 2017.02.23 - Initial version
 */
 
+#if RTVISION_BOARD
+
 #ifndef _APP_COMMON_H_
 #define _APP_COMMON_H_
 
@@ -70,4 +72,5 @@ void App_Show_Logo(Gpu_Hal_Context_t *phost);
 void App_Common_Init(Gpu_Hal_Context_t *phost);
 void App_Common_Close(Gpu_Hal_Context_t *phost);
 
+#endif
 #endif /* _APP_COMMON_H_ */

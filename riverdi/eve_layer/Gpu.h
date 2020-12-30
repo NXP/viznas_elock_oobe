@@ -28,6 +28,8 @@
 #ifndef _GPU_H_
 #define _GPU_H_
 
+#if RTVISION_BOARD
+
 #define DL_SIZE           (8*1024L)	/* 8KB Display List buffer size */
 #define CMD_FIFO_SIZE     (4*1024L)	/* 4KB coprocessor Fifo size */
 #define CMD_SIZE          (4)		/* 4 byte per coprocessor command of EVE */
@@ -1270,4 +1272,5 @@ typedef struct Gpu_FontsExt_t
 }Gpu_FontsExt_t;
 #endif
 
+#endif
 #endif /* #ifndef _GPU_H_ */

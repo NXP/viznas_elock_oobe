@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 NXP.
+ * Copyright 2019 NXP.
  * This software is owned or controlled by NXP and may only be used strictly in accordance with the
  * license terms that accompany it. By expressly accepting such terms or by downloading, installing,
  * activating and/or otherwise using the software, you are agreeing that you have read, and that you
@@ -9,15 +9,28 @@
  * Created by: NXP China Solution Team.
  */
 
-#ifndef _SWITCH_H_
-#define _SWITCH_H_
+#ifndef _SWITCH_RT106F_ELOCK_H_
+#define _SWITCH_RT106F_ELOCK_H_
 
-#if RTVISION_BOARD
-	#include "switch_rtvision.h"
-#elif RT106F_ELOCK_BOARD
-	#include "switch_rt106f_elock.h"
-#else
-	#error "***ERROR***"
+#if RT106F_ELOCK_BOARD
+#include "board.h"
+
+#if defined(__cplusplus)
+extern "C" {
 #endif
 
-#endif /* _SWITCH_H_ */
+int Switch_Start(void);
+#if BOARD_SUPPORT_PARALLEL_LCD
+void GPIO2_Combined_16_31_IRQHandler(void);
+#else
+void GPIO3_Combined_0_15_IRQHandler(void);
+#endif
+int Switch_SendQMsg(void *msg);
+int Switch_SendQMsgFromISR(void *msg);
+
+#if defined(__cplusplus)
+}
+#endif
+
+#endif
+#endif /* _SWITCH_RT106F_ELOCK_H_ */

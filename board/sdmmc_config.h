@@ -39,7 +39,9 @@
 #define BOARD_SDMMC_SD_CD_IRQ                        GPIO2_Combined_16_31_IRQn
 #define BOARD_SDMMC_SD_CD_INTTERUPT_TYPE             kGPIO_IntRisingOrFallingEdge
 #define BOARD_SDMMC_SD_CD_INSERT_LEVEL               (0U)
+#if RTVISION_BOARD
 #define BOARD_SDMMC_SD_CD_PORT_IRQ_HANDLER           GPIO2_Combined_16_31_IRQHandler
+#endif
 #define BOARD_SDMMC_SD_CD_TYPE                       kSD_DetectCardByGpioCD
 #define BOARD_SDMMC_SD_CARD_DETECT_DEBOUNCE_DELAY_MS (100U)
 /*! @brief SD power reset */

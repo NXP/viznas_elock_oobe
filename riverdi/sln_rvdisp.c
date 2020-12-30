@@ -6,7 +6,7 @@
  * agree to comply with and are bound by, such license terms. If you do not agree to be bound by the
  * applicable license terms, then you may not retain, install, activate or otherwise use the software.
  */
-
+#if RTVISION_BOARD
 #include "platform_disp.h"
 #include "App_Common.h"
 #include "fsl_log.h"
@@ -199,3 +199,4 @@ int RVDisp_Init(uint16_t *pDispBuffer)
 
     return 1;
 }
+#endif

@@ -9,6 +9,7 @@
  * Created by: NXP China Solution Team.
  */
 
+#include "board.h"
 #include "commondef.h"
 
 #include "semphr.h"
@@ -18,13 +19,25 @@
 #include "pxp.h"
 #include "fsl_log.h"
 
-#include "sln_pcal.h"
+#if LCD_TYPE == LCD_SPI_RIVERDI
 #include "sln_rvdisp.h"
+#elif LCD_TYPE == LCD_SPI_WZ032HN89V022
+#include "fsl_stdisp.h"
+#elif LCD_TYPE == LCD_RGB_PJ2805H02
+#include "fsl_pjdisp.h"
+#endif
+
 #if SCREEN_PORTRAIT_MODE
 #include "nxp_vertical_logo.h"
 #else
 #include "nxp_facemanager.h"
 #endif
+#if BOARD_SUPPORT_PARALLEL_LCD
+#include "fsl_elcdif.h"
+#define APP_POL_FLAGS (kELCDIF_DataEnableActiveHigh | kELCDIF_VsyncActiveLow | kELCDIF_HsyncActiveLow | kELCDIF_DriveDataOnRisingClkEdge)
+#define APP_LCDIF_DATA_BUS kELCDIF_DataBus16Bit
+#endif
+
 /*******************************************************************************
  * Variables
  *******************************************************************************/
@@ -167,15 +180,96 @@ int Display_Sync()
     return 0;
 }
 
+#if BOARD_SUPPORT_PARALLEL_LCD
+static void ELCDIF_Init(void)
+{
+    const elcdif_rgb_mode_config_t config = {
+        .panelWidth    = 240,
+        .panelHeight   = 320,
+        .hsw           = 10,
+        .hfp           = 10,
+        .hbp           = 20,
+        .vsw           = 2,
+        .vfp           = 4,
+        .vbp           = 2,
+        .polarityFlags = APP_POL_FLAGS,
+        .bufferAddr    = (uint32_t)s_BufferLcd,
+        .pixelFormat   = kELCDIF_PixelFormatRGB565,
+        .dataBus       = APP_LCDIF_DATA_BUS,
+    };
+    ELCDIF_RgbModeInit(LCDIF, &config);
+}
+
+static void LcdifPixelClock_Init(void)
+{
+    /*
+     * (240 + 10 + 20 + 10) * (320 + 2 + 2 +4) *60 = 5.51M
+     * The desired output frame rate is 60Hz. So the pixel clock frequency is:
+     * (480 + 41 + 4 + 18) * (272 + 10 + 4 + 2) * 60 = 9.2M.
+     * Here set the LCDIF pixel clock to 9.3M.
+     */
+
+    /*
+     * Initialize the Video PLL.
+     * Video PLL output clock is OSC24M * (loopDivider + (denominator / numerator)) / postDivider = 93MHz.
+     */
+    clock_video_pll_config_t config = {
+        .loopDivider = 29,
+        .postDivider = 16,
+        .numerator   = 3,
+        .denominator = 8,
+        .src = 0
+    };
+
+    CLOCK_InitVideoPll(&config);
+
+    /*
+     * 000 derive clock from PLL2
+     * 001 derive clock from PLL3 PFD3
+     * 010 derive clock from PLL5
+     * 011 derive clock from PLL2 PFD0
+     * 100 derive clock from PLL2 PFD1
+     * 101 derive clock from PLL3 PFD1
+     */
+    CLOCK_SetMux(kCLOCK_LcdifPreMux, 2);
+
+    CLOCK_SetDiv(kCLOCK_LcdifPreDiv, 1);
+
+    CLOCK_SetDiv(kCLOCK_LcdifDiv, 3);
+}
+
+void BOARD_LCD_Init(void)
+{
+	CLOCK_EnableClock(kCLOCK_Gpio1);
+	CLOCK_EnableClock(kCLOCK_Gpio2);
+	CLOCK_EnableClock(kCLOCK_Gpio3);
+	LcdifPixelClock_Init();
+	ELCDIF_Init();
+}
+#endif
+
 void Display_Init_Task(void *param)
 {
     if (Cfg_AppDataGetOutputMode() == DISPLAY_USB)
     {
+#if LCD_TYPE == LCD_SPI_RIVERDI
         RVDisp_PowerCycleDisplay(false);
+#endif
     }
-    else if (Cfg_AppDataGetOutputMode() == DISPLAY_RIVERDI)
+    else if (Cfg_AppDataGetOutputMode() == DISPLAY_LCD)
     {
+#if BOARD_SUPPORT_PARALLEL_LCD
+        BOARD_LCD_Init();
+        ELCDIF_RgbModeStart(LCDIF);
+#endif
+#if LCD_TYPE == LCD_SPI_RIVERDI
         RVDisp_Init(NULL);
+#elif LCD_TYPE == LCD_SPI_WZ032HN89V022
+        STDisp_Init(NULL);
+#elif LCD_TYPE == LCD_RGB_PJ2805H02
+        PJDisp_Init();
+		PJDisp_TurnOnBacklight();
+#endif
     }
 #if SCREEN_PORTRAIT_MODE
     Display_Update((uint32_t)nxp_vertical_logo);
@@ -203,9 +297,15 @@ int Display_Update(uint32_t backBuffer)
         g_FrameBufferUSB = (uint8_t *)backBuffer;
         xSemaphoreTake(g_DisplayEmpty, portMAX_DELAY);
     }
-    else if (Cfg_AppDataGetOutputMode() == DISPLAY_RIVERDI)
+    else if (Cfg_AppDataGetOutputMode() == DISPLAY_LCD)
     {
+#if LCD_TYPE == LCD_SPI_RIVERDI
         RVDisp_SendFrame((uint16_t *)backBuffer);
+#elif LCD_TYPE == LCD_SPI_WZ032HN89V022
+        STDisp_SendFrame((uint16_t *)backBuffer);
+#elif LCD_TYPE == LCD_RGB_PJ2805H02
+        PJDisp_SendFrame(backBuffer);
+#endif
     }
     else
     {
@@ -216,10 +316,12 @@ int Display_Update(uint32_t backBuffer)
 
 void Display_Deinit(void)
 {
-    if (Cfg_AppDataGetOutputMode() == DISPLAY_RIVERDI)
+    if (Cfg_AppDataGetOutputMode() == DISPLAY_LCD)
     {
+#if LCD_TYPE == LCD_SPI_RIVERDI
         RVDisp_UnInit(NULL);
         RVDisp_PowerCycleDisplay(false);
+#endif
     }
     xEventGroupClearBits(g_SyncVideoEvents, 1 << SYNC_VIDEO_DISPLAY_INIT_BIT);
 }

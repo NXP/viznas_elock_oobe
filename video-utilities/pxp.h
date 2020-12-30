@@ -12,9 +12,9 @@
 #ifndef _PXP_H_
 #define _PXP_H_
 
-#include "fsl_elcdif.h"
+//#include "fsl_elcdif.h"
 #include "fsl_pxp.h"
-#include "sln_rvdisp.h"
+//#include "sln_rvdisp.h"
 
 #ifdef __cplusplus
 extern "C" {

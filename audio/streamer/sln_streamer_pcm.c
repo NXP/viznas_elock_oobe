@@ -14,7 +14,9 @@ static pcm_rtos_t pcmHandle = {0};
 
 void streamer_pcm_init(void)
 {
+#if BOARD_AUDIO_CODEC_TFA9894
     SLN_AMP_Init(&pcmHandle.emptyBlock);
+#endif
 }
 
 pcm_rtos_t *streamer_pcm_open(uint32_t num_buffers)

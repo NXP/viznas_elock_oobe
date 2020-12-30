@@ -305,7 +305,7 @@ void SLN_Connections_Init()
     if (xTaskCreateStatic(BLE_Task, "BLE_Init", BLEINITTASK_STACKSIZE, NULL, BLEINITTASK_PRIORITY, s_BLETaskStack,
                           &s_BLETaskTCB) == NULL)
 #else
-    if (xTaskCreate(BLE_Init_Task, "BLE_Init", BLEINITTASK_STACKSIZE, NULL, BLEINITTASK_PRIORITY, NULL) != pdPASS)
+    if (xTaskCreate(BLE_Task, "BLE_Init", BLEINITTASK_STACKSIZE, NULL, BLEINITTASK_PRIORITY, NULL) != pdPASS)
 #endif
     {
         LOGE("[ERROR]BLE Init created failed\r\n");
@@ -318,7 +318,7 @@ void SLN_Connections_Init()
     if (xTaskCreateStatic(WiFi_Task, "WiFi_Init", WIFIINITTASK_STACKSIZE, NULL, WIFIINITTASK_PRIORITY, s_WifiTaskStack,
                           &s_WifiTaskTCB) == NULL)
 #else
-    if (xTaskCreate(WiFi_Init_Task, "WiFi_Init", WIFIINITTASK_STACKSIZE, NULL, WIFIINITTASK_PRIORITY, NULL) != pdPASS)
+    if (xTaskCreate(WiFi_Task, "WiFi_Init", WIFIINITTASK_STACKSIZE, NULL, WIFIINITTASK_PRIORITY, NULL) != pdPASS)
 #endif
     {
         LOGE("[ERROR]Wifi Init created failed\r\n");

@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+#if RTVISION_BOARD
 #include "board.h"
 #include "fsl_common.h"
 #include "fsl_debug_console.h"
@@ -781,3 +782,4 @@ uint8_t BUTTON_OTWPressed(void)
     /* Check if OTW Mode button (SW2) is pushed */
     return get_iox_port_pin(SW_PORT_PCAL, SW2_PIN_PCAL);
 }
+#endif

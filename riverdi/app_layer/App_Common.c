@@ -32,6 +32,8 @@ Revision History:
 0.1 - date 2017.03.24 - Initial version
 */
 
+#if RTVISION_BOARD
+
 #include "platform_disp.h"
 #include "App_Common.h"
 #include "ili9341.h"
@@ -904,3 +906,5 @@ void App_Common_Close(Gpu_Hal_Context_t *phost)
     Gpu_Hal_Close(phost);
     Gpu_Hal_DeInit();
 }
+
+#endif

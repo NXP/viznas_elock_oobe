@@ -34,7 +34,9 @@
  * Definitions
  ******************************************************************************/
 // #define USE_PIR_WAKEUP
+#if RTVISION_BOARD
 #define USE_SW_WAKEUP
+#endif
 
 #define LPM_PIR_INT_PORT GPIO2
 #define LPM_PIR_INT_PIN  17U
@@ -614,13 +616,16 @@ int LPM_PreEnterSuspend(void)
     Display_Deinit();
 
 #if VOICE_PROMPT
+
+#if RT_VISION_BOARD
     /* Audio */
     BOARD_SAI_Deinit();
 #endif
-
+#endif
+#if RT_VISION_BOARD
     DMAMUX_Deinit(DMAMUX);
     EDMA_Deinit(DMA0);
-
+#endif
     //    /* Pxp */
     //    APP_PXP_Deinit();
 
@@ -873,7 +878,7 @@ int LPM_Start(void)
     if (NULL == xTaskCreateStatic(LPM_Task, "Lpm Task", LPMTASK_STACKSIZE, NULL, LPMTASK_PRIORITY, s_LpmTaskStack,
                                   &s_LpmTaskTCB))
 #else
-    if (xTaskCreate(Switch_Task, "Lpm Task", LPMTASK_STACKSIZE, NULL, LPMTASK_PRIORITY, NULL) != pdPASS)
+    if (xTaskCreate(LPM_Task, "Lpm Task", LPMTASK_STACKSIZE, NULL, LPMTASK_PRIORITY, NULL) != pdPASS)
 #endif
     {
         LOGE("[ERROR]:Lpm Task created failed\r\n");

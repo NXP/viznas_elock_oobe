@@ -153,7 +153,7 @@ SHELL_COMMAND_DEFINE(liveness,
                      FFI_CLI_LivenessCommand,
                      SHELL_IGNORE_PARAMETER_COUNT);
 SHELL_COMMAND_DEFINE(display, (char *)"\r\n\"display output_mode <rgb|ir>\"\r\n"
-                                      "\r\n\"display output_device <usb|riverdi>\"\r\n"
+                                      "\r\n\"display output_device <usb|lcd>\"\r\n"
                                       "\r\n\"display interface <loopback|infobar>\"\r\n", FFI_CLI_DisplayCommand, SHELL_IGNORE_PARAMETER_COUNT);
 SHELL_COMMAND_DEFINE(wifi, (char *)"\r\n\"wifi <on|off>\":  Turn the Wi-Fi connection on|off\r\n"
 									"\r\n\"wifi reset\": Reset wifi to re-link. \r\n"
@@ -381,7 +381,7 @@ static shell_status_t FFI_CLI_DisplayCommand(shell_handle_t shellContextHandle, 
         if (!strcmp((char *)argv[1], "output_device"))
         {
             SHELL_Printf(shellContextHandle, "Current output device is: %s\r\n",
-                         (DISPLAY_USB == Cfg_AppDataGetOutputMode()) ? "USB" : "Riverdi");
+                         (DISPLAY_USB == Cfg_AppDataGetOutputMode()) ? "USB" : "LCD");
             return kStatus_SHELL_Success;
         }
         else if (!strcmp((char *)argv[1], "interface"))
@@ -920,9 +920,9 @@ void UsbShell_CmdProcess_Task(void *arg)
                     {
                         status = VIZN_SetDispOutputDevice(&VIZN_API_CLIENT(Shell), DISPLAY_USB);
                     }
-                    else if (!strcmp((char *)queueMsg.argv[2], "riverdi"))
+                    else if (!strcmp((char *)queueMsg.argv[2], "lcd"))
                     {
-                        status = VIZN_SetDispOutputDevice(&VIZN_API_CLIENT(Shell), DISPLAY_RIVERDI);
+                        status = VIZN_SetDispOutputDevice(&VIZN_API_CLIENT(Shell), DISPLAY_LCD);
                     }
                     else
                     {

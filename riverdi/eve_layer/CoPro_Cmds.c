@@ -25,6 +25,8 @@
  * AND SUBSEQUENT WHQL RE-CERTIFICATION AS A RESULT OF MAKING THESE CHANGES.
  */
 
+#if RTVISION_BOARD
+
 #include "platform_disp.h"
 #include "App_Common.h"
 
@@ -1376,3 +1378,5 @@ void Gpu_CoCmd_EndFunc(Gpu_Hal_Context_t *phost,uint16_t count)
 #endif
 #endif
 }
+
+#endif

@@ -25,6 +25,7 @@
  * AND SUBSEQUENT WHQL RE-CERTIFICATION AS A RESULT OF MAKING THESE CHANGES.
  */
 
+#if RTVISION_BOARD
 
 #include "platform_disp.h"
 #include "Hal_Utils.h"
@@ -134,4 +135,5 @@ float_t da(float_t i, int16_t degree)
     return (i - degree)* 32768 /360 ;
 }
 
+#endif
 #endif /* POLAR_UTIL */
