@@ -451,14 +451,22 @@ int FeatureDB::get_remain_map()
 /*******************************************************************************
  * Definitions
  *******************************************************************************/
+#define SDRAM_DB 0
 
 #ifdef TEST_DB
+#undef SDRAM_DB
+#define SDRAM_DB 1
 #define FLASH_SECTOR_SIZE 0x1000
 #endif
 /*******************************************************************************
  * Variables
  *******************************************************************************/
-static FeatureData s_FeatureData;
+static FeatureMap s_FeatureMap;
+
+
+#if SDRAM_DB
+static FeatureItem s_FeatureItem[FEATUREDATA_MAX_COUNT];
+#endif
 
 /*******************************************************************************
  * Code
@@ -483,111 +491,85 @@ FeatureDB::~FeatureDB()
 
 int FeatureDB::load_feature()
 {
-    int ret;
-    int index    = 0;
 #ifdef TEST_DB
-#define FLASH_SECTOR_SIZE 0x1000
     // copy the map
-    memcpy(&s_FeatureData.map, test_db_bin, sizeof(s_FeatureData.map));
+    memcpy(&s_FeatureMap, test_db_bin, sizeof(s_FeatureMap));
     // copy the items
-    memcpy(&s_FeatureData.item, test_db_bin + FLASH_SECTOR_SIZE, sizeof(s_FeatureData.item));
+    memcpy(s_FeatureItem, test_db_bin + FLASH_SECTOR_SIZE, sizeof(s_FeatureItem));
+#else
+    memset(&s_FeatureMap, FEATUREDATA_MAGIC_UNUSE, sizeof(s_FeatureMap));
+    Flash_FacerecFsReadMapMagic(&s_FeatureMap);
+#if SDRAM_DB
+    memset(s_FeatureItem, FEATUREDATA_MAGIC_UNUSE, sizeof(s_FeatureItem));
+    for (int i = 0; i < FEATUREDATA_MAX_COUNT; i++)
+    {
+        Flash_FacerecFsReadItem(i, &s_FeatureItem[i]);
+    }
 #endif
-
-    memset(&s_FeatureData, FEATUREDATA_MAGIC_UNUSE, sizeof(FeatureData));
-
-    Flash_FacerecFsReadMapMagic(&s_FeatureData.map);
-
-    int item_max = FEATUREDATA_MAX_COUNT;
-
-    // find valid item
-    for (int i = 0; i < item_max; i++)
-    {
-        if (s_FeatureData.map.magic[i] == FEATUREDATA_MAGIC_VALID)
-        {
-            ret = Flash_FacerecFsReadItem(i, &s_FeatureData.item[index++]);
-            if (ret != FLASH_OK)
-                return ret;
-        }
-    }
-
-    PRINTF("%d valid data.", index);
-
-#if 0
-    PRINTF("\r\nRTFS List--------------------------------------------------------");
-    PRINTF("\r\nValid -> ");
-    for (int i = 0; i < item_max; i++)
-    {
-        if (s_FeatureData.map.magic[i] == FEATUREDATA_MAGIC_VALID)
-        {
-            PRINTF("%d,", i);
-        }
-    }
-
-    PRINTF("\r\nUnuse -> ");
-    for (int i = 0; i < item_max; i++)
-    {
-        if (s_FeatureData.map.magic[i] == FEATUREDATA_MAGIC_UNUSE)
-        {
-            PRINTF("%d,", i);
-        }
-    }
-
-    PRINTF("\r\nDelet -> ");
-    for (int i = 0; i < item_max; i++)
-    {
-        if (s_FeatureData.map.magic[i] == FEATUREDATA_MAGIC_DELET)
-        {
-            PRINTF("%d,", i);
-        }
-    }
-    PRINTF("\r\n-----------------------------------------------------------------\r\n");
 #endif
-
-    return index;
+    return 0;
 }
 
 int FeatureDB::reassign_feature()
 {
-    int size     = 0;
+    int unuse_size     = 0;
+    int valid_size     = 0;
+    int delet_size     = 0;
+    int other_size     = 0;
     int item_max = FEATUREDATA_MAX_COUNT;
-    int count, reassign_index;
-    // flash occupy size.
+
     for (int i = 0; i < item_max; i++)
     {
-        if (s_FeatureData.map.magic[i] != FEATUREDATA_MAGIC_UNUSE)
+        if (s_FeatureMap.magic[i] == FEATUREDATA_MAGIC_UNUSE)
         {
-            size++;
+            unuse_size++;
+        }
+        else if (s_FeatureMap.magic[i] == FEATUREDATA_MAGIC_VALID)
+        {
+            valid_size++;
+        }
+        else if (s_FeatureMap.magic[i] == FEATUREDATA_MAGIC_DELET)
+        {
+            delet_size++;
+        }
+        else
+        {
+            other_size++;
         }
     }
 
-    if (size < item_max / 2)
+    if (other_size > 0)
     {
+        Flash_FacerecFsEraseAllBlock();
+        LOGD("Flash is not clear, need to erase flash first!\r\n");
         return 0;
     }
 
-    Flash_FacerecFsEraseMapBlock();
-
-    Flash_FacerecFsEraseItemBlock();
-
-    count = feature_count();
-    memset(&s_FeatureData.map, FEATUREDATA_MAGIC_UNUSE, sizeof(s_FeatureData.map));
-    reassign_index = 0;
-
-    for (int i = 0; i < FEATUREDATA_MAX_COUNT; i++)
+    if (unuse_size > 0)
     {
-        if (reassign_index >= count)
-        {
-            break;
-        }
+        LOGD("space is enough, no need to reassign_feature!\r\n");
+        return 0;
+    }
 
-        if (s_FeatureData.item[i].magic == FEATUREDATA_MAGIC_VALID)
-        {
-            s_FeatureData.item[i].index = reassign_index;
-            Flash_FacerecFsUpdateItem(reassign_index, &s_FeatureData.item[i]);
+    if (delet_size == 0)
+    {
+        LOGD("no deleted db, no need to reassign_feature!\r\n");
+        return 0;
+    }
 
-            s_FeatureData.map.magic[reassign_index] = FEATUREDATA_MAGIC_VALID;
-            Flash_FacerecFsUpdateMapMagic(reassign_index, &s_FeatureData.map);
-            reassign_index++;
+    //remove the deleted db
+    for (int i = 0; i < item_max; i++)
+    {
+        if (s_FeatureMap.magic[i] == FEATUREDATA_MAGIC_DELET)
+        {
+            s_FeatureMap.magic[i] = FEATUREDATA_MAGIC_UNUSE;
+            FeatureItem item_t;
+            memset(&item_t, FEATUREDATA_MAGIC_UNUSE, sizeof(item_t));
+#if SDRAM_DB
+            memset(&s_FeatureItem[i], FEATUREDATA_MAGIC_UNUSE, sizeof(item_t));
+#endif
+            Flash_FacerecFsUpdateItem(i, &item_t, true);
+            Flash_FacerecFsUpdateMapMagic(i, &s_FeatureMap, true);
         }
     }
     return 0;
@@ -599,7 +581,7 @@ int FeatureDB::get_free_mapmagic()
     // find new map index
     for (int i = 0; i < item_max; i++)
     {
-        if (s_FeatureData.map.magic[i] == FEATUREDATA_MAGIC_UNUSE)
+        if (s_FeatureMap.magic[i] == FEATUREDATA_MAGIC_UNUSE)
             return i;
     }
 
@@ -614,7 +596,7 @@ int FeatureDB::get_remain_map()
     // find new map index
     for (int i = 0; i < item_max; i++)
     {
-        if (s_FeatureData.map.magic[i] == FEATUREDATA_MAGIC_UNUSE)
+        if (s_FeatureMap.magic[i] == FEATUREDATA_MAGIC_UNUSE)
             remain_size++;
     }
 
@@ -623,80 +605,33 @@ int FeatureDB::get_remain_map()
 
 int FeatureDB::save_feature(int index)
 {
-    int old_map_index = s_FeatureData.item[index].index;
-
-    FeatureItem item_t;
-    Flash_FacerecFsReadItem(old_map_index, &item_t);
-
-    if (memcmp(&item_t, &s_FeatureData.item[old_map_index], sizeof(item_t)) == 0)
-    {
-        return 0;
-    }
-
-    // find new map index
-    int new_map_index = get_free_mapmagic();
-
-    if (old_map_index != -1)
-    {
-        // set old map magic to DELET
-        s_FeatureData.map.magic[old_map_index] = FEATUREDATA_MAGIC_DELET;
-        Flash_FacerecFsUpdateMapMagic(old_map_index, &s_FeatureData.map);
-
-        // set old item magic to DELET
-        Flash_FacerecFsUpdateItemMagic(old_map_index, FEATUREDATA_MAGIC_DELET);
-    }
-
-    // set new map magic to VALID
-    if (new_map_index == -1)
-        return -1;
-    s_FeatureData.map.magic[new_map_index] = FEATUREDATA_MAGIC_VALID;
-    Flash_FacerecFsUpdateMapMagic(new_map_index, &s_FeatureData.map);
-
-    // update new item
-    s_FeatureData.item[index].index = new_map_index;
-    Flash_FacerecFsUpdateItem(new_map_index, &s_FeatureData.item[index]);
-
-    PRINTF("[RTFS]: %d feature item&map saved.\r\n", index);
-
     return 0;
 }
 
 int FeatureDB::erase_feature(int index)
 {
-    int map_index = s_FeatureData.item[index].index;
-    // user is not in flash, do nothing and return with no error.
-    if (map_index == -1)
-    {
-        return 0;
-    }
-    // update index item magic to delet
-    Flash_FacerecFsUpdateItemMagic(map_index, FEATUREDATA_MAGIC_DELET);
-
-    // update index map magic to delet
-    s_FeatureData.map.magic[map_index] = FEATUREDATA_MAGIC_DELET;
-    Flash_FacerecFsUpdateMapMagic(map_index, &s_FeatureData.map);
-
-    PRINTF("[RTFS]: %d feature magic deleted.\r\n", index);
-
     return 0;
 }
 
 int FeatureDB::ren_name(const std::string oldname, const std::string newname)
 {
-    int index    = FEATUREDATA_MAX_COUNT;
-    int newIndex = FEATUREDATA_MAX_COUNT;
+    int ret;
+    int index = FEATUREDATA_MAX_COUNT;
+    FeatureItem item_t;
 
     for (int i = 0; i < FEATUREDATA_MAX_COUNT; i++)
     {
-        if (s_FeatureData.item[i].magic == FEATUREDATA_MAGIC_VALID)
+        if (s_FeatureMap.magic[i] == FEATUREDATA_MAGIC_VALID)
         {
-            if (!strcmp(oldname.c_str(), s_FeatureData.item[i].name))
+#if SDRAM_DB
+            memcpy(&item_t, &s_FeatureItem[i], sizeof(item_t));
+#else
+            Flash_FacerecFsReadItem(i,&item_t);
+#endif
+            if (!strcmp(oldname.c_str(), item_t.name))
             {
                 index = i;
-            }
-            if (!strcmp(newname.c_str(), s_FeatureData.item[i].name))
-            {
-                newIndex = i;
+                break;
             }
         }
     }
@@ -706,33 +641,35 @@ int FeatureDB::ren_name(const std::string oldname, const std::string newname)
         return -1;
     }
 
-    if (newIndex != FEATUREDATA_MAX_COUNT)
+    ret = del_feature(item_t.id, item_t.name);
+    if (ret == -1)
     {
-        // nothing to do if the name is the same
-        if (newIndex == index)
-        {
-            return 0;
-        }
-        // skip renaming if the newname already exists
-        return -2;
+        return ret;
     }
-    // rename the oldname entry
-    strcpy(s_FeatureData.item[index].name, newname.c_str());
-    return 0;
+    strcpy(item_t.name, newname.c_str());
+
+    ret = add_feature(item_t.id, item_t.name, item_t.feature);
+
+    return ret;
 }
 
 std::vector<std::string> FeatureDB::get_names()
 {
+    FeatureItem item_t;
     std::vector<std::string> names;
 
     for (int i = 0; i < FEATUREDATA_MAX_COUNT; i++)
     {
-        if (s_FeatureData.item[i].magic == FEATUREDATA_MAGIC_VALID)
+        if (s_FeatureMap.magic[i] == FEATUREDATA_MAGIC_VALID)
         {
-            names.push_back(std::string(s_FeatureData.item[i].name));
+#if SDRAM_DB
+            memcpy(&item_t, &s_FeatureItem[i], sizeof(item_t));
+#else
+            Flash_FacerecFsReadItem(i,&item_t);
+#endif
+            names.push_back(std::string(item_t.name));
         }
     }
-
     return names;
 }
 
@@ -742,7 +679,7 @@ int FeatureDB::feature_count()
 
     for (int i = 0; i < FEATUREDATA_MAX_COUNT; i++)
     {
-        if (s_FeatureData.item[i].magic == FEATUREDATA_MAGIC_VALID)
+        if (s_FeatureMap.magic[i] == FEATUREDATA_MAGIC_VALID)
         {
             count++;
         }
@@ -757,7 +694,7 @@ int FeatureDB::get_free(int &index)
 
     for (int i = 0; i < FEATUREDATA_MAX_COUNT; i++)
     {
-        if (s_FeatureData.item[i].magic == FEATUREDATA_MAGIC_UNUSE)
+        if (s_FeatureMap.magic[i] == FEATUREDATA_MAGIC_UNUSE)
         {
             index = i;
             break;
@@ -775,73 +712,72 @@ int FeatureDB::get_free(int &index)
 int FeatureDB::del_feature(uint16_t id, std::string name)
 {
     int index = FEATUREDATA_MAX_COUNT;
-
+    FeatureItem item_t;
+ 
     for (int i = 0; i < FEATUREDATA_MAX_COUNT; i++)
     {
-        if (s_FeatureData.item[i].magic == FEATUREDATA_MAGIC_VALID)
+        if (s_FeatureMap.magic[i] == FEATUREDATA_MAGIC_VALID)
         {
-            if ((s_FeatureData.item[i].id == id) && (!strcmp(name.c_str(), s_FeatureData.item[i].name)))
+#if SDRAM_DB
+            memcpy(&item_t, &s_FeatureItem[i], sizeof(item_t));
+#else
+            Flash_FacerecFsReadItem(i,&item_t);
+#endif
+            if ((item_t.id == id) && (!strcmp(name.c_str(), item_t.name)))
             {
                 index = i;
+                break;
             }
         }
     }
 
-    if (index != FEATUREDATA_MAX_COUNT)
-    {
-        if (0 == erase_feature(index))
-        {
-            memset(&s_FeatureData.item[index], 0xFF, sizeof(s_FeatureData.item[index]));
-        }
-
-        return 0;
-    }
-    else
-    {
+    if (index == FEATUREDATA_MAX_COUNT)
         return -1;
-    }
+
+    s_FeatureMap.magic[index] = FEATUREDATA_MAGIC_DELET;
+    Flash_FacerecFsUpdateMapMagic(index, &s_FeatureMap, false);
+    return 0;
 }
 
 int FeatureDB::del_feature(const std::string name)
 {
     int index = FEATUREDATA_MAX_COUNT;
+    FeatureItem item_t;
 
     for (int i = 0; i < FEATUREDATA_MAX_COUNT; i++)
     {
-        if (s_FeatureData.item[i].magic == FEATUREDATA_MAGIC_VALID)
+        if (s_FeatureMap.magic[i] == FEATUREDATA_MAGIC_VALID)
         {
-            if (!strcmp(name.c_str(), s_FeatureData.item[i].name))
+#if SDRAM_DB
+            memcpy(&item_t, &s_FeatureItem[i], sizeof(item_t));
+#else
+            Flash_FacerecFsReadItem(i,&item_t);
+#endif
+            if (!strcmp(name.c_str(), item_t.name))
             {
                 index = i;
+                break;
             }
         }
     }
 
-    if (index != FEATUREDATA_MAX_COUNT)
-    {
-        if (0 == erase_feature(index))
-        {
-            memset(&s_FeatureData.item[index], 0xFF, sizeof(s_FeatureData.item[index]));
-        }
 
-        return 0;
-    }
-    else
-    {
+    if (index == FEATUREDATA_MAX_COUNT)
         return -1;
-    }
+
+    s_FeatureMap.magic[index] = FEATUREDATA_MAGIC_DELET;
+    Flash_FacerecFsUpdateMapMagic(index, &s_FeatureMap, false);
+    return 0;
 }
 
 int FeatureDB::del_feature_all()
 {
     for (int i = 0; i < FEATUREDATA_MAX_COUNT; i++)
     {
-        if (s_FeatureData.item[i].magic == FEATUREDATA_MAGIC_VALID)
+        if (s_FeatureMap.magic[i] == FEATUREDATA_MAGIC_VALID)
         {
-            if (0 == erase_feature(i))
-            {
-                memset(&s_FeatureData.item[i], 0xFF, sizeof(s_FeatureData.item[i]));
-            }
+            s_FeatureMap.magic[i] = FEATUREDATA_MAGIC_DELET;
+            Flash_FacerecFsUpdateMapMagic(i, &s_FeatureMap, false);
         }
     }
 
@@ -850,206 +786,94 @@ int FeatureDB::del_feature_all()
 
 int FeatureDB::database_save(int count)
 {
-    int ret;
-
-    ret = feature_count();
-
-    if (count > ret)
-    {
-        count = ret;
-    }
-
-    if (count == 0)
-    {
-        return 0;
-    }
-
-    // find the save index position.
-    for (int i = 0; i < FEATUREDATA_MAX_COUNT; i++)
-    {
-        if (s_FeatureData.item[i].magic == FEATUREDATA_MAGIC_VALID)
-        {
-            // save item, read context to confirm if any different
-            FeatureItem item_t;
-            FeatureMap map_t;
-            int map_index = s_FeatureData.item[i].index;
-            Flash_FacerecFsReadItem(map_index, &item_t);
-
-            if (memcmp(&item_t, &s_FeatureData.item[i], sizeof(item_t)) != 0)
-            {
-                int old_map_index = s_FeatureData.item[i].index;
-
-                // find new map index
-                int new_map_index = get_free_mapmagic();
-
-                // flash database full
-                if (new_map_index == -1)
-                {
-                    reassign_feature();
-                    return 0;
-                }
-
-                if (old_map_index != -1)
-                {
-                    // set old map magic to DELET
-                    s_FeatureData.map.magic[old_map_index] = FEATUREDATA_MAGIC_DELET;
-                    Flash_FacerecFsUpdateMapMagic(old_map_index, &s_FeatureData.map);
-
-                    // set old item magic to DELET
-                    Flash_FacerecFsUpdateItemMagic(old_map_index, FEATUREDATA_MAGIC_DELET);
-                }
-
-                // set new map magic to VALID
-                s_FeatureData.map.magic[new_map_index] = FEATUREDATA_MAGIC_VALID;
-                Flash_FacerecFsUpdateMapMagic(new_map_index, &s_FeatureData.map);
-
-                // update new item
-                s_FeatureData.item[i].index = new_map_index;
-                Flash_FacerecFsUpdateItem(new_map_index, &s_FeatureData.item[i]);
-            }
-
-            // save map
-            Flash_FacerecFsReadMapMagic(&map_t);
-
-            if (memcmp(&map_t, &s_FeatureData.map, sizeof(map_t)) != 0)
-            {
-                ret = Flash_FacerecFsUpdateMapMagic(i, &s_FeatureData.map);
-                if (ret != 0)
-                    return ret;
-            }
-
-            PRINTF("[RTFS]: %d feature item&map saved.\r\n", i);
-
-            count--;
-            if (count == 0)
-                return 0;
-        }
-    }
-
     return 0;
 }
 
 int FeatureDB::add_feature(uint16_t id, const std::string name, float *feature)
 {
-    int index     = FEATUREDATA_MAX_COUNT;
-    int freeIndex = FEATUREDATA_MAX_COUNT;
-    int opIndex   = FEATUREDATA_MAX_COUNT;
+    reassign_feature();
 
-    for (int i = 0; i < FEATUREDATA_MAX_COUNT; i++)
+    int index = get_free_mapmagic();
+    if( index == -1)
     {
-        if (s_FeatureData.item[i].magic == FEATUREDATA_MAGIC_VALID)
-        {
-            if (id == s_FeatureData.item[i].id)
-            {
-                index = i;
-            }
-        }
-        else if (s_FeatureData.item[i].magic == FEATUREDATA_MAGIC_UNUSE)
-        {
-            if (freeIndex == FEATUREDATA_MAX_COUNT)
-            {
-                freeIndex = i;
-            }
-        }
+        LOGD("[ERROR]:Database space is full");
+        return -1;
     }
+    s_FeatureMap.magic[index] = FEATUREDATA_MAGIC_VALID;
 
-    // LOGD("[%d:%d]\r\n", index, freeIndex);
-    if (index != FEATUREDATA_MAX_COUNT)
-    {
-        // update
-        opIndex = index;
-    }
-    else if (freeIndex != FEATUREDATA_MAX_COUNT)
-    {
-        // add new
-        opIndex = freeIndex;
-    }
-
-    if (opIndex != FEATUREDATA_MAX_COUNT)
-    {
-        s_FeatureData.item[opIndex].magic = FEATUREDATA_MAGIC_VALID;
-        strcpy(s_FeatureData.item[opIndex].name, name.c_str());
-        s_FeatureData.item[opIndex].id = id;
-        memcpy(s_FeatureData.item[opIndex].feature, feature, OASISLT_getFaceItemSize());
-        if(this->auto_save)
-        {
-            save_feature(opIndex);
-        }
-        return opIndex;
-    }
-
-    LOGD("[ERROR]:Database out of space");
-    return -1;
+    FeatureItem item_t;
+    item_t.id = id;
+    item_t.index = index;
+    strcpy(item_t.name, name.c_str());
+    memcpy(item_t.feature, feature, OASISLT_getFaceItemSize());
+#if SDRAM_DB
+    memcpy(&s_FeatureItem[index], &item_t, sizeof(item_t));
+#endif
+    Flash_FacerecFsUpdateItem(index,&item_t, false);
+    Flash_FacerecFsUpdateMapMagic(index, &s_FeatureMap, false);
+    return 0;
 }
 
 int FeatureDB::update_feature(uint16_t id, const std::string name, float *feature)
 {
-    int index = FEATUREDATA_MAX_COUNT;
-
-    for (int i = 0; i < FEATUREDATA_MAX_COUNT; i++)
+    int ret;
+    ret = del_feature(id, name);
+    if (ret == -1)
     {
-        if (s_FeatureData.item[i].magic == FEATUREDATA_MAGIC_VALID)
-        {
-            if (id == s_FeatureData.item[i].id)
-            {
-                index = i;
-            }
-        }
+        return ret;
     }
-
-    if (index != FEATUREDATA_MAX_COUNT)
-    {
-        s_FeatureData.item[index].magic = FEATUREDATA_MAGIC_VALID;
-        s_FeatureData.item[index].id    = id;
-        memcpy(s_FeatureData.item[index].name, name.c_str(), min(name.size(), sizeof(s_FeatureData.item[index].name)));
-        s_FeatureData.item[index].name[sizeof(s_FeatureData.item[index].name) - 1] = 0;
-        memcpy(s_FeatureData.item[index].feature, feature, OASISLT_getFaceItemSize());
-        if(this->auto_save)
-        {
-            save_feature(index);
-        }
-        return 0;
-    }
-    else
-    {
-        return -1;
-    }
+    ret = add_feature(id, name, feature);
+    return ret;
 }
 
 int FeatureDB::get_feature(uint16_t id, float *feature)
 {
     int index = FEATUREDATA_MAX_COUNT;
+    FeatureItem item_t;
+
     for (int i = 0; i < FEATUREDATA_MAX_COUNT; i++)
     {
-        if (s_FeatureData.item[i].magic == FEATUREDATA_MAGIC_VALID)
+        if (s_FeatureMap.magic[i] == FEATUREDATA_MAGIC_VALID)
         {
-            if (id == s_FeatureData.item[i].id)
+#if SDRAM_DB
+            memcpy(&item_t, &s_FeatureItem[i], sizeof(item_t));
+#else
+            Flash_FacerecFsReadItem(i,&item_t);
+#endif
+            if (id == item_t.id)
             {
                 index = i;
+                memcpy(feature, item_t.feature,OASISLT_getFaceItemSize());
+                break;
             }
         }
     }
 
-    if (index != FEATUREDATA_MAX_COUNT)
+    if (index == FEATUREDATA_MAX_COUNT)
     {
-        memcpy(feature, s_FeatureData.item[index].feature, OASISLT_getFaceItemSize());
-        return 0;
+        return -1;
     }
     else
     {
-        memset(feature, 0x0, OASISLT_getFaceItemSize());
-        return -1;
+        return index;
     }
 }
 
 std::vector<uint16_t> FeatureDB::get_ids()
 {
+    FeatureItem item_t;
     std::vector<uint16_t> ids;
+
     for (int i = 0; i < FEATUREDATA_MAX_COUNT; i++)
     {
-        if (s_FeatureData.item[i].magic == FEATUREDATA_MAGIC_VALID)
+        if (s_FeatureMap.magic[i] == FEATUREDATA_MAGIC_VALID)
         {
-            ids.push_back(s_FeatureData.item[i].id);
+#if SDRAM_DB
+            memcpy(&item_t, &s_FeatureItem[i], sizeof(item_t));
+#else
+            Flash_FacerecFsReadItem(i,&item_t);
+#endif
+            ids.push_back(item_t.id);
         }
     }
     return ids;
@@ -1057,27 +881,35 @@ std::vector<uint16_t> FeatureDB::get_ids()
 
 int FeatureDB::get_name(uint16_t id, std::string &name)
 {
+    FeatureItem item_t;
     int index = FEATUREDATA_MAX_COUNT;
+
     for (int i = 0; i < FEATUREDATA_MAX_COUNT; i++)
     {
-        if (s_FeatureData.item[i].magic == FEATUREDATA_MAGIC_VALID)
+        if (s_FeatureMap.magic[i] == FEATUREDATA_MAGIC_VALID)
         {
-            if (id == s_FeatureData.item[i].id)
+#if SDRAM_DB
+            memcpy(&item_t, &s_FeatureItem[i], sizeof(item_t));
+#else
+            Flash_FacerecFsReadItem(i,&item_t);
+#endif
+            if (id == item_t.id)
             {
                 index = i;
+                name = std::string(item_t.name);
+                break;
             }
         }
     }
 
-    if (index != FEATUREDATA_MAX_COUNT)
-    {
-        name = std::string(s_FeatureData.item[index].name);
-        return 0;
-    }
-    else
+    if (index == FEATUREDATA_MAX_COUNT)
     {
         name.clear();
         return -1;
+    }
+    else
+    {
+        return index;
     }
 }
 

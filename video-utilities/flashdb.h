@@ -25,9 +25,8 @@ uint32_t Flash_FacerecFsEraseAllBlock(void);
 uint32_t Flash_FacerecFsEraseMapBlock(void);
 uint32_t Flash_FacerecFsEraseItemBlock(void);
 
-uint32_t Flash_FacerecFsUpdateMapMagic(int index, FeatureMap *pMap);
-uint32_t Flash_FacerecFsUpdateItemMagic(int index, uint8_t flag);
-uint32_t Flash_FacerecFsUpdateItem(int index, FeatureItem *pItem);
+uint32_t Flash_FacerecFsUpdateMapMagic(int index, FeatureMap *pMap, bool needErase);
+uint32_t Flash_FacerecFsUpdateItem(int index, FeatureItem *pItem, bool needErase);
 
 uint32_t Flash_FacerecFsReadMapMagic(FeatureMap *pMap);
 uint32_t Flash_FacerecFsReadItem(int index, FeatureItem *pItem);

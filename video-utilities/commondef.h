@@ -280,6 +280,8 @@ typedef struct
 #define FEATURE_BORDER_ROUTER 0
 
 /* Flash Database related */
+#define FEATUREDATA_MAX_COUNT 100
+
 #define FLASH_OK  0
 #define FLASH_ERR 1
 
@@ -289,35 +291,27 @@ typedef struct
 #define FLASH_NPAGE_PER_SECTOR     (FLASH_SECTOR_SIZE / FACEREC_FS_FLASH_PAGE_SIZE)
 
 #if FLASH_TYPE == HYPER_FLASH
-/* use second half of the flash */
-#define FACEREC_FS_FIRST_SECTOR (((FACEREC_FS_FLASH_SIZE) * (1024) / (FLASH_SECTOR_SIZE)) * 1 / 4) // 0x60800000
-#define FACEREC_FS_SECTORS      (((FACEREC_FS_FLASH_SIZE) * (1024) / (FLASH_SECTOR_SIZE)) - FACEREC_FS_FIRST_SECTOR)
-#define FEATUREDATA_FLASH_PAGE_SIZE FACEREC_FS_FLASH_PAGE_SIZE
-#define FACEREC_FS_MAP_ADDR  (FACEREC_FS_FIRST_SECTOR * FLASH_SECTOR_SIZE)
-#define FACEREC_FS_ITEM_ADDR (FACEREC_FS_MAP_ADDR + FLASH_SECTOR_SIZE)
+#define FACEREC_FS_MAP_ADDR  (0x800000U)
 #else
-#define FACEREC_FS_MAP_ADDR      0x820000 //0x60420000 -> 0x60820000
-#define FACEREC_FS_ITEM_ADDR     (FACEREC_FS_MAP_ADDR + FLASH_SECTOR_SIZE)
-#define FACEREC_FS_FIRST_SECTOR ((FACEREC_FS_MAP_ADDR) / (FLASH_SECTOR_SIZE))
-//#define FACEREC_FS_SECTORS ((FEATUREDATA_MAX_COUNT * 2*1024) / (FLASH_SECTOR_SIZE))
-#define FACEREC_FS_SECTORS ((FEATUREDATA_MAX_COUNT * 1024) / (FLASH_SECTOR_SIZE))
-#define FEATUREDATA_FLASH_PAGE_SIZE FACEREC_FS_FLASH_PAGE_SIZE
+#define FACEREC_FS_MAP_ADDR  (0x820000U) //0x60420000 -> 0x60820000
 #endif
+
+#define FACEREC_FS_ITEM_ADDR  (FACEREC_FS_MAP_ADDR + FLASH_SECTOR_SIZE)
+#define FACEREC_FS_FIRST_SECTOR ((FACEREC_FS_MAP_ADDR) / (FLASH_SECTOR_SIZE))
+#define FACEREC_FS_SECTORS (((FEATUREDATA_MAX_COUNT * 1024)+ (FLASH_SECTOR_SIZE -1)) / (FLASH_SECTOR_SIZE))
+#define FEATUREDATA_FLASH_PAGE_SIZE FACEREC_FS_FLASH_PAGE_SIZE
 
 #define FEATUREDATA_MAGIC_UNUSE 0xFF
 #define FEATUREDATA_MAGIC_VALID 0x79
 #define FEATUREDATA_MAGIC_DELET 0x00
 
-#define FEATUREDATA_MAX_COUNT 100
-
 #define FEATUREDATA_NAME_MAX_LEN 31
-
 #define FEATUREDATA_FEATURE_SIZE (OASISLT_getFaceItemSize() / sizeof(float))
 
 /********************************************************
  * item        |  address   |  size/sector |
- * FeatureMap  | 0x61800000 |      1       |
- * FeatureItem | 0x61840000 |      1       |
+ * FeatureMap  | 0x60800000 |      1       |
+ * FeatureItem | 0x60840000 |      1       |
  */
 /********************************************************
  * item        |  address   |  size/sector | for RT106F_ELOCK_BOARD
@@ -341,10 +335,8 @@ typedef union
         float feature[0];
     };
 #if FLASH_TYPE == HYPER_FLASH
-    //unsigned char raw[FEATUREDATA_FLASH_PAGE_SIZE * 4];
     unsigned char raw[FEATUREDATA_FLASH_PAGE_SIZE * 2];
 #else
-    //unsigned char raw[FEATUREDATA_FLASH_PAGE_SIZE * 8];
     unsigned char raw[FEATUREDATA_FLASH_PAGE_SIZE * 4];
 #endif
 } FeatureItem; // 1kB
