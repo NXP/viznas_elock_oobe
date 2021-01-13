@@ -54,5 +54,6 @@ int DB_GetIDs(std::vector<uint16_t> &ids);
 int DB_GetName(uint16_t id, std::string &names);
 int DB_GenID(uint16_t *id);
 int DB_SetAutoSave(bool auto_save);
+int DB_GetID_FeaturePointers(uint16_t* ids,void**pFeatures,int num);
 
 #endif /*_DATA_BASE_H_*/

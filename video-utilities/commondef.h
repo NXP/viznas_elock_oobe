@@ -318,6 +318,20 @@ typedef struct
  * FeatureMap  | 0x60820000 |      1      |
  * FeatureItem | 0x60821000~0x6083A000 |       25      |
  */
+typedef struct
+{
+    /*put char/unsigned char together to avoid padding*/
+    unsigned char magic;
+    char name[FEATUREDATA_NAME_MAX_LEN];
+    int index;
+    // this id identify a feature uniquely,we should use it as a handler for feature add/del/update/rename
+    uint16_t id;
+    uint16_t pad;
+    /*put feature in the last so, we can take it as dynamic, size limitation:
+     * (FEATUREDATA_FLASH_PAGE_SIZE * 2 - 1 - FEATUREDATA_NAME_MAX_LEN - 4 - 4)/4*/
+    float feature[0];
+} FeatureItemHeader;
+
 
 typedef union
 {
@@ -351,11 +365,6 @@ typedef union
                       * FEATUREDATA_FLASH_PAGE_SIZE];
 } FeatureMap;
 
-typedef struct
-{
-    FeatureMap map;
-    FeatureItem item[FEATUREDATA_MAX_COUNT];
-} FeatureData;
 
 // emotion recognition and front face deteciton related
 #define EMOTION_RECOG_INPUT_W 64

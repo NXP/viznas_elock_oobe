@@ -56,8 +56,6 @@ struct TimeStat
 
 } gTimeStat;
 
-const char *gEmoString[OASIS_EMO_ID_INVALID] = {"anger", // OASIS_EMO_ID_ANGER
-                                                "disgust", "fear", "happy", "sad", "surprised", "neutral"};
 
 /*******************************************************************************
  * Prototypes
@@ -69,9 +67,9 @@ static void clearFaceInfo(face_info_t *face_info);
 static void clearFaceInfoMsg(QUIInfoMsg *info);
 static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t *para, void *user_data);
 // static void EvtHandler2(ImageFrame_t* frame,OASISLTEvt_t evt,OASISLTCbPara_t* para,void* user_data);
-static int GetRegisteredFacesHandler(int idx, uint16_t *face_ids, void *faces, unsigned int *size);
-static int AddNewFaceHandler(uint16_t *face_id, void *face);
-static int UpdateFaceHandler(uint16_t face_id, void *face);
+static int GetRegisteredFacesHandler(uint16_t *face_ids, void **faces, unsigned int *size);
+static int AddNewFaceHandler(uint16_t *face_id, void *face, void* snapshot, int snapshot_len);
+static int UpdateFaceHandler(uint16_t face_id, void *face, void* snapshot_data, int length, int offset);
 static int Oasis_Printf(const char *formatString);
 static int Oasis_Exit();
 static void Oasis_Task(void *param);
@@ -120,7 +118,7 @@ static void clearFaceInfoMsg(QUIInfoMsg *info)
     info->dt              = 0;
     info->rt              = 0;
     info->registeredFaces = featurenames.size();
-    info->emotion         = E_INVALID;
+    info->emotion         = 0;
     info->blur            = 0xFF;
     info->rgbLive         = 0xFF;
     info->front           = 0xFF;
@@ -220,13 +218,13 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
             pQMsg->msg.info.front   = para->reserved[1];
             pQMsg->msg.info.blur    = para->reserved[3];
             pQMsg->msg.info.rgbLive = para->reserved[8];
-            pQMsg->msg.info.irBrightness = para->reserved[11];
-            pQMsg->msg.info.rgbBrightness = para->reserved[13];
+//            pQMsg->msg.info.irBrightness = para->reserved[11];
+//            pQMsg->msg.info.rgbBrightness = para->reserved[13];
             Camera_GetPWM(LED_IR,&pQMsg->msg.info.irPwm);
             Camera_GetPWM(LED_WHITE,&pQMsg->msg.info.rgbPwm);
 
-            UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[irBrightness]:%d\r\n",pQMsg->msg.info.irBrightness);
-            UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[rgbBrightness]:%d\r\n",pQMsg->msg.info.rgbBrightness);
+//            UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[irBrightness]:%d\r\n",pQMsg->msg.info.irBrightness);
+//            UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[rgbBrightness]:%d\r\n",pQMsg->msg.info.rgbBrightness);
             if (para->qualityResult == OASIS_QUALITY_RESULT_FACE_OK)
             {
                 UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[EVT]:ok!\r\n");
@@ -329,23 +327,6 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
             VIZN_RecognizeEvent(gApiHandle, face_info);
         }
         break;
-        case OASISLT_EVT_EMO_REC_START:
-        {
-            timeState->emo_start = Time_Now();
-        }
-        break;
-        case OASISLT_EVT_EMO_REC_COMPLETE:
-        {
-            timeState->emo_comp = Time_Now();
-            UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[OASIS]:Emo rec complete:%d.\r\n", para->emoID);
-            // if (para->emo_conf > 50)
-            {
-                pQMsg->msg.info.emotion = para->emoID;
-                // here we use name as emoID and similar as emotion recognition confidence level just for display
-                // purpose memcpy(pQMsg->msg.info.name,gEmoString[para->emoID],strlen(gEmoString[para->emoID]) + 1);
-            }
-        }
-        break;
 
         case OASISLT_EVT_REG_START:
         {
@@ -384,10 +365,10 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
         }
         break;
         default:
-            assert(0);
+            break;
     }
 
-    if (evt == OASISLT_EVT_DET_COMPLETE || evt == OASISLT_EVT_REC_COMPLETE || evt == OASISLT_EVT_EMO_REC_COMPLETE ||
+    if (evt == OASISLT_EVT_DET_COMPLETE || evt == OASISLT_EVT_REC_COMPLETE ||
         evt == OASISLT_EVT_QUALITY_CHK_COMPLETE || evt == OASISLT_EVT_REG_COMPLETE)
     {
         pQMsg->msg.info.similar = para->reserved[0];
@@ -402,12 +383,8 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
     }
 }
 
-static int GetRegisteredFacesHandler(int idx, uint16_t *face_ids, void *faces, unsigned int *size)
+static int GetRegisteredFacesHandler(uint16_t *face_ids, void **faces, unsigned int *size)
 {
-    int face_item_size = OASISLT_getFaceItemSize();
-    std::vector<uint16_t> allIDs;
-    DB_GetIDs(allIDs);
-
     /*caller ask for the total records numbers*/
     if (*size == 0)
     {
@@ -417,36 +394,18 @@ static int GetRegisteredFacesHandler(int idx, uint16_t *face_ids, void *faces, u
         }
         else
         {
-            *size = allIDs.size();
+        	DB_Count((int*)size);
         }
 
         return 0;
     }
 
-    if (idx < 0 || (unsigned int)idx >= allIDs.size())
-    {
-        *size = 0;
-        return 0;
-    }
-    else
-    {
-        if (allIDs.size() <= *size + idx)
-        {
-            *size = allIDs.size() - idx;
-        }
+    DB_GetID_FeaturePointers(face_ids,faces,*size);
 
-        for (uint32_t i = 0; i < *size; i++)
-        {
-            // get idx+i item from DB
-            face_ids[i] = allIDs[idx + i];
-            DB_GetFeature(allIDs[idx + i], (float *)((intptr_t)faces + i * face_item_size));
-        }
-
-        return 0;
-    }
+    return 0;
 }
 
-static int AddNewFaceHandler(uint16_t *face_id, void *face)
+static int AddNewFaceHandler(uint16_t *face_id, void *face,void* snapshot, int snapshot_len)
 {
     vizn_api_status_t status;
 
@@ -463,7 +422,7 @@ static int AddNewFaceHandler(uint16_t *face_id, void *face)
     return 0;
 }
 
-static int UpdateFaceHandler(uint16_t face_id, void *face)
+static int UpdateFaceHandler(uint16_t face_id, void *face,void* snapshot_data, int length, int offset)
 {
     int ret;
     float *feature_data = (float *)face;
@@ -594,11 +553,6 @@ static void Oasis_Task(void *param)
     Camera_SendQMsg((void *)&sentQMsg);
 
     memset(&gTimeStat, 0, sizeof(gTimeStat));
-
-    if (init_p->enable_flags & OASIS_ENABLE_EMO)
-    {
-        run_flag = OASIS_DET_REC_EMO;
-    }
 
     VIZN_StartRecognition(NULL);
     while (1)
@@ -753,7 +707,7 @@ static int Oasis_SetModelClass(OASISLTModelClass_t *model_class)
 
 int Oasis_Start()
 {
-    uint8_t mode = Cfg_AppDataGetEmotionRecTypes();
+    //uint8_t mode = Cfg_AppDataGetEmotionRecTypes();
     s_appType    = Cfg_AppDataGetApplicationType();
     int ret      = 0;
 
@@ -783,41 +737,34 @@ int Oasis_Start()
     s_InitPara.cbs      = {EvtHandler,        GetRegisteredFacesHandler, AddNewFaceHandler,
                       UpdateFaceHandler, AdjustBrightnessHandler,   (void *)Oasis_Printf};
 
-    s_InitPara.enable_flags = OASIS_ENABLE_DET | OASIS_ENABLE_REC;
+    s_InitPara.enable_flags = 0;
     if (s_appType != APP_TYPE_USERID)
     {
         s_InitPara.enable_flags |= OASIS_ENABLE_MULTI_VIEW;
     }
-    //s_InitPara.enable_flags |= OASIS_ENABLE_BRIGHTNESS_FAIL_CHECK;
-	//s_InitPara.enable_flags |= OASIS_ENABLE_MASK_FACE_REC;
-    s_InitPara.emo_mode          = OASIS_EMOTION_MODE_INVALID;
     s_InitPara.false_accept_rate = OASIS_FAR_1_1000000;
     s_InitPara.enable_flags |= (Cfg_AppDataGetLivenessMode() == LIVENESS_MODE_ON) ? OASIS_ENABLE_LIVENESS : 0;
 
-    if (0 != mode)
-    {
-        s_InitPara.emo_mode = (OASISLTEmoMode_t)mode;
-        s_InitPara.enable_flags |= OASIS_ENABLE_EMO;
-    }
 
     s_InitPara.height = REC_RECT_HEIGHT;
     s_InitPara.width  = REC_RECT_WIDTH;
 
     ret = OASISLT_init(&s_InitPara);
 
-    if (ret > 0)
+    if (ret == OASIS_INIT_INVALID_MEMORYPOOL)
     {
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
-        if ((uint32_t)ret <= sizeof(s_OasisMemPool))
+        if (s_InitPara.size <= sizeof(s_OasisMemPool))
         {
             s_InitPara.mem_pool = (char *)s_OasisMemPool;
+            s_InitPara.size = sizeof(s_OasisMemPool);
         }
         else
         {
             s_InitPara.mem_pool = NULL;
         }
 #else
-        s_InitPara.mem_pool = (char *)pvPortMalloc(ret);
+        s_InitPara.mem_pool = (char *)pvPortMalloc(s_InitPara.size);
 #endif
 
         if (s_InitPara.mem_pool == NULL)
@@ -826,7 +773,6 @@ int Oasis_Start()
             while (1)
                 ;
         }
-        s_InitPara.size = ret;
         ret             = OASISLT_init(&s_InitPara);
     }
 

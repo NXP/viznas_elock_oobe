@@ -665,7 +665,7 @@ std::vector<std::string> FeatureDB::get_names()
 #if SDRAM_DB
             memcpy(&item_t, &s_FeatureItem[i], sizeof(item_t));
 #else
-            Flash_FacerecFsReadItem(i,&item_t);
+            Flash_FacerecFsReadItemHeader(i,&item_t);
 #endif
             names.push_back(std::string(item_t.name));
         }
@@ -859,6 +859,32 @@ int FeatureDB::get_feature(uint16_t id, float *feature)
     }
 }
 
+
+int FeatureDB::get_ID_featurePointers(uint16_t* ids, void**featureP, int num)
+{
+    int index = 0;
+    for (int i = 0; i < FEATUREDATA_MAX_COUNT; i++)
+    {
+    	if (index >= num)
+    	{
+    		break;
+    	}
+
+        if (s_FeatureMap.magic[i] == FEATUREDATA_MAGIC_VALID)
+        {
+#if SDRAM_DB
+            ids[index] = s_FeatureItem[i].id;
+            featureP[index] = s_FeatureItem[i].feature;
+#else
+            Flash_FacerecFsReadIDFeaturePointer(index,&ids[index],&featureP[index]);
+#endif
+            index++;
+        }
+    }
+
+    return 0;
+}
+
 std::vector<uint16_t> FeatureDB::get_ids()
 {
     FeatureItem item_t;
@@ -871,7 +897,7 @@ std::vector<uint16_t> FeatureDB::get_ids()
 #if SDRAM_DB
             memcpy(&item_t, &s_FeatureItem[i], sizeof(item_t));
 #else
-            Flash_FacerecFsReadItem(i,&item_t);
+            Flash_FacerecFsReadItemHeader(i,&item_t);
 #endif
             ids.push_back(item_t.id);
         }
@@ -891,7 +917,7 @@ int FeatureDB::get_name(uint16_t id, std::string &name)
 #if SDRAM_DB
             memcpy(&item_t, &s_FeatureItem[i], sizeof(item_t));
 #else
-            Flash_FacerecFsReadItem(i,&item_t);
+            Flash_FacerecFsReadItemHeader(i,&item_t);
 #endif
             if (id == item_t.id)
             {

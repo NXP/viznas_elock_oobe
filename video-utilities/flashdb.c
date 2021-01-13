@@ -76,10 +76,6 @@ uint32_t Flash_FacerecFsReadMapMagic(FeatureMap *pMap)
 {
     status_t status;
 
-    int size_page = (sizeof(FeatureMap) % FACEREC_FS_FLASH_PAGE_SIZE) ?
-                        (sizeof(FeatureMap) / FACEREC_FS_FLASH_PAGE_SIZE + 1) :
-                        (sizeof(FeatureMap) / FACEREC_FS_FLASH_PAGE_SIZE);
-
     status = SLN_Read_Flash_At_Address(FACEREC_FS_MAP_ADDR, (uint8_t *)pMap, sizeof(FeatureMap));
     if (status != FLASH_OK)
     {
@@ -122,15 +118,56 @@ uint32_t Flash_FacerecFsReadItem(int index, FeatureItem *pItem)
     return FLASH_OK;
 }
 
+uint32_t Flash_FacerecFsReadItemHeader(int index, FeatureItem *pItem)
+{
+    status_t status;
+    int offset = offsetof(FeatureItem,feature);
+    int size_page = (sizeof(FeatureItem) % FACEREC_FS_FLASH_PAGE_SIZE) ?
+                        (sizeof(FeatureItem) / FACEREC_FS_FLASH_PAGE_SIZE + 1) :
+                        (sizeof(FeatureItem) / FACEREC_FS_FLASH_PAGE_SIZE);
+    int offset_page = index * size_page;
+
+    status = SLN_Read_Flash_At_Address(FACEREC_FS_ITEM_ADDR + PAGE_ADDR(offset_page), (uint8_t *)pItem,
+    		offset);
+    if (status != FLASH_OK)
+    {
+        return FLASH_ERR;
+    }
+
+    return FLASH_OK;
+}
+
+
+uint32_t Flash_FacerecFsReadIDFeaturePointer(int index, uint16_t *id, void** featurePointer)
+{
+    status_t status;
+    int offset = offsetof(FeatureItem,id);
+    int size_page = (sizeof(FeatureItem) % FACEREC_FS_FLASH_PAGE_SIZE) ?
+                        (sizeof(FeatureItem) / FACEREC_FS_FLASH_PAGE_SIZE + 1) :
+                        (sizeof(FeatureItem) / FACEREC_FS_FLASH_PAGE_SIZE);
+    int offset_page = index * size_page;
+
+    status = SLN_Read_Flash_At_Address(FACEREC_FS_ITEM_ADDR + PAGE_ADDR(offset_page) + offset, (uint8_t *)id,
+    								sizeof(*id));
+    *featurePointer =
+    		(void*)SLN_Flash_Get_Read_Address(FACEREC_FS_ITEM_ADDR + PAGE_ADDR(offset_page) + offsetof(FeatureItem,feature));
+    if (status != FLASH_OK)
+    {
+        return FLASH_ERR;
+    }
+
+    return FLASH_OK;
+}
+
 uint32_t Flash_FacerecFsUpdateMapMagic(int index, FeatureMap *pMap, bool needErase)
 {
     status_t status;
-    int size_page = (sizeof(FeatureMap) % FACEREC_FS_FLASH_PAGE_SIZE) ?
-                    (sizeof(FeatureMap) / FACEREC_FS_FLASH_PAGE_SIZE + 1) :
-                    (sizeof(FeatureMap) / FACEREC_FS_FLASH_PAGE_SIZE);
-    int size_sector = (size_page % FLASH_NPAGE_PER_SECTOR) ?
-                    (size_page / FLASH_NPAGE_PER_SECTOR + 1) :
-                    (size_page / FLASH_NPAGE_PER_SECTOR);
+//    int size_page = (sizeof(FeatureMap) % FACEREC_FS_FLASH_PAGE_SIZE) ?
+//                    (sizeof(FeatureMap) / FACEREC_FS_FLASH_PAGE_SIZE + 1) :
+//                    (sizeof(FeatureMap) / FACEREC_FS_FLASH_PAGE_SIZE);
+//    int size_sector = (size_page % FLASH_NPAGE_PER_SECTOR) ?
+//                    (size_page / FLASH_NPAGE_PER_SECTOR + 1) :
+//                    (size_page / FLASH_NPAGE_PER_SECTOR);
     int offset_page = index / FACEREC_FS_FLASH_PAGE_SIZE;
     int offset_sector = offset_page / FLASH_NPAGE_PER_SECTOR;
 

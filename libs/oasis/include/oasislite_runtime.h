@@ -1,5 +1,5 @@
 /*
-* Copyright 2019-2020 NXP.
+* Copyright 2020 NXP.
 * This software is owned or controlled by NXP and may only be used strictly in accordance with the
 * license terms that accompany it. By expressly accepting such terms or by downloading, installing,
 * activating and/or otherwise using the software, you are agreeing that you have read, and that you
@@ -15,7 +15,7 @@
 
 
 #define VERSION_MAJOR 4
-#define VERSION_MINOR 20
+#define VERSION_MINOR 31
 /*this version number only used for hot fix on frozen release or branch*/
 #define VERSION_HOTFIX 0
 
@@ -26,56 +26,54 @@
 /*these macros are used in OASISLT_init, they can be combined to indicate
  * what functions should be enabled in OASIS LIB.*/
 enum {
-    OASIS_ENABLE_DET = 1U << 0,
-    OASIS_ENABLE_REC = 1U << 1,
-    OASIS_ENABLE_EMO = 1U << 2,
-    OASIS_ENABLE_LIVENESS = 1U << 3,
-    OASIS_ENABLE_MULTI_VIEW = 1U << 4,
-    OASIS_ENABLE_BRIGHTNESS_FAIL_CHECK = 1U << 5,
+    /*To control liveness is enable or not*/
+    OASIS_ENABLE_LIVENESS = 1U << 0,
+    /*This flag is used to enable/disable multi-view check in face registration*/
+    OASIS_ENABLE_MULTI_VIEW = 1U << 1,
+    /*This flag used for brightness check on face recognitions*/
+    OASIS_ENABLE_FACE_REC_BRIGHTNESS_CHECK = 1U << 2,
     /*This flag is only valid for library with mask face support*/
-    OASIS_ENABLE_MASK_FACE_REC = 1U << 6,
+    OASIS_ENABLE_MASK_FACE_REC = 1U << 3,
+    /*This flag decide whether face feature smart learning is enabled or not*/
+    OASIS_ENABLE_FACE_FEA_SMART_LEARNING = 1U << 4,
     OASIS_ENABLE_INVALID = 0xFF
 };
 
 
 #define OASIS_REG_MODE_SHIFT (5)
 typedef enum {
+    OASISLT_OK = 0,
+    OASIS_INIT_INVALID_PARAMETERS,
+    OASIS_INIT_INVALID_MODEL_CLASS,
+    OASIS_INIT_ALREADY_INIT,
+    OASIS_INIT_INVALID_FAR,
+    OASIS_INIT_INVALID_CB,
+    OASIS_INIT_MEMORYPOOL_SMALL,
+    OASIS_INIT_INVALID_MEMORYPOOL,
+    OASIS_INIT_INVALID_IMAGE_MIN_DIM,
+    OASIS_INIT_INVALID_MASK_BUF,
+	OASIS_INIT_INVALID_IMG_TYPE_FOR_MASK_FACE,
+    OASIS_INIT_MASK_REC_NOTSUPORTED,
+    OASIS_INIT_INVALID_IMAGE_TYPE,
+	OASISLT_SNAPSHOT_INVALID_INPUT_PARAMETERS,
+	OASISLT_SNAPSHOT_LIB_UNINIT,
+	OASISLT_SNAPSHOT_INVALID_FRAME_NUM,
+	OASISLT_SNAPSHOT_IMG_TYPE_NOT_SUPPORT,
+	OASISLT_SNAPSHOT_RESIZE_FAILED,
+
+} OASISLTResult_t;
+
+
+
+typedef enum {
     OASIS_DET_ONLY = 0,
     OASIS_DET_REC,
-    OASIS_DET_EMO,
-    OASIS_DET_REC_EMO,
     OASIS_RUN_FLAG_NUM,
 
     //reg mode can be ored with OASIS_DET_REC,OASIS_DET_REC_EMO flags if needed
     OASIS_REG_MODE = 1 << OASIS_REG_MODE_SHIFT,
     OASIS_INVALID_RUN_FLAG = 0xFF
 } OASISRunFlag_t;
-
-
-/*this enum is used to indicate emotion recognition model mode.
- * 2 means two emotions recognition model:happy and neutral
- * 4 means four emotions recognition model:happy,anger,surprise and neutral
- * 7 means all 7 emotions recognition model: see OASISLTEmoID_t definition.*/
-typedef enum {
-    OASIS_EMOTION_MODE_2 = 2,
-    OASIS_EMOTION_MODE_4 = 4,
-    OASIS_EMOTION_MODE_7 = 7,
-    OASIS_EMOTION_MODE_INVALID = 0xFF
-
-} OASISLTEmoMode_t;
-
-typedef enum {
-    OASIS_EMO_ID_ANGER,
-    OASIS_EMO_ID_DISGUST,
-    OASIS_EMO_ID_FEAR,
-    OASIS_EMO_ID_HAPPY,
-    OASIS_EMO_ID_SAD,
-    OASIS_EMO_ID_SURPRISED,
-    OASIS_EMO_ID_NEUTRAL,
-    OASIS_EMO_ID_NUM,
-    OASIS_EMO_ID_INVALID = 0xFF
-
-} OASISLTEmoID_t;
 
 
 typedef enum {
@@ -104,6 +102,7 @@ typedef enum {
     OASIS_QUALITY_RESULT_FACE_BLUR,
     OASIS_QUALITY_RESULT_FAIL_LIVENESS_IR,
     OASIS_QUALITY_RESULT_FAIL_LIVENESS_RGB,
+	OASIS_QUALITY_RESULT_FAIL_LIVENESS_3D,
     OASIS_QUALITY_RESULT_FAIL_BRIGHTNESS_DARK,
     OASIS_QUALITY_RESULT_FAIL_BRIGHTNESS_OVEREXPOSURE,
     OASIS_QUALITY_RESULT_INVALID = 0xFF
@@ -204,7 +203,6 @@ typedef struct {
     FBox* faceBoxIR; //face rect and landmark on IR image
     FBox* faceBoxRGB; //face rect and landmark on RGB image
     uint16_t faceID;//only valid when a face recognized or registered
-    OASISLTEmoID_t emoID; //valid only for emotion recognition callback
     OASISLTRegisterRes_t regResult; // only valid for registration
     OASISLTRecognizeRes_t recResult;//only valid for face recognition
     OASISLTFaceQualityRes_t qualityResult;//only valid for face quality check event.
@@ -216,7 +214,7 @@ typedef struct {
 
 typedef enum {
     /*indicate the start of face detection, user can update frame data if it is needed.
-     * all parameter in callback parameter is invalid.*/
+    * all parameter in callback parameter is invalid.*/
     OASISLT_EVT_DET_START,
 
     /*The end of face detection.
@@ -250,12 +248,6 @@ typedef enum {
      * if no face match, a invalid(INVALID_FACE_ID) will be set.*/
     OASISLT_EVT_REC_COMPLETE,
 
-    /*start of emotion recognition*/
-    OASISLT_EVT_EMO_REC_START,
-
-    /*End of emotion recognition, emoID indicate which emotion current face is.*/
-    OASISLT_EVT_EMO_REC_COMPLETE,
-
     /*if user set a registration flag in a call of OASISLT_run and a face is detected, this two events will be notified
      * for auto registration mode, only new face(not recognized) is added(call AddNewFace callback function)
      * for manu registration mode, face will be added forcely.
@@ -280,28 +272,38 @@ typedef void (*OASISLTEvtCb)(ImageFrame_t* frames[OASISLT_INT_FRAME_IDX_LAST], O
 
 
 /*OASIS LITE would use this fun to  get all registered face array.
- * start_idx[input] indicate the start index of the face record OASIS LIB is trying to get.
- * for example, if there are N face records in database, their indexes are 0 to N-1
- * face_id[output]: buffer used to save face ID array returned. it should align with records in "faces".
- * faces[output]: buffer used to save face records data,this buffer size is *face_num*OASISLT_getFaceItemSize()
- * face_num[input/output]: as input, it indicates the number of unit in "face_id" and "faces"
- * as output, it indicates how many faces returned actually.
- * specially, as input when *frame_num is 0, actual face record number should be set in *face_num before return.
- * in this case, "face_id" and 'faces' can be NULL.
+ * face_id[output]: buffer used to save face ID array returned. This buffer size is sizeof(*face_id)*face_num
+ * pfaces[output]: buffer used to save pointer array, each pointer point to a face records data
+ * this buffer size is *face_num*4
+ * face_num[input/output]: as input, it indicates the number "face_id" and "pFaces"
+ * as output, it indicates how many items in face_id array and pfaces returned actually.
+ * specially, if *face_num is 0, actual face record number should be set in *face_num before return.
+ * in this case, no "face_id" and 'pFaces' be returned.
  * return 0 if call succeed, otherwise failed.
- * in order to enumerate all registered faces in the system, this function may be called multi times
  *  */
-typedef int (*GetRegisteredFaces)(int start_idx, uint16_t* face_id, void* faces, unsigned int* face_num);
+typedef int (*GetRegisteredFaces)(uint16_t* face_id, void** pFaces, unsigned int* face_num);
 
-/*in register mode, OASIS LITE would call this function to add new/delete/update face
- *face_data: pointer to the faces' data, the data length of each face can get by OASISLT_getFaceItemSize()
- *face_id: output parameter,this id identified this face data uniquely, it should be generated by outside DB.
- *         it can be used in following delete/update face operation
+/*in register mode, OASIS LITE would call this function to add new face data to database.
+ *face_data:[input]pointer to the faces data, the data length can be get by OASISLT_getFaceItemSize()
+ *face_id: [output]this id identifies this face uniquely, it should be generated by the caller and
+           return back to library.it is used in following face update/recognition procedure.
+ *snapshot:[input]snapshot data corresponding to this face. it can be saved for face feature generating
+           purpose. if caller don't need it,ignore it.
+ *snapshot_length:[input]snapshot data length.
  *return 0 if succeed; otherwise failed*/
-typedef int (*FaceOperationAdd)(uint16_t* face_id, void* face_data);
+typedef int (*FaceOperationAdd)(uint16_t* face_id, void* face_data, void* snapshot, int snapshot_length);
 
-
-typedef int (*FaceOperationUpdate)(uint16_t face_id, void* face_data);
+/*When library beleives a face data/snapshot need to be update during face recognition procedure,
+this function will be called to update corresponding data in database.
+*face_id:[input] which face data should be update.
+*face_data:[input] new face data which should replace original face data in whole.
+*snapshot_data:[input] new data which should be replace orignal snapshot.
+*data_length:[input] snapshot data length.
+*offset:[input] in most cases, not whole snapshot need update, offset indicate start position of
+        snapshot where snapshot_data should be writen.
+*/
+typedef int (*FaceOperationUpdate)(uint16_t face_id, void* face_data, void* snapshot_data, int data_length, 
+int offset);
 
 /*Using for print out ANSI string in self test API*/
 typedef void (*StringPrint)(const char* str);
@@ -314,11 +316,22 @@ typedef uint32_t (*GetSystemCurrentMS)(void);
   * direction: 1: up 0: down*/
 typedef void (*FaceBrightnessAdjust)(uint8_t frame_idx, uint8_t direction);
 
+
 typedef struct {
+    /*This callback function is called when any event start/complete inside library.
+     * It can be NULL if caller does not care about any event.*/
     OASISLTEvtCb EvtCb;
+    /*By this function, library can get how many face are registered or get a part of registered face items.
+     * It can not be NULL.*/
     GetRegisteredFaces GetFaces;
+    /*By this function, library can save a face item record to somewhere( it depend on caller, can be ram/disk)
+     * If is NULL, no face item should be saved.*/
     FaceOperationAdd AddFace;
+
+    /*By this function,library can update a face item. if is NULL, no update will be done.*/
     FaceOperationUpdate UpdateFace;
+
+    /*By this function, caller can know RGB and IR image's brightness according input parameters */
     FaceBrightnessAdjust AdjustBrightness;
 
     //internal debugging use only
@@ -353,9 +366,6 @@ typedef struct {
     /*what functions should be enabled in OASIS LIB*/
     uint8_t enable_flags;
 
-    /*only valid when OASIS_ENABLE_EMO is activated*/
-    OASISLTEmoMode_t emo_mode;
-
     /*false accept rate*/
     OASISLTFar_t false_accept_rate;
 
@@ -372,19 +382,15 @@ extern "C" {
 /* Initialize OASIS LITE lib, it should be called before any other APIs.
  * para: initializing parameter. refer to OASISLTInitPara_t for detail information.
  * */
-int OASISLT_init(OASISLTInitPara_t* para);
-int OASISLT_uninit(void);
+OASISLTResult_t OASISLT_init(OASISLTInitPara_t* para);
+OASISLTResult_t OASISLT_uninit(void);
 
-/*return version information of OASIS LITE library*/
-void OASISLT_getVersion(int* major, int* minor, int* hotFix);
+/*return version information string of OASIS LITE library, please note that:
+ * string buffer size input should not less than 64 bytes
+ * verStrBuf: buffer used to save version string.
+ * length: verStrBuf lenght, unit: byte, it should not less than 64*/
+void OASISLT_getVersion(char* verStrBuf, int length);
 
-/* Run face detection/recognition/emotion recognition/registration according given run flags.
- * event callback function will be called when each of job complete.
- * min_face: minimum face size for current frame face detection.
- * userData: user data for callback functions.
- * */
-int OASISLT_run(ImageFrame_t* frame, uint8_t flag, int minFace, void* userData);
-int OASISLT_run2D(ImageFrame_t* irFrame, ImageFrame_t* rgbFrame, uint8_t flag, int minFace, void* userData);
 
 /*this API can be used to replace OASISLT_run and OASISLT_run2D API with a more flexiable input parameters.
  * user can input RGB/IR/3D frame with different combinations according image types in intializing.
@@ -394,6 +400,7 @@ int OASISLT_run_extend(ImageFrame_t* frames[OASISLT_INT_FRAME_IDX_LAST], uint8_t
 
 enum {
     OASISLT_RUN_IDENTIFY_RESULT_OK,
+    OASISLT_RUN_IDENTIFY_RESULT_NO_FACE_ON_BOTH,
     OASISLT_RUN_IDENTIFY_RESULT_NO_FACE_ON_INPUT,
     OASISLT_RUN_IDENTIFY_RESULT_NO_FACE_ON_TARGET,
     OASISLT_RUN_IDENTIFY_RESULT_PARAM_ERROR,
@@ -405,6 +412,16 @@ enum {
  * OASIS_IMG_FORMAT_RGB888 and OASIS_IMG_FORMAT_BGR888 are supported*/
 int OASISLT_run_identification(ImageFrame_t* input, ImageFrame_t* target, float* sim);
 
+
+/*Used to extract face data(features) from a snapshot.
+ * snapshot:[input] point to snapshot packet.
+ * snapshot_length:[input] length of snapshot packet in bytes.
+ * face_data:[output] point to a buffer which is used for saving of face data extracted. The length of
+ * this buffer should not less than OASISLT_getFaceItemSize().
+ * OASIS_IMG_FORMAT_RGB888 and OASIS_IMG_FORMAT_BGR888 are supported*/
+OASISLTResult_t OASISLT_snapshot2feature(const void* snapshot, int snapshot_lenght,void* face_data);
+
+
 /*return minimum free memory size since OASISLT initialization.
  **/
 unsigned int OASISHeapGetMinimumEverFreeHeapSize(void);
@@ -414,7 +431,8 @@ uint32_t OASISLT_getFaceItemSize(void);
 
 
 /*OASIS LITE runtime library self test. Internal use only*/
-int OASISLT_selftest(void* mempool,int size,StringPrint print,GetSystemCurrentMS getMS);
+int OASISLT_selftest(void* mempool, int size, StringPrint print, GetSystemCurrentMS getMS);
+
 
 #ifdef __cplusplus
 }

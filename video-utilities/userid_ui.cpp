@@ -501,16 +501,16 @@ static void UIInfo_UpdateNameConf(uint16_t *pBufferAddr, std::string name, int x
 
 static void UIInfo_UpdateEmotion(uint16_t *pBufferAddr, uint8_t emotion, int x1, int x2, int y1, int y2, int dim)
 {
-    char tstring[64];
-    if (pBufferAddr == NULL)
-        return;
-    // show the emotion info
-    if (emotion >= E_ANGER && emotion <= E_SURPRISED)
-    {
-        sprintf(tstring, emotion_str[emotion]);
-        draw_text(tstring, x2 - dim - get_stringwidth(tstring, OPENSANS8), y1 + dim, RGB565_BLACK, s_Color, OPENSANS8,
-                  pBufferAddr);
-    }
+//    char tstring[64];
+//    if (pBufferAddr == NULL)
+//        return;
+//    // show the emotion info
+//    if (emotion >= E_ANGER && emotion <= E_SURPRISED)
+//    {
+//        sprintf(tstring, emotion_str[emotion]);
+//        draw_text(tstring, x2 - dim - get_stringwidth(tstring, OPENSANS8), y1 + dim, RGB565_BLACK, s_Color, OPENSANS8,
+//                  pBufferAddr);
+//    }
 }
 
 static void UIInfo_Userid(uint16_t *pBufferAddr, QUIInfoMsg infoMsg, uint8_t p_DisplayInterfaceMode)

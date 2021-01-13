@@ -30,6 +30,8 @@ uint32_t Flash_FacerecFsUpdateItem(int index, FeatureItem *pItem, bool needErase
 
 uint32_t Flash_FacerecFsReadMapMagic(FeatureMap *pMap);
 uint32_t Flash_FacerecFsReadItem(int index, FeatureItem *pItem);
+uint32_t Flash_FacerecFsReadItemHeader(int index, FeatureItem *pItem);
+uint32_t Flash_FacerecFsReadIDFeaturePointer(int index, uint16_t *id, void** featurePointer);
 
 #ifdef __cplusplus
 }

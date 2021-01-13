@@ -767,54 +767,8 @@ void UsbShell_CmdProcess_Task(void *arg)
         }
         else if (queueMsg.shellCommand == SHELL_EV_FFI_CLI_EMOTION_TYPES)
         {
-            uint8_t eType;
+            SHELL_Printf(shellContextHandle, "This command is not supported anymore\r\n");
 
-            /* Get the current emotion recognition type */
-            VIZN_GetEmotionTypes(&VIZN_API_CLIENT(Shell), &eType);
-
-            if (queueMsg.argc == 2)
-            {
-                /* set the emotion types */
-                uint8_t eTypeToSet = atoi(queueMsg.argv[1]);
-                if (eType == eTypeToSet)
-                {
-                    SHELL_Printf(shellContextHandle, "Emotion recognition already set to %d\r\n", eType);
-                    SHELL_Printf(shellContextHandle, USB_SHELL_PROMPT);
-                    continue;
-                }
-
-                status = VIZN_SetEmotionTypes(&VIZN_API_CLIENT(Shell), (uint8_t)eTypeToSet);
-                switch (status)
-                {
-                    case kStatus_API_Layer_Success:
-                        SHELL_Printf(shellContextHandle, "%d types emotion recognition is set, system will reset\r\n",
-                                     eTypeToSet);
-                        VIZN_SystemReset(&VIZN_API_CLIENT(Shell));
-                        break;
-                    case kStatus_API_Layer_SetEmotionTypes_InvalidTypes:
-                        SHELL_Printf(shellContextHandle, "%d types emotion recognition is invalid\r\n", eTypeToSet);
-                        break;
-                    case kStatus_API_Layer_SetEmotionTypes_Disabled:
-                        SHELL_Printf(shellContextHandle, "Emotion recognition is disabled, system will reset\r\n");
-                        VIZN_SystemReset(&VIZN_API_CLIENT(Shell));
-                        break;
-                    default:
-                        SHELL_Printf(shellContextHandle, "ERROR API ENGINE\r\n");
-                        break;
-                }
-            }
-            else
-            {
-                /* show the current emotion types */
-                if ((eType == EMOTION_2_TYPES) || (eType == EMOTION_4_TYPES) || (eType == EMOTION_7_TYPES))
-                {
-                    SHELL_Printf(shellContextHandle, "%d types emotion recognition\r\n", eType);
-                }
-                else
-                {
-                    SHELL_Printf(shellContextHandle, "emotion recognition is disabled\r\n");
-                }
-            }
         }
         else if (queueMsg.shellCommand == SHELL_EV_FFI_CLI_LIVENESS)
         {

@@ -44,6 +44,7 @@ class FeatureDB
     int get_feature(uint16_t id, float *feature);
     void set_autosave(bool auto_save);
     bool get_autosave();
+    int get_ID_featurePointers(uint16_t* ids, void**featureP, int num);
 
    private:
     bool auto_save;

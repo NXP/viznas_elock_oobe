@@ -296,6 +296,22 @@ int DB_GetIDs(std::vector<uint16_t> &ids)
     return ret;
 }
 
+
+int DB_GetID_FeaturePointers(uint16_t* ids,void**pFeatures,int num)
+{
+    int ret = DB_MGMT_FAILED;
+    ret = DB_Lock();
+    if (DB_MGMT_OK == ret)
+    {
+    	s_DB->get_ID_featurePointers(ids,pFeatures,num);
+        DB_UnLock();
+    }
+
+    return ret;
+
+
+}
+
 int DB_GetName(uint16_t id, std::string &name)
 {
     int ret = DB_MGMT_FAILED;
