@@ -8,7 +8,7 @@
  *
  * Created by: NXP China Solution Team.
  */
-
+#include "board.h"
 #include "fsl_gc0308.h"
 #include "fsl_video_common.h"
 #include "fsl_camera.h"

@@ -60,11 +60,7 @@ extern uint32_t __Vectors[];
 
 #if defined(SDK_I2C_BASED_COMPONENT_USED) && SDK_I2C_BASED_COMPONENT_USED
 /* Numbers if I2C instances */
-uint8_t s_i2cHandle[5][((HAL_I2C_MASTER_HANDLE_SIZE + sizeof(uint32_t) - 1U) / sizeof(uint32_t))];
-#endif
-
-#if defined BOARD_USE_CODEC
-
+static hal_i2c_master_transfer_t s_i2cMasterHandle[5][sizeof(hal_i2c_master_transfer_t)];
 #endif
 
 /*******************************************************************************
@@ -163,12 +159,10 @@ void BOARD_LPI2C_Init(uint8_t i2cInstance, uint32_t clkSrc_Hz)
     masterConfig.instance     = i2cInstance;
 
 #if defined(SDK_I2C_FREERTOS) && SDK_I2C_FREERTOS
-    HAL_I2cMasterInit_FreeRTOS((hal_i2c_master_handle_t *)s_i2cHandle[i2cInstance], &masterConfig);
+    HAL_I2cMasterInit_FreeRTOS(s_i2cMasterHandle[i2cInstance], &masterConfig);
 #else
-    HAL_I2cMasterInit((hal_i2c_master_handle_t *)s_i2cHandle[i2cInstance], &masterConfig);
+    HAL_I2cMasterInit(s_i2cMasterHandle[i2cInstance], &masterConfig);
 #endif /* SDK_I2C_FREERTOS */
-
-
 }
 
 status_t BOARD_LPI2C_Send(uint8_t i2cInstance,
@@ -180,26 +174,26 @@ status_t BOARD_LPI2C_Send(uint8_t i2cInstance,
 {
     status_t reVal;
     hal_i2c_master_transfer_t transfer;
-    transfer.flags          = kHAL_I2cTransferDefaultFlag;;
+    transfer.flags          = kHAL_I2cTransferDefaultFlag;
     transfer.slaveAddress   = deviceAddress;
     transfer.direction      = kHAL_I2cWrite;
     transfer.data           = txBuff;
     transfer.dataSize       = txBuffSize;
     transfer.subaddressSize = subAddressSize;
-    transfer.subaddress 	= subAddress;
+    transfer.subaddress     = subAddress;
 
 #if defined(SDK_I2C_FREERTOS) && SDK_I2C_FREERTOS
     /* Send master blocking data to slave */
     if (xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED)
     {
-        reVal = HAL_I2cMasterTransferBlocking((hal_i2c_master_handle_t *)s_i2cHandle[i2cInstance], &transfer);
+        reVal = HAL_I2cMasterTransferBlocking(s_i2cMasterHandle[i2cInstance], &transfer);
     }
     else
     {
-        reVal = HAL_I2cMasterTransfer_FreeRTOS((hal_i2c_master_handle_t *)s_i2cHandle[i2cInstance], &transfer);
+        reVal = HAL_I2cMasterTransfer_FreeRTOS(s_i2cMasterHandle[i2cInstance], &transfer);
     }
 #else
-    reVal = HAL_I2cMasterTransferBlocking((hal_i2c_master_handle_t *)s_i2cHandle[i2cInstance], &transfer);
+    reVal = HAL_I2cMasterTransferBlocking(s_i2cMasterHandle[i2cInstance], &transfer);
 #endif
     return reVal;
 }
@@ -213,26 +207,26 @@ status_t BOARD_LPI2C_Receive(uint8_t i2cInstance,
 {
     status_t reVal;
     hal_i2c_master_transfer_t transfer;
-    transfer.flags          = kHAL_I2cTransferDefaultFlag;;
+    transfer.flags          = kHAL_I2cTransferDefaultFlag;
     transfer.slaveAddress   = deviceAddress;
     transfer.direction      = kHAL_I2cRead;
     transfer.data           = rxBuff;
     transfer.dataSize       = rxBuffSize;
     transfer.subaddressSize = subAddressSize;
-    transfer.subaddress 	= subAddress;
+    transfer.subaddress     = subAddress;
 
 #if defined(SDK_I2C_FREERTOS) && SDK_I2C_FREERTOS
     /* Send master blocking data to slave */
     if (xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED)
     {
-        reVal = HAL_I2cMasterTransferBlocking((hal_i2c_master_handle_t *)s_i2cHandle[i2cInstance], &transfer);
+        reVal = HAL_I2cMasterTransferBlocking(s_i2cMasterHandle[i2cInstance], &transfer);
     }
     else
     {
-        reVal = HAL_I2cMasterTransfer_FreeRTOS((hal_i2c_master_handle_t *)s_i2cHandle[i2cInstance], &transfer);
+        reVal = HAL_I2cMasterTransfer_FreeRTOS(s_i2cMasterHandle[i2cInstance], &transfer);
     }
 #else
-    reVal = HAL_I2cMasterTransferBlocking((hal_i2c_master_handle_t *)s_i2cHandle[i2cInstance], &transfer);
+    reVal = HAL_I2cMasterTransferBlocking(s_i2cMasterHandle[i2cInstance], &transfer);
 #endif 
     return reVal;
 }

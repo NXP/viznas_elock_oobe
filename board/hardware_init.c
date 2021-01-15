@@ -24,11 +24,12 @@ void USB_DeviceClockInit(void);
 void BOARD_InitHardware(void)
 {
     /* Exit doze and stop mode after wakeup from suspend mode, otherwise peripherals(refer RM) can not work. */
+#if RTVISION_BOARD
     IOMUXC_GPR->GPR4  = 0x00000000;
     IOMUXC_GPR->GPR7  = 0x00000000;
     IOMUXC_GPR->GPR8  = 0x00000000;
     IOMUXC_GPR->GPR12 = 0x00000000;
-
+#endif
     BOARD_ConfigMPU();
     // BOARD_ConfigUSBMPU();
     BOARD_BootClockRUN();

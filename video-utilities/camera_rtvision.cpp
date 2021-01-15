@@ -107,8 +107,14 @@ static QMsg CmdMsg;
 static QMsg DIntMsg;
 
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
-DTC_BSS static StackType_t s_CameraTaskStack[CAMERATASK_STACKSIZE];
-DTC_BSS static StaticTask_t s_CameraTaskTCB;
+static StackType_t s_CameraTaskStack[CAMERATASK_STACKSIZE];
+static StaticTask_t s_CameraTaskTCB;
+
+static StackType_t s_CameraInitTaskStack[CAMERAINITTASK_STACKSIZE];
+static StaticTask_t s_CameraInitTaskTCB;
+
+static StackType_t s_CameraDeviceInitTaskStack[CAMERAINITTASK_STACKSIZE];
+static StaticTask_t s_CameraDeviceInitTaskTCB;
 #endif
 
 static uint32_t s_ActiveFrameAddr;
@@ -631,10 +637,19 @@ static void Camera_Init_Task(void *param)
 #endif
     NVIC_SetPriority(CSI_IRQn, configMAX_SYSCALL_INTERRUPT_PRIORITY - 1);
     CAMERA_RECEIVER_Init(&cameraReceiver, &cameraConfig, Camera_Callback, NULL);
+#if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
+    CAMERA_RECEIVER_SwapBytes(&cameraReceiver);
+#endif
 
 #if (CAMERA_DIFF_I2C_BUS || (APP_CAMERA_TYPE == APP_CAMERA_MT9M114))
-    if (xTaskCreate(CameraDevice_Init_Task, "Camera_Init", CAMERAINITTASK_STACKSIZE, &cameraConfig,
-                    CAMERAINITTASK_PRIORITY, NULL) != pdPASS)
+
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+    if (NULL == xTaskCreateStatic(CameraDevice_Init_Task, "CameraDevice_Init_Task", CAMERAINITTASK_STACKSIZE, &cameraConfig, CAMERAINITTASK_PRIORITY,
+                                    s_CameraDeviceInitTaskStack, &s_CameraDeviceInitTaskTCB))
+#else
+    if (xTaskCreate(CameraDevice_Init_Task, "CameraDevice_Init_Task", CAMERAINITTASK_STACKSIZE, &cameraConfig,
+                                    CAMERAINITTASK_PRIORITY, NULL) != pdPASS)
+#endif
     {
         LOGE("[ERROR]CameraDevice  Init created failed\r\n");
 
@@ -648,7 +663,6 @@ static void Camera_Init_Task(void *param)
     CAMERA_DEVICE_Start(&cameraDevice[0]);
     xEventGroupWaitBits(g_SyncVideoEvents, 1 << SYNC_VIDEO_CAMERADEVICE_INIT_BIT, pdTRUE, pdTRUE, portMAX_DELAY);
 #else
-    CAMERA_RECEIVER_SwapBytes(&cameraReceiver);
     // RGB camera off
     CAMERA_DEVICE_Stop(&cameraDevice[0]);
     // IR camera
@@ -1026,10 +1040,12 @@ int Camera_Start()
 #else
     g_pRotateBuff = NULL;
 #endif
-
-    if (xTaskCreate(Camera_Init_Task, "Camera_Init", CAMERAINITTASK_STACKSIZE, NULL, CAMERAINITTASK_PRIORITY, NULL) !=
-        pdPASS)
-
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+    if (NULL == xTaskCreateStatic(Camera_Init_Task, "Camera_Init_Task", CAMERAINITTASK_STACKSIZE, NULL, CAMERAINITTASK_PRIORITY,
+                                    s_CameraInitTaskStack, &s_CameraInitTaskTCB))
+#else
+    if (xTaskCreate(Camera_Init_Task, "Camera_Init_Task", CAMERAINITTASK_STACKSIZE, NULL, CAMERAINITTASK_PRIORITY, NULL) != pdPASS)
+#endif
     {
         LOGE("[ERROR]Camera Init created failed\r\n");
 
@@ -1038,8 +1054,8 @@ int Camera_Start()
     }
 
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
-    if (NULL == xTaskCreateStatic(Camera_Task, "Camera_Init", CAMERATASK_STACKSIZE, NULL, CAMERATASK_PRIORITY,
-                                  s_CameraTaskStack, &s_CameraTaskTCB))
+    if (NULL == xTaskCreateStatic(Camera_Task, "Camera_Task", CAMERATASK_STACKSIZE, NULL, CAMERATASK_PRIORITY,
+                                    s_CameraTaskStack, &s_CameraTaskTCB))
 #else
     if (xTaskCreate(Camera_Task, "Camera Task", CAMERATASK_STACKSIZE, NULL, CAMERATASK_PRIORITY, NULL) != pdPASS)
 #endif
