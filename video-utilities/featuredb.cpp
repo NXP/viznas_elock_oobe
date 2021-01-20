@@ -876,7 +876,7 @@ int FeatureDB::get_ID_featurePointers(uint16_t* ids, void**featureP, int num)
             ids[index] = s_FeatureItem[i].id;
             featureP[index] = s_FeatureItem[i].feature;
 #else
-            Flash_FacerecFsReadIDFeaturePointer(index,&ids[index],&featureP[index]);
+            Flash_FacerecFsReadIDFeaturePointer(i,&ids[index],&featureP[index]);
 #endif
             index++;
         }

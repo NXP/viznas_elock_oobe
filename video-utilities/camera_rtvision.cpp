@@ -134,9 +134,9 @@ static uint8_t s_PwmWhite;
 static int8_t s_CurrentCameraID = COLOR_CAMERA;
 static bool  isOddFrame = false;
 #endif
-static uint8_t s_CurRGBExposureMode = CAMERA_EXPOSURE_MODE_AUTO;
+static uint8_t s_CurRGBExposureMode = CAMERA_EXPOSURE_MODE_AUTO_LEVEL0;
 
-static void Camera_SetRGBExposureMode(uint8_t mode);
+static uint8_t gPendingRGBExposureModeSet = 0;
 
 static csi_resource_t csiResource = {
     .csiBase = CSI,
@@ -442,6 +442,14 @@ static void Camera_RgbIrSwitch(int8_t cameraID)
         CAMERA_DEVICE_Stop(&cameraDevice[1]);
         set_iox_port_pin(BOARD_CAMERA_SWITCH_GPIO, BOARD_CAMERA_SWITCH_GPIO_PIN, 0);
         CAMERA_DEVICE_Start(&cameraDevice[0]);
+#if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
+        //only need do this if one IIC used for dual camera
+        if (gPendingRGBExposureModeSet)
+        {
+            CAMERA_DEVICE_Control(&cameraDevice[0],  kCAMERA_DeviceExposureMode, s_CurRGBExposureMode);
+            gPendingRGBExposureModeSet = 0;
+        }
+#endif
     }
     else if (cameraID == IR_CAMERA)
     {
@@ -476,18 +484,30 @@ int Camera_SetDispMode(uint8_t displayMode)
     return status;
 }
 
-static void Camera_SetRGBExposureMode(uint8_t mode)
-{
-    static uint8_t lastMode = CAMERA_EXPOSURE_MODE_AUTO;
-    if (lastMode == mode)
-        return;
-    lastMode = mode;
-    CAMERA_DEVICE_Control(&cameraDevice[0], kCAMERA_DeviceExposureMode, mode);
-}
 
 uint8_t Camera_GetRGBExposureMode(void)
 {
     return s_CurRGBExposureMode;
+}
+
+int Camera_SetRGBExposureMode(uint8_t mode)
+{
+#if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
+	if (s_CurRGBExposureMode == mode)
+	{
+		return 0;
+	}else
+	{
+		s_CurRGBExposureMode = mode;
+#if (CAMERA_DIFF_I2C_BUS)
+		CAMERA_DEVICE_Control(&cameraDevice[0],  kCAMERA_DeviceExposureMode, mode);
+#else
+		//delay to do so in Camera_RgbIrSwitch
+		gPendingRGBExposureModeSet = 1;
+#endif
+	}
+#endif
+	return 0;
 }
 
 int Camera_QMsgSetExposureMode(uint8_t mode)

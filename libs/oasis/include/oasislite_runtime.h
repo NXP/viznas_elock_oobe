@@ -15,7 +15,7 @@
 
 
 #define VERSION_MAJOR 4
-#define VERSION_MINOR 31
+#define VERSION_MINOR 32
 /*this version number only used for hot fix on frozen release or branch*/
 #define VERSION_HOTFIX 0
 

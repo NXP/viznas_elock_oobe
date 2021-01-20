@@ -145,9 +145,9 @@ static uint8_t s_PwmWhite;
 static int8_t s_CurrentCameraID = COLOR_CAMERA;
 static bool  isOddFrame = false;
 #endif
-static uint8_t s_CurRGBExposureMode = CAMERA_EXPOSURE_MODE_AUTO;
+static uint8_t s_CurRGBExposureMode = CAMERA_EXPOSURE_MODE_AUTO_LEVEL0;
 
-static void Camera_SetRGBExposureMode(uint8_t mode);
+static uint8_t gPendingRGBExposureModeSet = 0;
 
 static csi_resource_t csiResource = {
     .csiBase = CSI,
@@ -479,7 +479,12 @@ static void Camera_RgbIrSwitch(int8_t cameraID)
         GPIO_PinWrite(BOARD_CAMERA_SWITCH_GPIO, BOARD_CAMERA_SWITCH_GPIO_PIN, 1);
         CAMERA_DEVICE_Start(&cameraDevice[0]);
 #if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
-        Camera_SetRGBExposureMode(s_CurRGBExposureMode);
+        //only need do this if one IIC used for dual camera
+        if (gPendingRGBExposureModeSet)
+        {
+            CAMERA_DEVICE_Control(&cameraDevice[0],  kCAMERA_DeviceExposureMode, s_CurRGBExposureMode);
+            gPendingRGBExposureModeSet = 0;
+        }
 #endif
     }
     else if (cameraID == IR_CAMERA)
@@ -515,18 +520,30 @@ int Camera_SetDispMode(uint8_t displayMode)
     return status;
 }
 
-static void Camera_SetRGBExposureMode(uint8_t mode)
-{
-    static uint8_t lastMode = CAMERA_EXPOSURE_MODE_AUTO;
-    if (lastMode == mode)
-        return;
-    lastMode = mode;
-    CAMERA_DEVICE_Control(&cameraDevice[0], kCAMERA_DeviceExposureMode, mode);
-}
 
 uint8_t Camera_GetRGBExposureMode(void)
 {
     return s_CurRGBExposureMode;
+}
+
+int Camera_SetRGBExposureMode(uint8_t mode)
+{
+#if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
+	if (s_CurRGBExposureMode == mode)
+	{
+		return 0;
+	}else
+	{
+		s_CurRGBExposureMode = mode;
+#if (CAMERA_DIFF_I2C_BUS)
+		CAMERA_DEVICE_Control(&cameraDevice[0],  kCAMERA_DeviceExposureMode, mode);
+#else
+		//delay to do so in Camera_RgbIrSwitch
+		gPendingRGBExposureModeSet = 1;
+#endif
+	}
+#endif
+	return 0;
 }
 
 int Camera_QMsgSetExposureMode(uint8_t mode)
@@ -632,7 +649,7 @@ void BOARD_InitCameraResource(void)
             IOMUXC_GPIO_B1_15_FLEXPWM4_PWMA03,      /* GPIO_B1_15 is configured as FLEXPWM4_PWMA03 */
             0U);                                    /* Software Input On Field: Input Path is determined by functionality */
     IOMUXC_SetPinConfig(
-            IOMUXC_GPIO_B1_14_FLEXPWM4_PWMA02,      /* GPIO_SD_B0_00 PAD functional properties : */
+            IOMUXC_GPIO_B1_14_FLEXPWM4_PWMA02,      /* GPIO_B1_14 PAD functional properties : */
             0x10B0u);                               /* Slew Rate Field: Slow Slew Rate
                                                                                                                                         Drive Strength Field: R0/6
                                                                                                                                         Speed Field: medium(100MHz)
@@ -642,7 +659,7 @@ void BOARD_InitCameraResource(void)
                                                                                                                                         Pull Up / Down Config. Field: 100K Ohm Pull Down
                                                                                                                                         Hyst. Enable Field: Hysteresis Disabled */
     IOMUXC_SetPinConfig(
-            IOMUXC_GPIO_B1_15_FLEXPWM4_PWMA03,      /* GPIO_SD_B0_01 PAD functional properties : */
+            IOMUXC_GPIO_B1_15_FLEXPWM4_PWMA03,      /* GPIO_B1_15 PAD functional properties : */
             0x10B0u);                               /* Slew Rate Field: Slow Slew Rate
                                                                                                                                         Drive Strength Field: R0/6
                                                                                                                                         Speed Field: medium(100MHz)

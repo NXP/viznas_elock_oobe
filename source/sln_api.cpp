@@ -175,14 +175,6 @@ vizn_api_status_t VIZN_API_Init(VIZN_api_handle_t *apiHandle)
         return kStatus_API_Layer_Error;
     }
 
-    if (cfg.low_power_mode == LOW_POWER_MODE_OFF)
-    {
-        DB_SetAutoSave(false);
-    }
-    else
-    {
-        DB_SetAutoSave(true);
-    }
     VIZN_RegisterClient(gApiHandle, &VIZN_API_CLIENT(VIZN_API));
     return kStatus_API_Layer_Success;
 }

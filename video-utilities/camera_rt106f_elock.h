@@ -59,7 +59,7 @@ int Camera_SetMonoMode(uint8_t enable);
 int Camera_SetDispMode(uint8_t displayMode);
 int Camera_SelectLED(uint8_t led);
 uint8_t Camera_GetRGBExposureMode(void);
-int Camera_QMsgSetExposureMode(uint8_t mode);
+int Camera_SetRGBExposureMode(uint8_t mode);
 
 #ifdef __cplusplus
 }

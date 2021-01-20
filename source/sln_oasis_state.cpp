@@ -129,16 +129,10 @@ void StartRecognitionProcess(void)
     sFaceRec.msg.cmd.data.rec_face = g_RecFace;
     pQMsg                          = &sFaceRec;
     Oasis_SendQMsg((void *)&pQMsg);
-    if (Cfg_AppDataGetLowPowerMode() == LOW_POWER_MODE_ON)
-    {
-        StartRecNoFaceTimers();
-        StartDetNoFaceTimers();
-    }
-    else
-    {
-        StopRecNoFaceTimers();
-        StopDetNoFaceTimers();
-    }
+
+    StartRecNoFaceTimers();
+    StartDetNoFaceTimers();
+
     StopLockProcess();
 }
 
@@ -339,13 +333,15 @@ void Oasis_TimerCallback(uint8_t id_timer)
         case TIMER_DET_NO_FACE:
         {
             StopRecognitionProcess(kEvents_API_Layer_RecFailed);
-            LPM_SendControlStatus(LPM_DetNoFaceTimeout, 0);
+            if (Cfg_AppDataGetLowPowerMode() == LOW_POWER_MODE_ON)
+                LPM_SendControlStatus(LPM_DetNoFaceTimeout, 0);
         }
         break;
         case TIMER_REC_NO_FACE:
         {
             StopRecognitionProcess(kEvents_API_Layer_RecFailed);
-            LPM_SendControlStatus(LPM_RecNoFaceTimeout, 0);
+            if (Cfg_AppDataGetLowPowerMode() == LOW_POWER_MODE_ON)
+                LPM_SendControlStatus(LPM_RecNoFaceTimeout, 0);
         }
         break;
     }
