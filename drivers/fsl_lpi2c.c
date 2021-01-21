@@ -169,6 +169,12 @@ uint32_t LPI2C_GetInstance(LPI2C_Type *base)
     return instance;
 }
 
+IRQn_Type LPI2C_GetIRQn(uint32_t instance)
+{
+    return kLpi2cIrqs[instance];
+}
+
+
 /*!
  * @brief Computes a cycle count for a given time in nanoseconds.
  * @param sourceClock_Hz LPI2C functional clock frequency in Hertz.

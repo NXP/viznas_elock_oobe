@@ -11,9 +11,8 @@
 #include "fsl_debug_console.h"
 
 #if defined(SDK_I2C_BASED_COMPONENT_USED) && SDK_I2C_BASED_COMPONENT_USED
-#include "i2c.h"
 #if defined(SDK_I2C_FREERTOS) && SDK_I2C_FREERTOS
-#include "i2c_freertos.h"
+#include "fsl_lpi2c_freertos.h"
 #else
 #include "fsl_lpi2c.h"
 #endif /* SDK_I2C_FREERTOS */
@@ -59,8 +58,9 @@ extern uint32_t __Vectors[];
 #endif
 
 #if defined(SDK_I2C_BASED_COMPONENT_USED) && SDK_I2C_BASED_COMPONENT_USED
-/* Numbers if I2C instances */
-static hal_i2c_master_transfer_t s_i2cMasterHandle[5][sizeof(hal_i2c_master_transfer_t)];
+#if defined(SDK_I2C_FREERTOS) && SDK_I2C_FREERTOS
+static lpi2c_rtos_handle_t g_i2c_handle[5];
+#endif
 #endif
 
 /*******************************************************************************
@@ -140,32 +140,32 @@ void BOARD_DeInitDebugConsole(void)
 
 
 #if defined(SDK_I2C_BASED_COMPONENT_USED) && SDK_I2C_BASED_COMPONENT_USED
-void BOARD_LPI2C_Init(uint8_t i2cInstance, uint32_t clkSrc_Hz)
+void BOARD_LPI2C_Init(LPI2C_Type *base, uint32_t clkSrc_Hz)
 {
-    /*
-     * lpi2cConfig.debugEnable = false;
-     * lpi2cConfig.ignoreAck = false;
-     * lpi2cConfig.pinConfig = kLPI2C_2PinOpenDrain;
-     * lpi2cConfig.baudRate_Hz = 100000U;
-     * lpi2cConfig.busIdleTimeout_ns = 0;
-     * lpi2cConfig.pinLowTimeout_ns = 0;
-     * lpi2cConfig.sdaGlitchFilterWidth_ns = 0;
-     * lpi2cConfig.sclGlitchFilterWidth_ns = 0;
-     */
-    hal_i2c_master_config_t masterConfig;
-    masterConfig.enableMaster = true;
-    masterConfig.baudRate_Bps = 400000U;
-    masterConfig.srcClock_Hz  = clkSrc_Hz;
-    masterConfig.instance     = i2cInstance;
+    uint32_t i2cInstance = LPI2C_GetInstance(base);
+    lpi2c_master_config_t lpi2cConfig = {0};
+   /*
+         * lpi2cConfig.debugEnable = false;
+         * lpi2cConfig.ignoreAck = false;
+         * lpi2cConfig.pinConfig = kLPI2C_2PinOpenDrain;
+         * lpi2cConfig.baudRate_Hz = 100000U;
+         * lpi2cConfig.busIdleTimeout_ns = 0;
+         * lpi2cConfig.pinLowTimeout_ns = 0;
+         * lpi2cConfig.sdaGlitchFilterWidth_ns = 0;
+         * lpi2cConfig.sclGlitchFilterWidth_ns = 0;
+         */
+    LPI2C_MasterGetDefaultConfig(&lpi2cConfig);
+    lpi2cConfig.baudRate_Hz = 400000U;
 
 #if defined(SDK_I2C_FREERTOS) && SDK_I2C_FREERTOS
-    HAL_I2cMasterInit_FreeRTOS(s_i2cMasterHandle[i2cInstance], &masterConfig);
+    LPI2C_RTOS_Init(&g_i2c_handle[i2cInstance], base, &lpi2cConfig, clkSrc_Hz);
 #else
-    HAL_I2cMasterInit(s_i2cMasterHandle[i2cInstance], &masterConfig);
-#endif /* SDK_I2C_FREERTOS */
+    LPI2C_MasterInit(base, &lpi2cConfig, clkSrc_Hz);
+#endif
+    NVIC_SetPriority(LPI2C_GetIRQn(i2cInstance), configMAX_SYSCALL_INTERRUPT_PRIORITY - 1);
 }
 
-status_t BOARD_LPI2C_Send(uint8_t i2cInstance,
+status_t BOARD_LPI2C_Send(LPI2C_Type *base,
                           uint8_t deviceAddress,
                           uint32_t subAddress,
                           uint8_t subAddressSize,
@@ -173,12 +173,13 @@ status_t BOARD_LPI2C_Send(uint8_t i2cInstance,
                           uint8_t txBuffSize)
 {
     status_t reVal;
-    hal_i2c_master_transfer_t transfer;
-    transfer.flags          = kHAL_I2cTransferDefaultFlag;
-    transfer.slaveAddress   = deviceAddress;
-    transfer.direction      = kHAL_I2cWrite;
-    transfer.data           = txBuff;
-    transfer.dataSize       = txBuffSize;
+    uint32_t i2cInstance =  LPI2C_GetInstance(base);
+    lpi2c_master_transfer_t transfer;
+    transfer.flags = kLPI2C_TransferDefaultFlag;
+    transfer.slaveAddress = deviceAddress;
+    transfer.direction = kLPI2C_Write;
+    transfer.data = txBuff;
+    transfer.dataSize = txBuffSize;
     transfer.subaddressSize = subAddressSize;
     transfer.subaddress     = subAddress;
 
@@ -186,19 +187,18 @@ status_t BOARD_LPI2C_Send(uint8_t i2cInstance,
     /* Send master blocking data to slave */
     if (xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED)
     {
-        reVal = HAL_I2cMasterTransferBlocking(s_i2cMasterHandle[i2cInstance], &transfer);
-    }
-    else
+        reVal = LPI2C_MasterTransferBlocking(base, &transfer);
+    }else
     {
-        reVal = HAL_I2cMasterTransfer_FreeRTOS(s_i2cMasterHandle[i2cInstance], &transfer);
+        reVal = LPI2C_RTOS_Transfer(&g_i2c_handle[i2cInstance], &transfer);
     }
 #else
-    reVal = HAL_I2cMasterTransferBlocking(s_i2cMasterHandle[i2cInstance], &transfer);
+	reVal = LPI2C_MasterTransferBlocking(base, &transfer);
 #endif
     return reVal;
 }
 
-status_t BOARD_LPI2C_Receive(uint8_t i2cInstance,
+status_t BOARD_LPI2C_Receive(LPI2C_Type *base,
                              uint8_t deviceAddress,
                              uint32_t subAddress,
                              uint8_t subAddressSize,
@@ -206,12 +206,13 @@ status_t BOARD_LPI2C_Receive(uint8_t i2cInstance,
                              uint8_t rxBuffSize)
 {
     status_t reVal;
-    hal_i2c_master_transfer_t transfer;
-    transfer.flags          = kHAL_I2cTransferDefaultFlag;
-    transfer.slaveAddress   = deviceAddress;
-    transfer.direction      = kHAL_I2cRead;
-    transfer.data           = rxBuff;
-    transfer.dataSize       = rxBuffSize;
+    uint32_t i2cInstance =  LPI2C_GetInstance(base);
+    lpi2c_master_transfer_t transfer;
+    transfer.flags = kLPI2C_TransferDefaultFlag;
+    transfer.slaveAddress = deviceAddress;
+    transfer.direction = kLPI2C_Read;
+    transfer.data = rxBuff;
+    transfer.dataSize = rxBuffSize;
     transfer.subaddressSize = subAddressSize;
     transfer.subaddress     = subAddress;
 
@@ -219,89 +220,88 @@ status_t BOARD_LPI2C_Receive(uint8_t i2cInstance,
     /* Send master blocking data to slave */
     if (xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED)
     {
-        reVal = HAL_I2cMasterTransferBlocking(s_i2cMasterHandle[i2cInstance], &transfer);
-    }
-    else
+        reVal = LPI2C_MasterTransferBlocking(base, &transfer);
+    }else
     {
-        reVal = HAL_I2cMasterTransfer_FreeRTOS(s_i2cMasterHandle[i2cInstance], &transfer);
+        reVal = LPI2C_RTOS_Transfer(&g_i2c_handle[i2cInstance], &transfer);
     }
 #else
-    reVal = HAL_I2cMasterTransferBlocking(s_i2cMasterHandle[i2cInstance], &transfer);
-#endif 
+	reVal = LPI2C_MasterTransferBlocking(base, &transfer);
+#endif
     return reVal;
 }
 
 void BOARD_Accel_I2C_Init(void)
 {
-    BOARD_LPI2C_Init(BOARD_ACCEL_I2C_INSTANCE, BOARD_ACCEL_I2C_CLOCK_FREQ);
+    BOARD_LPI2C_Init(BOARD_ACCEL_I2C_BASEADDR, BOARD_ACCEL_I2C_CLOCK_FREQ);
 }
 
 status_t BOARD_Accel_I2C_Send(uint8_t deviceAddress, uint32_t subAddress, uint8_t subaddressSize, uint32_t txBuff)
 {
     uint8_t data = (uint8_t)txBuff;
 
-    return BOARD_LPI2C_Send(BOARD_ACCEL_I2C_INSTANCE, deviceAddress, subAddress, subaddressSize, &data, 1);
+    return BOARD_LPI2C_Send(BOARD_ACCEL_I2C_BASEADDR, deviceAddress, subAddress, subaddressSize, &data, 1);
 }
 
 status_t BOARD_Accel_I2C_Receive(
     uint8_t deviceAddress, uint32_t subAddress, uint8_t subaddressSize, uint8_t *rxBuff, uint8_t rxBuffSize)
 {
-    return BOARD_LPI2C_Receive(BOARD_ACCEL_I2C_INSTANCE, deviceAddress, subAddress, subaddressSize, rxBuff, rxBuffSize);
+    return BOARD_LPI2C_Receive(BOARD_ACCEL_I2C_BASEADDR, deviceAddress, subAddress, subaddressSize, rxBuff, rxBuffSize);
 }
 
 void BOARD_Codec_I2C_Init(void)
 {
-    //    BOARD_LPI2C_Init(BOARD_CODEC_I2C_INSTANCE, BOARD_CODEC_I2C_CLOCK_FREQ);
+    //    BOARD_LPI2C_Init(BOARD_CODEC_I2C_BASEADDR, BOARD_CODEC_I2C_CLOCK_FREQ);
 }
 
 status_t BOARD_Codec_I2C_Send(
     uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, const uint8_t *txBuff, uint8_t txBuffSize)
 {
-    return BOARD_LPI2C_Send(BOARD_CODEC_I2C_INSTANCE, deviceAddress, subAddress, subAddressSize, (uint8_t *)txBuff,
+    return BOARD_LPI2C_Send(BOARD_CODEC_I2C_BASEADDR, deviceAddress, subAddress, subAddressSize, (uint8_t *)txBuff,
                             txBuffSize);
 }
 
 status_t BOARD_Codec_I2C_Receive(
     uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, uint8_t *rxBuff, uint8_t rxBuffSize)
 {
-    return BOARD_LPI2C_Receive(BOARD_CODEC_I2C_INSTANCE, deviceAddress, subAddress, subAddressSize, rxBuff, rxBuffSize);
+    return BOARD_LPI2C_Receive(BOARD_CODEC_I2C_BASEADDR, deviceAddress, subAddress, subAddressSize, rxBuff, rxBuffSize);
 }
 
 void BOARD_Camera_I2C_Init(void)
 {
     CLOCK_SetMux(kCLOCK_Lpi2cMux, BOARD_CAMERA_I2C_CLOCK_SOURCE_SELECT);
     CLOCK_SetDiv(kCLOCK_Lpi2cDiv, BOARD_CAMERA_I2C_CLOCK_SOURCE_DIVIDER);
-    BOARD_LPI2C_Init(BOARD_CAMERA_I2C_INSTANCE, BOARD_CAMERA_I2C_CLOCK_FREQ);
+    BOARD_LPI2C_Init(BOARD_CAMERA_I2C_BASEADDR, BOARD_CAMERA_I2C_CLOCK_FREQ);
 #if CAMERA_DIFF_I2C_BUS
-    BOARD_LPI2C_Init(BOARD_CAMERA_IR_I2C_INSTANCE, BOARD_CAMERA_I2C_CLOCK_FREQ);
+    BOARD_LPI2C_Init(BOARD_CAMERA_IR_I2C_BASEADDR, BOARD_CAMERA_I2C_CLOCK_FREQ);
 #endif
 }
 
 status_t BOARD_Camera_I2C_Send(
     uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, const uint8_t *txBuff, uint8_t txBuffSize)
 {
-    return BOARD_LPI2C_Send(BOARD_CAMERA_I2C_INSTANCE, deviceAddress, subAddress, subAddressSize, (uint8_t *)txBuff,
+    return BOARD_LPI2C_Send(BOARD_CAMERA_I2C_BASEADDR, deviceAddress, subAddress, subAddressSize, (uint8_t *)txBuff,
                             txBuffSize);
 }
 
 status_t BOARD_Camera_I2C_Receive(
     uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, uint8_t *rxBuff, uint8_t rxBuffSize)
 {
-    return BOARD_LPI2C_Receive(BOARD_CAMERA_I2C_INSTANCE, deviceAddress, subAddress, subAddressSize, rxBuff,
+    return BOARD_LPI2C_Receive(BOARD_CAMERA_I2C_BASEADDR, deviceAddress, subAddress, subAddressSize, rxBuff,
                                rxBuffSize);
 }
 
 status_t BOARD_Camera_IR_I2C_Send(
     uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, const uint8_t *txBuff, uint8_t txBuffSize)
 {
-    return BOARD_LPI2C_Send(BOARD_CAMERA_IR_I2C_INSTANCE, deviceAddress, subAddress, subAddressSize, (uint8_t *)txBuff,
+    return BOARD_LPI2C_Send(BOARD_CAMERA_IR_I2C_BASEADDR, deviceAddress, subAddress, subAddressSize, (uint8_t *)txBuff,
                             txBuffSize);
 }
 
 status_t BOARD_Camera_IR_I2C_Receive(
     uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, uint8_t *rxBuff, uint8_t rxBuffSize)
 {
-    return BOARD_LPI2C_Receive(BOARD_CAMERA_IR_I2C_INSTANCE, deviceAddress, subAddress, subAddressSize, rxBuff,
+    return BOARD_LPI2C_Receive(BOARD_CAMERA_IR_I2C_BASEADDR, deviceAddress, subAddress, subAddressSize, rxBuff,
                                rxBuffSize);
 }
 

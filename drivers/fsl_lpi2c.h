@@ -408,6 +408,9 @@ struct _lpi2c_slave_handle
 extern "C" {
 #endif
 
+uint32_t LPI2C_GetInstance(LPI2C_Type *base);
+IRQn_Type LPI2C_GetIRQn(uint32_t instance);
+
 /*!
  * @addtogroup lpi2c_master_driver
  * @{

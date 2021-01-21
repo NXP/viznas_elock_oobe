@@ -475,14 +475,14 @@ void BOARD_InitDebugConsole(void);
 
 void BOARD_ConfigMPU(void);
 #if defined(SDK_I2C_BASED_COMPONENT_USED) && SDK_I2C_BASED_COMPONENT_USED
-void BOARD_LPI2C_Init(uint8_t i2cInstance, uint32_t clkSrc_Hz);
-status_t BOARD_LPI2C_Send(uint8_t i2cInstance,
+void BOARD_LPI2C_Init(LPI2C_Type *base, uint32_t clkSrc_Hz);
+status_t BOARD_LPI2C_Send(LPI2C_Type *base,
                           uint8_t deviceAddress,
                           uint32_t subAddress,
                           uint8_t subaddressSize,
                           uint8_t *txBuff,
                           uint8_t txBuffSize);
-status_t BOARD_LPI2C_Receive(uint8_t i2cInstance,
+status_t BOARD_LPI2C_Receive(LPI2C_Type *base,
                              uint8_t deviceAddress,
                              uint32_t subAddress,
                              uint8_t subaddressSize,
