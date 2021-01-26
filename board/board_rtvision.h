@@ -8,7 +8,7 @@
 #ifndef _BOARD_RTVISION_H_
 #define _BOARD_RTVISION_H_
 
-#if RTVISION_BOARD
+//#if RTVISION_BOARD
 #include "clock_config.h"
 #include "fsl_common.h"
 #include "fsl_gpio.h"
@@ -30,7 +30,7 @@
 
 //LCD_TYPE
 #define LCD_SPI_RIVERDI          0x00
-#define LCD_SPI_WZ032HN89V022    0x01   //ì¿Õý¿Æ¼¼
+#define LCD_SPI_WZ032HN89V022    0x01   //ï¿½ï¿½ï¿½ï¿½Æ¼ï¿½
 
 #define LCD_RGB_PJ2805H02        0x80   //PengJi Photoelectricity
 #ifndef LCD_TYPE
@@ -541,4 +541,4 @@ void BOARD_RelocateVectorTableToRam(void);
 #endif /* __cplusplus */
 
 #endif
-#endif /* _BOARD_RTVISION_H_ */
+//#endif /* _BOARD_RTVISION_H_ */

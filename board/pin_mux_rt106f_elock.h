@@ -13,7 +13,7 @@
 #ifndef _PIN_MUX_RT106F_ELOCK_H_
 #define _PIN_MUX_RT106F_ELOCK_H_
 
-#if RT106F_ELOCK_BOARD
+//#if RT106F_ELOCK_BOARD
 
 /***********************************************************************************************************************
  * Definitions
@@ -105,7 +105,7 @@ void BOARD_InitLPUART5Pins(void);
  * @}
  */
 #endif
-#endif /* _PIN_MUX_RT106F_ELOCK_H_ */
+//#endif /* _PIN_MUX_RT106F_ELOCK_H_ */
 
 /***********************************************************************************************************************
  * EOF

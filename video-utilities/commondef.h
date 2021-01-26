@@ -293,7 +293,8 @@ typedef struct
 #if FLASH_TYPE == HYPER_FLASH
 #define FACEREC_FS_MAP_ADDR  (0x800000U)
 #else
-#define FACEREC_FS_MAP_ADDR  (0x820000U) //0x60420000 -> 0x60820000
+//0x800000 to 0x820000 are used by configuration file
+#define FACEREC_FS_MAP_ADDR  (0x820000U)
 #endif
 
 #define FACEREC_FS_ITEM_ADDR  (FACEREC_FS_MAP_ADDR + FLASH_SECTOR_SIZE)
@@ -365,10 +366,6 @@ typedef union
                       * FEATUREDATA_FLASH_PAGE_SIZE];
 } FeatureMap;
 
-
-// emotion recognition and front face deteciton related
-#define EMOTION_RECOG_INPUT_W 64
-#define EMOTION_RECOG_INPUT_H 64
 
 /* BLE/Network remote operation command definition */
 enum

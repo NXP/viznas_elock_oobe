@@ -319,11 +319,10 @@ void BOARD_InitSDRAMPins(void) {
       IOMUXC_GPIO_EMC_28_SEMC_WE,             /* GPIO_EMC_28 is configured as SEMC_WE */
       0U);                                    /* Software Input On Field: Input Path is determined by functionality */
 
-#if RT106F_ELOCK_BOARD
   IOMUXC_SetPinMux(
        IOMUXC_GPIO_EMC_29_SEMC_CS0,            /* GPIO_EMC_29 is configured as SEMC_CS0 */
        0U);                                    /* Software Input On Field: Input Path is determined by functionality */
-#endif
+
 
   IOMUXC_SetPinMux(
       IOMUXC_GPIO_EMC_30_SEMC_DATA08,         /* GPIO_EMC_30 is configured as SEMC_DATA08 */
@@ -353,15 +352,6 @@ void BOARD_InitSDRAMPins(void) {
       IOMUXC_GPIO_EMC_38_SEMC_DM01,           /* GPIO_EMC_38 is configured as SEMC_DM01 */
       0U);                                    /* Software Input On Field: Input Path is determined by functionality */
 
-#if RT106F_ELOCK_BOARD
-
-#else
-  IOMUXC_SetPinMux(
-      IOMUXC_GPIO_EMC_41_SEMC_CSX00,          /* GPIO_EMC_41 is configured as SEMC_CSX00 */
-      0U);                                    /* Software Input On Field: Input Path is determined by functionality */
-#endif
-
-#if RT106F_ELOCK_BOARD
   IOMUXC_SetPinConfig(
         IOMUXC_GPIO_EMC_00_SEMC_DATA00,         /* GPIO_EMC_00 PAD functional properties : */
         0x0110F9u);                             /* Slew Rate Field: Fast Slew Rate
@@ -753,18 +743,6 @@ void BOARD_InitSDRAMPins(void) {
                                                    Pull Up / Down Config. Field: 100K Ohm Pull Down
                                                    Hyst. Enable Field: Hysteresis Enabled */
 
-#endif
-
-#if RT106F_ELOCK_BOARD
-
-#else
-  IOMUXC_SetPinMux(
-      IOMUXC_GPIO_AD_B0_09_GPIO1_IO09,        /* GPIO_AD_B0_09 is configured as GPIO1_IO09 */
-      0U);                                    /* Software Input On Field: Input Path is determined by functionality */
-  IOMUXC_SetPinMux(
-      IOMUXC_GPIO_AD_B0_10_GPIO1_IO10,        /* GPIO_AD_B0_10 is configured as GPIO1_IO10 */
-      0U);                                    /* Software Input On Field: Input Path is determined by functionality */
-#endif
 
   IOMUXC_SetPinMux(
       IOMUXC_GPIO_B1_04_ENET_RX_DATA00,       /* GPIO_B1_04 is configured as ENET_RX_DATA00 */
@@ -787,13 +765,7 @@ void BOARD_InitSDRAMPins(void) {
   IOMUXC_SetPinMux(
       IOMUXC_GPIO_B1_10_ENET_REF_CLK,         /* GPIO_B1_10 is configured as ENET_REF_CLK */
       1U);                                    /* Software Input On Field: Force input path of pad GPIO_B1_10 */
-#if RT106F_ELOCK_BOARD
-  
-#else
-  IOMUXC_SetPinMux(
-      IOMUXC_GPIO_B1_11_ENET_RX_ER,           /* GPIO_B1_11 is configured as ENET_RX_ER */
-      0U);                                    /* Software Input On Field: Input Path is determined by functionality */
-#endif
+
   IOMUXC_SetPinMux(
       IOMUXC_GPIO_EMC_40_ENET_MDC,            /* GPIO_EMC_40 is configured as ENET_MDC */
       0U);                                    /* Software Input On Field: Input Path is determined by functionality */
@@ -801,31 +773,7 @@ void BOARD_InitSDRAMPins(void) {
       IOMUXC_GPIO_EMC_41_ENET_MDIO,           /* GPIO_EMC_41 is configured as ENET_MDIO */
       0U);                                    /* Software Input On Field: Input Path is determined by functionality */
 
-#if RT106F_ELOCK_BOARD
 
-#else
-  IOMUXC_SetPinConfig(
-      IOMUXC_GPIO_AD_B0_09_GPIO1_IO09,        /* GPIO_AD_B0_09 PAD functional properties : */
-      0xB0A9u);                               /* Slew Rate Field: Fast Slew Rate
-                                                 Drive Strength Field: R0/5
-                                                 Speed Field: medium(100MHz)
-                                                 Open Drain Enable Field: Open Drain Disabled
-                                                 Pull / Keep Enable Field: Pull/Keeper Enabled
-                                                 Pull / Keep Select Field: Pull
-                                                 Pull Up / Down Config. Field: 100K Ohm Pull Up
-                                                 Hyst. Enable Field: Hysteresis Disabled */
-  IOMUXC_SetPinConfig(
-      IOMUXC_GPIO_AD_B0_10_GPIO1_IO10,        /* GPIO_AD_B0_10 PAD functional properties : */
-      0xB0A9u);                               /* Slew Rate Field: Fast Slew Rate
-                                                 Drive Strength Field: R0/5
-                                                 Speed Field: medium(100MHz)
-                                                 Open Drain Enable Field: Open Drain Disabled
-                                                 Pull / Keep Enable Field: Pull/Keeper Enabled
-                                                 Pull / Keep Select Field: Pull
-                                                 Pull Up / Down Config. Field: 100K Ohm Pull Up
-                                                 Hyst. Enable Field: Hysteresis Disabled */
-
-#endif
   IOMUXC_SetPinConfig(
       IOMUXC_GPIO_B1_04_ENET_RX_DATA00,       /* GPIO_B1_04 PAD functional properties : */
       0xB0E9u);                               /* Slew Rate Field: Fast Slew Rate
@@ -896,20 +844,6 @@ void BOARD_InitSDRAMPins(void) {
                                                  Pull / Keep Select Field: Keeper
                                                  Pull Up / Down Config. Field: 100K Ohm Pull Down
                                                  Hyst. Enable Field: Hysteresis Disabled */
-#if RT106F_ELOCK_BOARD
-                                                     
-#else
-  IOMUXC_SetPinConfig(
-      IOMUXC_GPIO_B1_11_ENET_RX_ER,           /* GPIO_B1_11 PAD functional properties : */
-      0xB0E9u);                               /* Slew Rate Field: Fast Slew Rate
-                                                 Drive Strength Field: R0/5
-                                                 Speed Field: max(200MHz)
-                                                 Open Drain Enable Field: Open Drain Disabled
-                                                 Pull / Keep Enable Field: Pull/Keeper Enabled
-                                                 Pull / Keep Select Field: Pull
-                                                 Pull Up / Down Config. Field: 100K Ohm Pull Up
-                                                 Hyst. Enable Field: Hysteresis Disabled */
-#endif
   IOMUXC_SetPinConfig(
       IOMUXC_GPIO_EMC_40_ENET_MDC,            /* GPIO_EMC_40 PAD functional properties : */
       0xB0E9u);                               /* Slew Rate Field: Fast Slew Rate

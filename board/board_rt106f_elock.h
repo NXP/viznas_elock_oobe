@@ -8,7 +8,7 @@
 #ifndef _BOARD_RT106F_ELOCK_H_
 #define _BOARD_RT106F_ELOCK_H_
 
-#if RT106F_ELOCK_BOARD
+//#if RT106F_ELOCK_BOARD
 
 #include "clock_config.h"
 #include "fsl_common.h"
@@ -547,4 +547,4 @@ void BOARD_RelocateVectorTableToRam(void);
 #endif /* __cplusplus */
 
 #endif
-#endif /* _BOARD_RT106F_ELOCK_H_ */
+//#endif /* _BOARD_RT106F_ELOCK_H_ */
