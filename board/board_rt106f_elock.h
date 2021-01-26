@@ -30,7 +30,7 @@
 
 //LCD_TYPE
 #define LCD_SPI_RIVERDI          0x00
-#define LCD_SPI_WZ032HN89V022    0x01   //����Ƽ�
+#define LCD_SPI_WZ032HN89V022    0x01   //
 
 #define LCD_RGB_PJ2805H02        0x80   //PengJi Photoelectricity
 #ifndef LCD_TYPE
@@ -203,10 +203,11 @@
             kGPIO_IntRisingOrFallingEdge,                                                   \
         };                                                                                  \
         GPIO_PinInit(BOARD_USDHC_CD_GPIO_BASE, BOARD_USDHC_CD_GPIO_PIN, &sw_config);        \
-        GPIO_PortEnableInterrupts(BOARD_USDHC_CD_GPIO_BASE, 1U << BOARD_USDHC_CD_GPIO_PIN); \
+        /*clear interrupt before enable interrupt. we found unknown interrupts just after bootup*/\
         GPIO_PortClearInterruptFlags(BOARD_USDHC_CD_GPIO_BASE, ~0);                         \
+        GPIO_PortEnableInterrupts(BOARD_USDHC_CD_GPIO_BASE, 1U << BOARD_USDHC_CD_GPIO_PIN); \
     }
-#define BOARD_HAS_SDCARD              (1U)
+#define BOARD_HAS_SDCARD              (0U)
 #define BOARD_SD_POWER_RESET_GPIO     (GPIO5)
 #define BOARD_SD_POWER_RESET_GPIO_PIN (1U)
 

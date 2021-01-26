@@ -83,7 +83,7 @@ static void BOARD_PullCameraIRPowerDownPin(bool pullUp);
 static void BOARD_PullCameraResetPin(bool pullUp);
 static void Camera_Deinit(void);
 static void Camera_RgbIrSwitch(int8_t cameraID);
-static uint32_t Camera_getAnotherRxBuf(uint32_t activeAddr);
+//static uint32_t Camera_getAnotherRxBuf(uint32_t activeAddr);
 static void Camera_Callback(camera_receiver_handle_t *handle, status_t status, void *userData);
 static void Camera_CheckOverRun();
 static void CameraDevice_Init_Task(void *param);
@@ -454,17 +454,17 @@ static void CAMERA_RECEIVER_SwapBytes(camera_receiver_handle_t *handle)
 }
 #endif
 
-static uint32_t Camera_getAnotherRxBuf(uint32_t activeAddr)
-{
-    if (activeAddr == (uint32_t)s_pBufferQueue)
-    {
-        return (uint32_t)(s_pBufferQueue + APP_CAMERA_HEIGHT * APP_CAMERA_WIDTH);
-    }
-    else
-    {
-        return (uint32_t)s_pBufferQueue;
-    }
-}
+//static uint32_t Camera_getAnotherRxBuf(uint32_t activeAddr)
+//{
+//    if (activeAddr == (uint32_t)s_pBufferQueue)
+//    {
+//        return (uint32_t)(s_pBufferQueue + APP_CAMERA_HEIGHT * APP_CAMERA_WIDTH);
+//    }
+//    else
+//    {
+//        return (uint32_t)s_pBufferQueue;
+//    }
+//}
 
 static void Camera_RgbIrSwitch(int8_t cameraID)
 {
@@ -546,16 +546,16 @@ int Camera_SetRGBExposureMode(uint8_t mode)
 	return 0;
 }
 
-int Camera_QMsgSetExposureMode(uint8_t mode)
-{
-    int status = -1;
-    QMsg* pQMsg = (QMsg*)pvPortMalloc(sizeof(QMsg));
-    pQMsg->id = QMSG_CMD;
-    pQMsg->msg.cmd.id = QCMD_CHANGE_RGB_EXPOSURE_MODE;
-    pQMsg->msg.cmd.data.exposure_mode = mode;
-    status = Camera_SendQMsg((void*)&pQMsg);
-    return status;
-}
+//int Camera_QMsgSetExposureMode(uint8_t mode)
+//{
+//    int status = -1;
+//    QMsg* pQMsg = (QMsg*)pvPortMalloc(sizeof(QMsg));
+//    pQMsg->id = QMSG_CMD;
+//    pQMsg->msg.cmd.id = QCMD_CHANGE_RGB_EXPOSURE_MODE;
+//    pQMsg->msg.cmd.data.exposure_mode = mode;
+//    status = Camera_SendQMsg((void*)&pQMsg);
+//    return status;
+//}
 
 void BOARD_InitCameraResource(void)
 {

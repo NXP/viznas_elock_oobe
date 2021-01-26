@@ -510,16 +510,16 @@ int Camera_SetRGBExposureMode(uint8_t mode)
 	return 0;
 }
 
-int Camera_QMsgSetExposureMode(uint8_t mode)
-{
-    int status = -1;
-    QMsg* pQMsg = (QMsg*)pvPortMalloc(sizeof(QMsg));
-    pQMsg->id = QMSG_CMD;
-    pQMsg->msg.cmd.id = QCMD_CHANGE_RGB_EXPOSURE_MODE;
-    pQMsg->msg.cmd.data.exposure_mode = mode;
-    status = Camera_SendQMsg((void*)&pQMsg);
-    return status;
-}
+//int Camera_QMsgSetExposureMode(uint8_t mode)
+//{
+//    int status = -1;
+//    QMsg* pQMsg = (QMsg*)pvPortMalloc(sizeof(QMsg));
+//    pQMsg->id = QMSG_CMD;
+//    pQMsg->msg.cmd.id = QCMD_CHANGE_RGB_EXPOSURE_MODE;
+//    pQMsg->msg.cmd.data.exposure_mode = mode;
+//    status = Camera_SendQMsg((void*)&pQMsg);
+//    return status;
+//}
 
 void BOARD_InitCameraResource(void)
 {

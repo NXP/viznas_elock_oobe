@@ -155,7 +155,9 @@ void BOARD_LPI2C_Init(LPI2C_Type *base, uint32_t clkSrc_Hz)
          * lpi2cConfig.sclGlitchFilterWidth_ns = 0;
          */
     LPI2C_MasterGetDefaultConfig(&lpi2cConfig);
-    lpi2cConfig.baudRate_Hz = 400000U;
+    
+    //Some HW may can not support 400Kbps speed
+    lpi2cConfig.baudRate_Hz = 100000U;//400000U;
 
 #if defined(SDK_I2C_FREERTOS) && SDK_I2C_FREERTOS
     LPI2C_RTOS_Init(&g_i2c_handle[i2cInstance], base, &lpi2cConfig, clkSrc_Hz);
