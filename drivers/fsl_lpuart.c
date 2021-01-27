@@ -1496,7 +1496,7 @@ void LPUART_TransferHandleIRQ(LPUART_Type *base, lpuart_handle_t *handle)
         base->STAT |= LPUART_STAT_IDLE_MASK;
 
         /* If rxDataSize is 0, disable idle line interrupt.*/
-        if (0U != (handle->rxDataSize))
+        if (0U == (handle->rxDataSize))
         {
             LPUART_DisableInterrupts(base, (uint32_t)kLPUART_IdleLineInterruptEnable);
         }

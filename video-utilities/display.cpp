@@ -46,8 +46,6 @@
 SemaphoreHandle_t g_DisplayFull, g_DisplayEmpty;
 /*!< Queue used by Display Task to receive messages*/
 static QueueHandle_t s_DisplayMsgQ = NULL;
-/*!< Message used to request camera buffer from the camera task */
-static QMsg s_DisplayReqMsg;
 static uint8_t s_ActiveFrameIndex = 0;
 /*!< Init the interface with an invalid value and let camera task send a proper value */
 static uint8_t s_DisplayInterfaceMode = DISPLAY_LAST_INTERFACE;
@@ -80,6 +78,15 @@ int Display_SendQMsg(void *msg)
     return 0;
 }
 
+//send msg to camera task by display task to request camera buffer 
+static int Display_sendReqMsg(void *data)
+{
+    QMsg *pDisplayReqMsg = (QMsg*)pvPortMalloc(sizeof(QMsg));
+    pDisplayReqMsg->id = QMSG_DISPLAY_FRAME_REQ;
+    pDisplayReqMsg->msg.raw.data = data;
+    return Camera_SendQMsg((void *)&pDisplayReqMsg);
+}
+
 static void Display_Task(void *param)
 {
     BaseType_t ret;
@@ -89,9 +96,7 @@ static void Display_Task(void *param)
                         pdTRUE, portMAX_DELAY);
 
     LOGD("[Display]:running\r\n");
-    pQMsg = &s_DisplayReqMsg;
-    Camera_SendQMsg((void *)&pQMsg);
-
+    Display_sendReqMsg((void *)s_BufferLcd[s_ActiveFrameIndex]);
     while (1)
     {
         // pick up message
@@ -105,16 +110,13 @@ static void Display_Task(void *param)
                 {
                     Display_Update((uint32_t)s_BufferLcd[s_ActiveFrameIndex]);
                     s_ActiveFrameIndex ^= 1U;
-                    pQMsg                        = &s_DisplayReqMsg;
-                    s_DisplayReqMsg.msg.raw.data = (void *)s_BufferLcd[s_ActiveFrameIndex];
-                    Camera_SendQMsg((void *)&pQMsg);
+                    Display_sendReqMsg((void *)s_BufferLcd[s_ActiveFrameIndex]);
                 }
                 break;
 
                 case QMSG_DISPLAY_INTERFACE:
                 {
                     s_DisplayInterfaceMode = pQMsg->msg.cmd.data.interface_mode;
-                    vPortFree(pQMsg);
                 }
                 break;
 
@@ -122,15 +124,13 @@ static void Display_Task(void *param)
                     break;
             }
         }
+        vPortFree(pQMsg);
     }
 }
 
 int Display_Start()
 {
     LOGD("[Display]:start\r\n");
-
-    s_DisplayReqMsg.id           = QMSG_DISPLAY_FRAME_REQ;
-    s_DisplayReqMsg.msg.raw.data = (void *)s_BufferLcd[s_ActiveFrameIndex];
 
     s_DisplayInterfaceMode = Cfg_AppDataGetInterfaceMode();
 

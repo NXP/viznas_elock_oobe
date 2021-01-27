@@ -82,10 +82,9 @@ static int Oasis_SetImgType(OASISLTImageType_t *img_type);
 extern uint8_t g_RemoveExistingFace;
 extern VIZN_api_client_t VIZN_API_CLIENT(Buttons);
 extern std::string g_AddNewFaceName;
+static QUIInfoMsg gui_info;
 static FaceRecBuffer s_FaceRecBuf;
-static QMsg gFaceInfoMsg;
 static QueueHandle_t gFaceDetMsgQ = NULL;
-static QMsg gFaceDetReqMsg;
 static OASISLTInitPara_t s_InitPara;
 static uint8_t s_lockstatus       = 1;
 static OasisState s_CurOasisState = OASIS_STATE_FACE_REC_START;
@@ -140,13 +139,38 @@ static void clearFaceInfo(face_info_t *face_info)
     face_info->face_id          = 0;
 }
 
+static int Oasis_SendFaceInfoMsg(QUIInfoMsg info)
+{
+    QMsg *pFaceInfoMsg      = (QMsg*)pvPortMalloc(sizeof(QMsg));
+    if (NULL == pFaceInfoMsg)
+    {
+        //LOGE("[ERROR]: pFaceInfoMsg pvPortMalloc failed\r\n");
+        return -1;
+    }
+    pFaceInfoMsg->id        = QMSG_FACEREC_INFO_UPDATE;
+    memcpy(&pFaceInfoMsg->msg.info, &info, sizeof(QUIInfoMsg));
+    return Camera_SendQMsg((void *)&pFaceInfoMsg);
+}
+
+static int Oasis_SendFaceDetReqMsg(void *dataIR, void *dataRGB)
+{
+    QMsg *pFaceDetReqMsg          = (QMsg*)pvPortMalloc(sizeof(QMsg));
+    if (NULL == pFaceDetReqMsg)
+    {
+        //LOGE("[ERROR]: pFaceDetReqMsg pvPortMalloc failed\r\n");
+        return -1;
+    }
+    pFaceDetReqMsg->id            = QMSG_FACEREC_FRAME_REQ;
+    pFaceDetReqMsg->msg.raw.data  = dataIR;
+    pFaceDetReqMsg->msg.raw.data2 = dataRGB;
+    return Camera_SendQMsg((void *)&pFaceDetReqMsg);
+}
+
 static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t *para, void *user_data)
 {
     face_info_t face_info;
-    QMsg *pQMsg;
     struct TimeStat *timeState;
 
-    pQMsg = &gFaceInfoMsg;
 
     /*The memset is corupting string pointers use clearFaceInfo function.
      The MCUX11 optimize copy trait. face_info.name = std::string(name) won't make a copy. Not seen with MCUX10.*/
@@ -166,29 +190,29 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
         case OASISLT_EVT_DET_COMPLETE:
         {
             timeState->det_comp = Time_Now();
-            pQMsg->msg.info.dt  = timeState->det_start - timeState->det_comp;
+            gui_info.dt  = timeState->det_start - timeState->det_comp;
             if (para->faceBoxIR == NULL && para->faceBoxRGB == NULL)
             {
-                memset(pQMsg->msg.info.name, 0x0, sizeof(pQMsg->msg.info.name));
+                memset(gui_info.name, 0x0, sizeof(gui_info.name));
             }
 
             if (para->faceBoxIR == NULL)
             {
-                memset(pQMsg->msg.info.rect, -1, sizeof(para->faceBoxIR->rect));
+                memset(gui_info.rect, -1, sizeof(para->faceBoxIR->rect));
             }
             else
             {
-                memcpy(pQMsg->msg.info.rect, para->faceBoxIR->rect, sizeof(para->faceBoxIR->rect));
+                memcpy(gui_info.rect, para->faceBoxIR->rect, sizeof(para->faceBoxIR->rect));
             }
 
             if (para->faceBoxRGB == NULL)
             {
-                memset(pQMsg->msg.info.rect2, -1, sizeof(para->faceBoxRGB->rect));
+                memset(gui_info.rect2, -1, sizeof(para->faceBoxRGB->rect));
             }
             else
             {
                 // UsbShell_Printf("[EVT]:RGB detected:%d\r\n",para->faceBoxRGB->rect[0]);
-                memcpy(pQMsg->msg.info.rect2, para->faceBoxRGB->rect, sizeof(para->faceBoxRGB->rect));
+                memcpy(gui_info.rect2, para->faceBoxRGB->rect, sizeof(para->faceBoxRGB->rect));
             }
 #ifdef SHOW_FPS
             /*pit timer unit is us*/
@@ -197,13 +221,13 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
             if (diff > 1000000 / PIT_TIMER_UNIT && diff < 5000000 / PIT_TIMER_UNIT)
             {
                 // update fps
-                pQMsg->msg.info.detect_fps = timeState->det_fps * 1000.0f / diff;
+                gui_info.detect_fps = timeState->det_fps * 1000.0f / diff;
                 timeState->det_fps         = 0;
                 timeState->det_fps_start   = timeState->det_comp;
             }
 #endif
             VIZN_DetectEvent(gApiHandle,
-                             (para->faceBoxIR == NULL && para->faceBoxRGB == NULL) ? -1 : pQMsg->msg.info.dt);
+                             (para->faceBoxIR == NULL && para->faceBoxRGB == NULL) ? -1 : gui_info.dt);
         }
 
         break;
@@ -214,17 +238,17 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
         {
             UsbShell_Printf("[OASIS]:quality chk res:%d\r\n", para->qualityResult);
 
-            pQMsg->msg.info.irLive  = para->reserved[5];
-            pQMsg->msg.info.front   = para->reserved[1];
-            pQMsg->msg.info.blur    = para->reserved[3];
-            pQMsg->msg.info.rgbLive = para->reserved[7];
-            pQMsg->msg.info.irBrightness = para->reserved[10];
-            pQMsg->msg.info.rgbBrightness = para->reserved[12];
-            Camera_GetPWM(LED_IR,&pQMsg->msg.info.irPwm);
-            Camera_GetPWM(LED_WHITE,&pQMsg->msg.info.rgbPwm);
+            gui_info.irLive  = para->reserved[5];
+            gui_info.front   = para->reserved[1];
+            gui_info.blur    = para->reserved[3];
+            gui_info.rgbLive = para->reserved[7];
+            gui_info.irBrightness = para->reserved[10];
+            gui_info.rgbBrightness = para->reserved[12];
+            Camera_GetPWM(LED_IR,&gui_info.irPwm);
+            Camera_GetPWM(LED_WHITE,&gui_info.rgbPwm);
 
-            UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[irBrightness]:%d\r\n",pQMsg->msg.info.irBrightness);
-            UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[rgbBrightness]:%d\r\n",pQMsg->msg.info.rgbBrightness);
+            UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[irBrightness]:%d\r\n",gui_info.irBrightness);
+            UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[rgbBrightness]:%d\r\n",gui_info.rgbBrightness);
             if (para->qualityResult == OASIS_QUALITY_RESULT_FACE_OK)
             {
                 UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[EVT]:ok!\r\n");
@@ -291,8 +315,8 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
             OASISLTRecognizeRes_t recResult = para->recResult;
 
             timeState->rec_comp = Time_Now();
-            pQMsg->msg.info.rt  = timeState->rec_start - timeState->rec_comp;
-            face_info.rt        = pQMsg->msg.info.rt;
+            gui_info.rt  = timeState->rec_start - timeState->rec_comp;
+            face_info.rt        = gui_info.rt;
 #ifdef SHOW_FPS
             /*pit timer unit is us*/
             timeState->rec_fps++;
@@ -300,22 +324,22 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
             if (diff > 1000000 / PIT_TIMER_UNIT)
             {
                 // update fps
-                pQMsg->msg.info.recognize_fps = timeState->rec_fps * 1000.0f / diff;
+                gui_info.recognize_fps = timeState->rec_fps * 1000.0f / diff;
                 timeState->rec_fps            = 0;
                 timeState->rec_fps_start      = timeState->rec_comp;
             }
 #endif
-            memset(pQMsg->msg.info.name, 0x0, sizeof(pQMsg->msg.info.name));
+            memset(gui_info.name, 0x0, sizeof(gui_info.name));
 
             if (recResult == OASIS_REC_RESULT_KNOWN_FACE)
             {
                 std::string name;
                 UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[OASIS]:face id:%d\r\n", id);
                 DB_GetName(id, name);
-                memcpy(pQMsg->msg.info.name, name.c_str(), name.size());
+                memcpy(gui_info.name, name.c_str(), name.size());
                 face_info.recognize = true;
                 face_info.name      = std::string(name);
-                UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[OASIS]:face id:%d name:%s\r\n", id, pQMsg->msg.info.name);
+                UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[OASIS]:face id:%d name:%s\r\n", id, gui_info.name);
             }
             else
             {
@@ -341,20 +365,20 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
             OASISLTRegisterRes_t res = para->regResult;
             UsbShell_Printf("[OASIS]:registration complete:%d\r\n", res);
             face_info.enrolment_result = res;
-            memset(pQMsg->msg.info.name, 0x0, sizeof(pQMsg->msg.info.name));
+            memset(gui_info.name, 0x0, sizeof(gui_info.name));
             if ((res == OASIS_REG_RESULT_OK) || (res == OASIS_REG_RESULT_DUP))
             {
                 std::string name;
                 int count;
                 DB_GetName(id, name);
-                memcpy(pQMsg->msg.info.name, name.c_str(), name.size());
+                memcpy(gui_info.name, name.c_str(), name.size());
                 DB_Count(&count);
                 // gFaceInfoMsg.msg.info.registeredFaces = featurenames.size();
-                pQMsg->msg.info.registeredFaces = count;
-                // pQMsg->msg.info.updateFlag |= DISPLAY_INFO_UPDATE_NAME_SIM_RT|DISPLAY_INFO_UPDATE_NEW_REG_FACE;
-                face_info.dt        = pQMsg->msg.info.dt;
-                face_info.rt        = pQMsg->msg.info.rt;
-                face_info.name      = std::string(pQMsg->msg.info.name);
+                gui_info.registeredFaces = count;
+                // gui_info.updateFlag |= DISPLAY_INFO_UPDATE_NAME_SIM_RT|DISPLAY_INFO_UPDATE_NEW_REG_FACE;
+                face_info.dt        = gui_info.dt;
+                face_info.rt        = gui_info.rt;
+                face_info.name      = std::string(gui_info.name);
                 face_info.enrolment = true;
             }
             else
@@ -371,8 +395,8 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
     if (evt == OASISLT_EVT_DET_COMPLETE || evt == OASISLT_EVT_REC_COMPLETE ||
         evt == OASISLT_EVT_QUALITY_CHK_COMPLETE || evt == OASISLT_EVT_REG_COMPLETE)
     {
-        pQMsg->msg.info.similar = para->reserved[0];
-        Camera_SendQMsg((void *)&pQMsg);
+        gui_info.similar = para->reserved[0];
+        Oasis_SendFaceInfoMsg(gui_info);
         if (evt == OASISLT_EVT_REC_COMPLETE || evt == OASISLT_EVT_REG_COMPLETE)
         {
             UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[EVT]:sim:[%d]\r\n", para->reserved[0]);
@@ -521,13 +545,13 @@ static int Oasis_Printf(const char *formatString)
 static void Oasis_SetState(OasisState state)
 {
     s_CurOasisState = state;
+    //UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[OASIS]:oasis_state = %d\r\n", state);
 }
+
 static void Oasis_Task(void *param)
 {
     BaseType_t ret;
     QMsg *rxQMsg              = NULL;
-    QMsg *sentQMsg            = NULL;
-    QMsg *infoQMsg            = NULL;
     OASISLTInitPara_t *init_p = (OASISLTInitPara_t *)param;
     ImageFrame_t frameRGB     = {(short)init_p->height, (short)init_p->width, 0, NULL};
     ImageFrame_t frameIR      = {(short)init_p->height, (short)init_p->width, 0, NULL};
@@ -537,16 +561,9 @@ static void Oasis_Task(void *param)
     UsbShell_Printf("[OASIS DETECT]:running\r\n");
 
     // ask for the first frame
-    gFaceInfoMsg.id = QMSG_FACEREC_INFO_UPDATE;
-    infoQMsg        = &gFaceInfoMsg;
-    clearFaceInfoMsg(&infoQMsg->msg.info);
-    Camera_SendQMsg((void *)&infoQMsg);
-
-    gFaceDetReqMsg.id            = QMSG_FACEREC_FRAME_REQ;
-    gFaceDetReqMsg.msg.raw.data  = s_FaceRecBuf.dataIR;
-    gFaceDetReqMsg.msg.raw.data2 = s_FaceRecBuf.dataRGB;
-    sentQMsg                     = &gFaceDetReqMsg;
-    Camera_SendQMsg((void *)&sentQMsg);
+    clearFaceInfoMsg(&gui_info);
+    Oasis_SendFaceInfoMsg(gui_info);
+    Oasis_SendFaceDetReqMsg(s_FaceRecBuf.dataIR, s_FaceRecBuf.dataRGB);
 
     memset(&gTimeStat, 0, sizeof(gTimeStat));
 
@@ -581,9 +598,7 @@ static void Oasis_Task(void *param)
                             while (1)
                                 ;
                         }
-
-                        sentQMsg = &gFaceDetReqMsg;
-                        Camera_SendQMsg((void *)&sentQMsg);
+                        Oasis_SendFaceDetReqMsg(s_FaceRecBuf.dataIR, s_FaceRecBuf.dataRGB);
                     }
                 }
                 break;
@@ -646,11 +661,10 @@ static void Oasis_Task(void *param)
                     UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[OASIS]:QMSG_FACEREC_START!\r\n");
                     VIZN_GetPulseWidth(NULL, LED_IR, &pwm);
                     Camera_QMsgSetPWM(LED_IR, pwm);
-                    infoQMsg = &gFaceInfoMsg;
-                    clearFaceInfoMsg(&infoQMsg->msg.info);
-                    Camera_SendQMsg((void *)&infoQMsg);
-                    sentQMsg = &gFaceDetReqMsg;
-                    Camera_SendQMsg((void *)&sentQMsg);
+
+                    clearFaceInfoMsg(&gui_info);
+                    Oasis_SendFaceInfoMsg(gui_info);
+                    Oasis_SendFaceDetReqMsg(s_FaceRecBuf.dataIR, s_FaceRecBuf.dataRGB);                    
                 }
                 break;
 
@@ -658,6 +672,7 @@ static void Oasis_Task(void *param)
                     assert(0);
             }
         }
+        vPortFree(rxQMsg);
     }
 }
 

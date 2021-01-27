@@ -599,7 +599,7 @@ void LPM_EnterSNVS(void)
     }
 }
 
-int LPM_PreEnterSuspend(void)
+static void LPM_SendDeinitCameraMsg(void)
 {
     QMsg *pQMsgCamera;
     /* Camera */
@@ -607,6 +607,11 @@ int LPM_PreEnterSuspend(void)
     pQMsgCamera->id         = QMSG_CMD;
     pQMsgCamera->msg.cmd.id = QCMD_DEINIT_CAMERA;
     Camera_SendQMsg((void *)&pQMsgCamera);
+}
+
+int LPM_PreEnterSuspend(void)
+{
+    LPM_SendDeinitCameraMsg();
 
     xEventGroupWaitBits(g_SyncVideoEvents, 1 << SYNC_VIDEO_CAMERA_DEINIT_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
 

@@ -632,7 +632,6 @@ vizn_api_status_t VIZN_SetDispOutputInterface(VIZN_api_client_t *clientHandle, c
     uint32_t status;
     sln_cfg_data_t cfg;
     bool already = false;
-    QMsg *pQMsg  = NULL;
 
     if (interface_mode >= DISPLAY_LAST_INTERFACE)
         return kStatus_API_Layer_SetDispOutputInterface_NotSupported;
@@ -648,12 +647,7 @@ vizn_api_status_t VIZN_SetDispOutputInterface(VIZN_api_client_t *clientHandle, c
     {
         cfg.display_interface = (uint8_t)interface_mode;
         status                = Cfg_AppDataSave(&cfg);
-
-        pQMsg                              = (QMsg *)pvPortMalloc(sizeof(QMsg));
-        pQMsg->id                          = QMSG_CMD;
-        pQMsg->msg.cmd.id                  = QCMD_CHANGE_INFO_DISP_MODE;
-        pQMsg->msg.cmd.data.interface_mode = interface_mode;
-        Camera_SendQMsg((void *)&pQMsg);
+        Camera_ChangeInterfaceMode(interface_mode);
     }
     Cfg_Unlock();
 

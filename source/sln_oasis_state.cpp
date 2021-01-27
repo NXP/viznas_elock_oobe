@@ -25,11 +25,8 @@
 
 #include "oasis.h"
 #include "oasislite_runtime.h"
+#include "fsl_log.h"
 
-static QMsg sFaceAddNew;
-static QMsg sFaceDel;
-static QMsg sFaceRec;
-static QMsg sFaceLock;
 static uint8_t s_appType;
 static bool s_face_detect   = false;
 static bool s_firstDetected = false;
@@ -41,31 +38,78 @@ extern volatile uint8_t g_FaceSystemLocked;
 volatile static uint32_t s_API_Events = 0;
 extern std::string g_AddNewFaceName;
 
+static void SendDelFaceQMsg(uint8_t start)
+{
+    QMsg *pQMsg = (QMsg*)pvPortMalloc(sizeof(QMsg));
+    if (NULL == pQMsg)
+    {
+        LOGE("[ERROR]: DelFace pQMsg pvPortMalloc failed\r\n");
+        return;
+    }
+    pQMsg->id = QMSG_FACEREC_DELFACE;
+    pQMsg->msg.cmd.data.del_face = start;
+    Oasis_SendQMsg((void *)&pQMsg);
+}
+
+static void SendAddFaceQMsg(uint8_t start)
+{
+    QMsg *pQMsg = (QMsg*)pvPortMalloc(sizeof(QMsg));
+    if (NULL == pQMsg)
+    {
+        LOGE("[ERROR]: AddFace pQMsg pvPortMalloc failed\r\n");
+        return;
+    }
+    pQMsg->id = QMSG_FACEREC_ADDNEWFACE;
+    pQMsg->msg.cmd.data.add_newface = start;
+    Oasis_SendQMsg((void *)&pQMsg);
+}
+
+static void SendRecFaceQMsg(uint8_t start)
+{
+    QMsg *pQMsg = (QMsg*)pvPortMalloc(sizeof(QMsg));
+    if (NULL == pQMsg)
+    {
+        LOGE("[ERROR]: RecFace pQMsg pvPortMalloc failed\r\n");
+        return;
+    }
+    pQMsg->id = QMSG_FACEREC_RECFACE;
+    pQMsg->msg.cmd.data.rec_face = start;
+    Oasis_SendQMsg((void *)&pQMsg);
+}
+
+static void SendLockFaceQMsg(uint8_t Locked)
+{
+    QMsg *pQMsg = (QMsg*)pvPortMalloc(sizeof(QMsg));
+    if (NULL == pQMsg)
+    {
+        LOGE("[ERROR]: LockFace pQMsg pvPortMalloc failed\r\n");
+        return;
+    }
+    if (Locked)
+        pQMsg->id = QMSG_FACEREC_STOP;
+    else
+        pQMsg->id = QMSG_FACEREC_START;
+
+    Oasis_SendQMsg((void *)&pQMsg);
+}
+
+
 void StartDeregistrationProcess(void)
 {
-    QMsg *pQMsg;
-
     StartDeregistrationTimers();
-    g_RemoveExistingFace           = 1;
-    s_face_detect                  = false;
-    s_firstDetected                = false;
-    sFaceDel.msg.cmd.data.del_face = g_RemoveExistingFace;
-    pQMsg                          = &sFaceDel;
-    Oasis_SendQMsg((void *)&pQMsg);
+    s_face_detect = false;
+    s_firstDetected = false;
+    g_RemoveExistingFace = 1;
+    SendDelFaceQMsg(g_RemoveExistingFace);
     StopLockProcess();
 }
 
 void StopDeregistrationProcess(uint8_t event)
 {
-    QMsg *pQMsg;
-
     StopDeregistrationTimers();
-    s_API_Events                   = 1 << event;
-    g_RemoveExistingFace           = 0;
-    sFaceDel.msg.cmd.data.del_face = g_RemoveExistingFace;
-    pQMsg                          = &sFaceDel;
-    Oasis_SendQMsg((void *)&pQMsg);
-
+    s_API_Events = 1 << event;
+    g_RemoveExistingFace = 0;
+    SendDelFaceQMsg(g_RemoveExistingFace);
     if (event != kEvents_API_Layer_DeregCanceled)
     {
         StartLockProcess(true);
@@ -74,22 +118,16 @@ void StopDeregistrationProcess(uint8_t event)
 
 void StartRegistrationProcess(void)
 {
-    QMsg *pQMsg;
-
-    g_AddNewFace                         = 1;
     s_face_detect                        = false;
     s_firstDetected                      = false;
-    sFaceAddNew.msg.cmd.data.add_newface = g_AddNewFace;
-    pQMsg                                = &sFaceAddNew;
-    Oasis_SendQMsg((void *)&pQMsg);
-
+    g_AddNewFace                         = 1;
+    SendAddFaceQMsg(g_AddNewFace);
     StartRegistrationTimers();
     StopLockProcess();
 }
 
 void StopRegistrationProcess(uint8_t event)
 {
-    QMsg *pQMsg;
     StopRegistrationTimers();
 
     if (s_appType != APP_TYPE_USERID)
@@ -109,11 +147,8 @@ void StopRegistrationProcess(uint8_t event)
     }
     s_API_Events = 1 << event;
     g_AddNewFaceName.assign("");
-    g_AddNewFace                         = 0;
-    sFaceAddNew.msg.cmd.data.add_newface = g_AddNewFace;
-    pQMsg                                = &sFaceAddNew;
-    Oasis_SendQMsg((void *)&pQMsg);
-
+    g_AddNewFace = 0;
+    SendAddFaceQMsg(g_AddNewFace);
     if (event != kEvents_API_Layer_RegCanceled)
     {
         StartLockProcess(true);
@@ -122,13 +157,10 @@ void StopRegistrationProcess(uint8_t event)
 
 void StartRecognitionProcess(void)
 {
-    QMsg *pQMsg;
     g_RecFace                      = 1;
     s_face_detect                  = false;
     s_firstDetected                = false;
-    sFaceRec.msg.cmd.data.rec_face = g_RecFace;
-    pQMsg                          = &sFaceRec;
-    Oasis_SendQMsg((void *)&pQMsg);
+    SendRecFaceQMsg(g_RecFace);
 
     StartRecNoFaceTimers();
     StartDetNoFaceTimers();
@@ -138,15 +170,11 @@ void StartRecognitionProcess(void)
 
 void StopRecognitionProcess(uint8_t event)
 {
-    QMsg *pQMsg;
-
     StopRecNoFaceTimers();
     StopDetNoFaceTimers();
     s_API_Events                   = 1 << event;
     g_RecFace                      = 0;
-    sFaceRec.msg.cmd.data.rec_face = g_RecFace;
-    pQMsg                          = &sFaceRec;
-    Oasis_SendQMsg((void *)&pQMsg);
+    SendRecFaceQMsg(g_RecFace);
 
     if (s_appType == APP_TYPE_USERID && event != kEvents_API_Layer_RecCanceled)
     {
@@ -169,8 +197,6 @@ void StopRecognitionProcess(uint8_t event)
 
 void StartLockProcess(bool timerEnable)
 {
-    QMsg *pQMsg;
-
     if (APP_TYPE_USERID == s_appType)
     {
         /* If is is userid app_type just restart the recognition proceess */
@@ -178,9 +204,7 @@ void StartLockProcess(bool timerEnable)
         return;
     }
     g_FaceSystemLocked = 1;
-    sFaceLock.id       = QMSG_FACEREC_STOP;
-    pQMsg              = &sFaceLock;
-    Oasis_SendQMsg((void *)&pQMsg);
+    SendLockFaceQMsg(g_FaceSystemLocked);
 
     if (timerEnable)
     {
@@ -190,8 +214,6 @@ void StartLockProcess(bool timerEnable)
 
 void StopLockProcess(void)
 {
-    QMsg *pQMsg;
-
     if (APP_TYPE_USERID == s_appType)
     {
         /* If it is userid do nothing  */
@@ -201,9 +223,7 @@ void StopLockProcess(void)
     SysState_Set(sysStateDetectedNoUser);
     g_FaceSystemLocked = 0;
     s_API_Events       = kEvents_API_Layer_NoEvent;
-    sFaceLock.id       = QMSG_FACEREC_START;
-    pQMsg              = &sFaceLock;
-    Oasis_SendQMsg((void *)&pQMsg);
+    SendLockFaceQMsg(g_FaceSystemLocked);
 }
 
 void Oasis_API_Detect(int dt)
@@ -353,7 +373,5 @@ uint32_t Oasis_Get_Events()
 
 void Oasis_State_Init(uint8_t appType)
 {
-    sFaceAddNew.id = QMSG_FACEREC_ADDNEWFACE;
-    sFaceDel.id    = QMSG_FACEREC_DELFACE;
-    sFaceRec.id    = QMSG_FACEREC_RECFACE;
+
 }

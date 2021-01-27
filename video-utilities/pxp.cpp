@@ -40,10 +40,6 @@
 extern EventGroupHandle_t g_SyncVideoEvents;
 
 static QueueHandle_t s_PXPMsgQ = NULL;
-/*!< Message sent to Oasis Task by Camera task to signal that a frame is available */
-static QMsg s_FResMsg;
-/*!< Message sent to Display Task by Camera task to signal that a frame is available */
-static QMsg s_DResMsg;
 
 static uint8_t s_DisplayInterfaceMode = DISPLAY_LAST_INTERFACE;
 
@@ -401,6 +397,32 @@ void APP_PXPStartCamera2DetBuf(uint32_t cameraBuffer, uint32_t detBuffer)
     APP_PXPStart(cameraBuffer, detBuffer, 0);
 }
 
+/* send msg to Camera Task by PXP task to signal that frame for face rec is done */
+static int PXP_SendFResMsg(void)
+{
+    QMsg* pFResMsg = (QMsg*)pvPortMalloc(sizeof(QMsg));
+    if (NULL == pFResMsg)
+    {
+        LOGE("[ERROR]: pFResMsg pvPortMalloc failed\r\n");
+        return -1;
+    }
+    pFResMsg->id = QMSG_PXP_FACEREC;
+    return Camera_SendQMsg((void *)&pFResMsg);
+}
+
+/* send msg to Camera Task by PXP task to signal that frame for display is done */
+static int PXP_SendDResMsg(void)
+{
+    QMsg* pDResMsg = (QMsg*)pvPortMalloc(sizeof(QMsg));
+    if (NULL == pDResMsg)
+    {
+        LOGE("[ERROR]: pDResMsg pvPortMalloc failed\r\n");
+        return -1;
+    }
+    pDResMsg->id = QMSG_PXP_DISPLAY;
+    return Camera_SendQMsg((void *)&pDResMsg);
+}
+
 static void PXP_Task(void *param)
 {
     BaseType_t ret;
@@ -423,8 +445,7 @@ static void PXP_Task(void *param)
 #else
                     APP_PXPStartCamera2DetBuf(pQMsg->msg.pxp.in_buffer, pQMsg->msg.pxp.out_buffer);
 #endif
-                    pQMsg = &s_FResMsg;
-                    Camera_SendQMsg((void *)&pQMsg);
+                    PXP_SendFResMsg(); 
                 }
                 break;
 
@@ -438,15 +459,13 @@ static void PXP_Task(void *param)
                     APP_PXPStartCamera2Display(pQMsg->msg.pxp.in_buffer, *pQMsg->msg.pxp.info, s_DisplayInterfaceMode,
                                                pQMsg->msg.pxp.out_buffer);
 #endif
-                    pQMsg = &s_DResMsg;
-                    Camera_SendQMsg((void *)&pQMsg);
+                    PXP_SendDResMsg();
                 }
                 break;
 
                 case QMSG_DISPLAY_INTERFACE:
                 {
                     s_DisplayInterfaceMode = pQMsg->msg.cmd.data.interface_mode;
-                    vPortFree(pQMsg);
                 }
                 break;
 
@@ -454,6 +473,7 @@ static void PXP_Task(void *param)
                     break;
             }
         }
+        vPortFree(pQMsg);
     }
 }
 
@@ -461,8 +481,6 @@ void APP_PXP_Start(void)
 {
     LOGD("[PXP]:start\r\n");
     APP_PXPInit();
-    s_FResMsg.id = QMSG_PXP_FACEREC;
-    s_DResMsg.id = QMSG_PXP_DISPLAY;
 
     s_PXPMsgQ = xQueueCreate(PXP_MSG_Q_COUNT, sizeof(QMsg *));
 

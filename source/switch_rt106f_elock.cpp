@@ -50,9 +50,6 @@ static void TimerCallback(TimerHandle_t xTimer);
  *******************************************************************************/
 static QueueHandle_t SwitchMsgQ = NULL;
 static QMsg SW1Msg;
-static uint8_t keyNum = 0;
-static QMsg CmdMsg;
-static uint8_t s_DisplayInterfaceMode = 1;
 static int s_Running;
 static TimerHandle_t s_DebouncingTimer = NULL;
 static int s_TimerDebounceID           = TIMER_DEBOUNCE_SWITCH_1;
@@ -148,6 +145,7 @@ static void Switch_Task(void *param)
         if (ret == pdTRUE)
         {
             LPM_SendControlStatus(LPM_ButtonOperation, 1);
+            uint8_t keyNum = pQMsg->msg.key_num;
             switch (pQMsg->id)
             {
                 case QMSG_SWITCH_1:
@@ -209,6 +207,7 @@ void GPIO2_Combined_16_31_IRQHandler(void)
 {
     // LOGD("++GPIO++\r\n");
     uint32_t intPin = 0x00;
+    uint8_t keyNum;
     // Get interrupt flag for the GPIO
     intPin = GPIO_PortGetInterruptFlags(BOARD_USER_SWITCH_GPIO);
 
@@ -220,7 +219,8 @@ void GPIO2_Combined_16_31_IRQHandler(void)
 			GPIO_PortDisableInterrupts(BOARD_USER_SWITCH_GPIO, (1 << SW1_GPIO_PIN));
 			/* clear the interrupt status */
 			GPIO_PortClearInterruptFlags(BOARD_USER_SWITCH_GPIO, 1U << SW1_GPIO_PIN);
-			QMsg* pQMsg = &SW1Msg;
+            QMsg* pQMsg = &SW1Msg;
+            pQMsg->msg.key_num = keyNum;
 			Switch_SendQMsgFromISR((void*)&pQMsg);
 			BaseType_t HigherPriorityTaskWoken = pdFALSE;
 			xTimerResetFromISR (s_DebouncingTimer,&HigherPriorityTaskWoken); //Debouncing
@@ -231,7 +231,8 @@ void GPIO2_Combined_16_31_IRQHandler(void)
 			GPIO_PortDisableInterrupts(BOARD_USER_SWITCH_GPIO, (1 << SW2_GPIO_PIN));
 			/* clear the interrupt status */
 			GPIO_PortClearInterruptFlags(BOARD_USER_SWITCH_GPIO, 1U << SW2_GPIO_PIN);
-			QMsg* pQMsg = &SW1Msg;
+            QMsg* pQMsg = &SW1Msg;
+            pQMsg->msg.key_num = keyNum;
 			Switch_SendQMsgFromISR((void*)&pQMsg);
 			BaseType_t HigherPriorityTaskWoken = pdFALSE;
 			xTimerResetFromISR (s_DebouncingTimer,&HigherPriorityTaskWoken); //Debouncing
@@ -240,7 +241,8 @@ void GPIO2_Combined_16_31_IRQHandler(void)
 			keyNum = SW3_GPIO_PIN;
 			GPIO_PortDisableInterrupts(BOARD_USER_SWITCH_GPIO, (1 << SW3_GPIO_PIN));
 			GPIO_PortClearInterruptFlags(BOARD_USER_SWITCH_GPIO, 1U << SW3_GPIO_PIN);
-			QMsg* pQMsg = &SW1Msg;
+            QMsg* pQMsg = &SW1Msg;
+            pQMsg->msg.key_num = keyNum;
 			Switch_SendQMsgFromISR((void*)&pQMsg);
 			BaseType_t HigherPriorityTaskWoken = pdFALSE;
 			xTimerResetFromISR (s_DebouncingTimer,&HigherPriorityTaskWoken); //Debouncing
@@ -250,7 +252,8 @@ void GPIO2_Combined_16_31_IRQHandler(void)
 			keyNum = SW4_GPIO_PIN;
 			GPIO_PortDisableInterrupts(BOARD_USER_SWITCH_GPIO, (1 << SW4_GPIO_PIN));
 			GPIO_PortClearInterruptFlags(BOARD_USER_SWITCH_GPIO, 1U << SW4_GPIO_PIN);
-			QMsg* pQMsg = &SW1Msg;
+            QMsg* pQMsg = &SW1Msg;
+            pQMsg->msg.key_num = keyNum;
 			Switch_SendQMsgFromISR((void*)&pQMsg);
 			BaseType_t HigherPriorityTaskWoken = pdFALSE;
 			xTimerResetFromISR (s_DebouncingTimer,&HigherPriorityTaskWoken); //Debouncing
@@ -266,9 +269,6 @@ int Switch_Start(void)
     s_Running = 0;
 
     SW1Msg.id  = QMSG_SWITCH_1;
-    SW1Msg.msg.raw.data = &keyNum;
-
-    CmdMsg.id = QMSG_CMD;
     SwitchMsgQ = xQueueCreate(SWITCH_MSG_Q_COUNT, sizeof(QMsg *));
 
     if (SwitchMsgQ == NULL)

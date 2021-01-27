@@ -104,18 +104,6 @@ EventGroupHandle_t g_SyncVideoEvents;
 static QueueHandle_t CameraMsgQ = NULL;
 /*!< Message sent from CameraISR to  Camera task to signal that a frame is available */
 static QMsg DQMsg;
-/*!< Message sent to Oasis Task by Camera task to signal that a frame is available */
-static QMsg FResMsg;
-/*!< Message sent to Display Task by Camera task to signal that a frame is available */
-static QMsg DResMsg;
-/*!< Message sent to PXP Task by Camera task to signal that a frame is available */
-static QMsg FPxpMsg; // for facerec
-/*!< Message sent to PXP Task by Camera task to signal that a frame is available */
-static QMsg DPxpMsg; // for display
-/*!< TBD */
-static QMsg CmdMsg;
-/*!< Message sent by Camera task to signal the interface mode for which the next frame will be processed */
-static QMsg DIntMsg;
 
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
 static StackType_t s_CameraTaskStack[CAMERATASK_STACKSIZE];
@@ -275,7 +263,8 @@ static void Camera_LedTimer_Deinit()
 int Camera_QMsgSetPWM(uint8_t led, uint8_t pulse_width)
 {
     int status                     = -1;
-    QMsg *pQMsg                    = &CmdMsg;
+    QMsg *pQMsg                    = (QMsg*)pvPortMalloc(sizeof(QMsg));
+    pQMsg->id                      = QMSG_CMD;
     pQMsg->msg.cmd.id              = QCMD_SET_PWM;
     pQMsg->msg.cmd.data.led_pwm[0] = led;
     pQMsg->msg.cmd.data.led_pwm[1] = pulse_width;
@@ -344,7 +333,8 @@ static void Camera_LedTimer_Deinit()
 int Camera_QMsgSetPWM(uint8_t led, uint8_t pulse_width)
 {
     int status = -1;
-    QMsg *pQMsg                    = &CmdMsg;
+    QMsg *pQMsg = (QMsg*)pvPortMalloc(sizeof(QMsg));
+    pQMsg->id = QMSG_CMD;
     pQMsg->msg.cmd.id = QCMD_SET_PWM;
     pQMsg->msg.cmd.data.led_pwm[0] = led;
     pQMsg->msg.cmd.data.led_pwm[1] = pulse_width;
@@ -503,7 +493,8 @@ static void Camera_RgbIrSwitch(int8_t cameraID)
 int Camera_SetMonoMode(uint8_t enable)
 {
     int status;
-    QMsg *pQMsg                       = &CmdMsg;
+    QMsg *pQMsg                       = (QMsg*)pvPortMalloc(sizeof(QMsg));
+    pQMsg->id                         = QMSG_CMD;
     pQMsg->msg.cmd.id                 = QCMD_SET_LIVENESS_MODE;
     pQMsg->msg.cmd.data.liveness_mode = enable;
     status                            = Camera_SendQMsg((void *)&pQMsg);
@@ -513,7 +504,8 @@ int Camera_SetMonoMode(uint8_t enable)
 int Camera_SetDispMode(uint8_t displayMode)
 {
     int status;
-    QMsg *pQMsg                      = &CmdMsg;
+    QMsg *pQMsg                      = (QMsg*)pvPortMalloc(sizeof(QMsg));
+    pQMsg->id                        = QMSG_CMD;
     pQMsg->msg.cmd.id                = QCMD_CHANGE_RGB_IR_DISP_MODE;
     pQMsg->msg.cmd.data.display_mode = displayMode;
     status                           = Camera_SendQMsg((void *)&pQMsg);
@@ -556,6 +548,17 @@ int Camera_SetRGBExposureMode(uint8_t mode)
 //    status = Camera_SendQMsg((void*)&pQMsg);
 //    return status;
 //}
+
+int Camera_ChangeInterfaceMode(uint8_t mode)
+{
+    int status = -1;
+    QMsg* pQMsg                        = (QMsg *)pvPortMalloc(sizeof(QMsg));
+    pQMsg->id                          = QMSG_CMD;
+    pQMsg->msg.cmd.id                  = QCMD_CHANGE_INFO_DISP_MODE;
+    pQMsg->msg.cmd.data.interface_mode = mode;
+    status                             = Camera_SendQMsg((void *)&pQMsg);
+    return status;
+}
 
 void BOARD_InitCameraResource(void)
 {
@@ -808,6 +811,94 @@ static void Camera_CheckOverRun()
     }
 }
 
+// Send msg to Dispaly Task by Camera task to signal that a frame is available for display.
+static int Camera_SendDResMsg(void)
+{
+    QMsg *pDResMsg = (QMsg*)pvPortMalloc(sizeof(QMsg));
+    if (NULL == pDResMsg)
+    {
+        LOGE("[ERROR]: pDResMsg pvPortMalloc failed\r\n");
+        return -1;
+    }
+    pDResMsg->id = QMSG_DISPLAY_FRAME_RES;
+
+    return Display_SendQMsg((void *)&pDResMsg);
+}
+
+// Send msg to Oasis Task by Camera task to signal that a frame is available for face rec.
+static int Camera_SendFResMsg(void)
+{
+    QMsg *pFResMsg = (QMsg*)pvPortMalloc(sizeof(QMsg));
+    if (NULL == pFResMsg)
+    {
+        LOGE("[ERROR]: pFResMsg pvPortMalloc failed\r\n");
+        return -1;
+    }
+    pFResMsg->id = QMSG_FACEREC_FRAME_RES;
+
+    return Oasis_SendQMsg((void *)&pFResMsg);
+}
+
+// Send msg to PXP Task by Camera task to signal that a frame is available for display .
+static int Camera_SendDPxpMsg(uint32_t in_buffer, QUIInfoMsg *info, uint32_t out_buffer)
+{
+    QMsg *pDPxpMsg = (QMsg*)pvPortMalloc(sizeof(QMsg));
+    if (NULL == pDPxpMsg)
+    {
+        LOGE("[ERROR]: pDPxpMsg pvPortMalloc failed\r\n");
+        return -1;
+    }
+    pDPxpMsg->id = QMSG_PXP_DISPLAY;
+    pDPxpMsg->msg.pxp.in_buffer = in_buffer;
+    pDPxpMsg->msg.pxp.out_buffer = out_buffer;
+    pDPxpMsg->msg.pxp.info = info;
+
+    return PXP_SendQMsg((void *)&pDPxpMsg);
+}
+
+// Send msg to PXP Task by Camera task to signal that a frame is available for face rec .
+static int Camera_SendFPxpMsg(uint32_t in_buffer, uint32_t out_buffer)
+{
+    QMsg *pFPxpMsg = (QMsg*)pvPortMalloc(sizeof(QMsg));
+    if (NULL == pFPxpMsg)
+    {
+        LOGE("[ERROR]: FPxpMsg pvPortMalloc failed\r\n");
+        return -1;
+    }
+    pFPxpMsg->id = QMSG_PXP_FACEREC;
+    pFPxpMsg->msg.pxp.in_buffer = in_buffer;
+    pFPxpMsg->msg.pxp.out_buffer = out_buffer;
+    return PXP_SendQMsg((void *)&pFPxpMsg);
+}
+
+// Send msg to PXP Task by Camera task to signal that interface mode is changed .
+static int Camera_SendPxpInfoModeMsg(uint8_t mode)
+{
+    QMsg *pInfoDispMode = (QMsg*)pvPortMalloc(sizeof(QMsg));
+    if (NULL == pInfoDispMode)
+    {
+        LOGE("[ERROR]: pInfoDispMode pvPortMalloc failed\r\n");
+        return -1;
+    }
+    pInfoDispMode->id = QMSG_DISPLAY_INTERFACE;
+    pInfoDispMode->msg.cmd.data.interface_mode = mode;
+    return PXP_SendQMsg((void *)&pInfoDispMode);
+}
+
+// Send msg to Display Task by Camera task to signal that interface mode is changed .
+static int Camera_SendDispInfoModeMsg(uint8_t mode)
+{
+    QMsg *pInfoDispMode = (QMsg*)pvPortMalloc(sizeof(QMsg));
+    if (NULL == pInfoDispMode)
+    {
+        LOGE("[ERROR]: pInfoDispMode pvPortMalloc failed\r\n");
+        return -1;
+    }
+    pInfoDispMode->id = QMSG_DISPLAY_INTERFACE;
+    pInfoDispMode->msg.cmd.data.interface_mode = mode;
+    return Display_SendQMsg((void *)&pInfoDispMode);
+}
+
 static void Camera_Task(void *param)
 {
     BaseType_t ret;
@@ -851,20 +942,13 @@ static void Camera_Task(void *param)
                             {
                                 memcpy(infoMsgOut.rect, infoMsgOut.rect2, sizeof(infoMsgOut.rect));
                             }
-                            DPxpMsg.msg.pxp.out_buffer = (uint32_t)pDispData;
-                            DPxpMsg.msg.pxp.in_buffer  = s_ActiveFrameAddr;
-                            DPxpMsg.msg.pxp.info       = &infoMsgOut;
-                            pQMsg                      = &DPxpMsg;
-                            PXP_SendQMsg((void *)&pQMsg);
+                            Camera_SendDPxpMsg(s_ActiveFrameAddr, &infoMsgOut, (uint32_t)pDispData);
                             pDispData = NULL;
                         }
 
                         if (pDetRGB)
                         {
-                            FPxpMsg.msg.pxp.out_buffer = (uint32_t)pDetRGB;
-                            FPxpMsg.msg.pxp.in_buffer  = s_ActiveFrameAddr;
-                            pQMsg                      = &FPxpMsg;
-                            PXP_SendQMsg((void *)&pQMsg);
+                            Camera_SendFPxpMsg(s_ActiveFrameAddr, (uint32_t)pDetRGB);
                             pDetRGB = NULL;
                         }
 
@@ -910,20 +994,13 @@ static void Camera_Task(void *param)
                                 {
                                     memcpy(infoMsgOut.rect, infoMsgOut.rect2, sizeof(infoMsgOut.rect));
                                 }
-                                DPxpMsg.msg.pxp.out_buffer = (uint32_t)pDispData;
-                                DPxpMsg.msg.pxp.in_buffer  = s_ActiveFrameAddr;
-                                DPxpMsg.msg.pxp.info       = &infoMsgOut;
-                                pQMsg                      = &DPxpMsg;
-                                PXP_SendQMsg((void *)&pQMsg);
+                                Camera_SendDPxpMsg(s_ActiveFrameAddr, &infoMsgOut, (uint32_t)pDispData);
                                 pDispData = NULL;
                             }
 
                             if (pDetRGB && irReady)
                             {
-                                FPxpMsg.msg.pxp.out_buffer = (uint32_t)pDetRGB;
-                                FPxpMsg.msg.pxp.in_buffer  = s_ActiveFrameAddr;
-                                pQMsg                      = &FPxpMsg;
-                                PXP_SendQMsg((void *)&pQMsg);
+                                Camera_SendFPxpMsg(s_ActiveFrameAddr, (uint32_t)pDetRGB);
                                 irReady = false;
                                 pDetRGB = NULL;
                                 pDetIR  = NULL;
@@ -938,20 +1015,13 @@ static void Camera_Task(void *param)
                             if ((dispMode == DISPLAY_MODE_IR) && pDispData)
                             {
                                 memcpy(&infoMsgOut, &infoMsgIn, sizeof(QUIInfoMsg));
-                                DPxpMsg.msg.pxp.out_buffer = (uint32_t)pDispData;
-                                DPxpMsg.msg.pxp.in_buffer  = s_ActiveFrameAddr;
-                                DPxpMsg.msg.pxp.info       = &infoMsgOut;
-                                pQMsg                      = &DPxpMsg;
-                                PXP_SendQMsg((void *)&pQMsg);
+                                Camera_SendDPxpMsg(s_ActiveFrameAddr, &infoMsgOut, (uint32_t)pDispData);
                                 pDispData = NULL;
                             }
 
                             if (pDetIR && (!irReady))
                             {
-                                FPxpMsg.msg.pxp.out_buffer = (uint32_t)pDetIR;
-                                FPxpMsg.msg.pxp.in_buffer  = s_ActiveFrameAddr;
-                                pQMsg                      = &FPxpMsg;
-                                PXP_SendQMsg((void *)&pQMsg);
+                                Camera_SendFPxpMsg(s_ActiveFrameAddr, (uint32_t)pDetIR);
                                 irReady = true;
                             }
                         }
@@ -983,8 +1053,7 @@ static void Camera_Task(void *param)
 
                 case QMSG_PXP_DISPLAY:
                 {
-                    pQMsg = &DResMsg;
-                    Display_SendQMsg((void *)&pQMsg);
+                    Camera_SendDResMsg();
                 }
                 break;
 
@@ -992,8 +1061,7 @@ static void Camera_Task(void *param)
                 {
                     if (!pDetIR && !pDetRGB)
                     {
-                        pQMsg = &FResMsg;
-                        Oasis_SendQMsg((void *)&pQMsg);
+                        Camera_SendFResMsg();
                     }
                 }
                 break;
@@ -1032,7 +1100,6 @@ static void Camera_Task(void *param)
                 {
                     if (pQMsg->msg.cmd.id == QCMD_DEINIT_CAMERA)
                     {
-                        vPortFree(pQMsg);
                         Camera_Deinit();
                     }
                     else if (pQMsg->msg.cmd.id == QCMD_CHANGE_RGB_IR_DISP_MODE)
@@ -1057,23 +1124,12 @@ static void Camera_Task(void *param)
                     else if(pQMsg->msg.cmd.id == QCMD_CHANGE_RGB_EXPOSURE_MODE)
                     {
                     	s_CurRGBExposureMode = pQMsg->msg.cmd.data.exposure_mode;
-                        vPortFree(pQMsg);
                     }
 					else if (pQMsg->msg.cmd.id == QCMD_CHANGE_INFO_DISP_MODE)
                     {
-                        QMsg *pInfoDispMode;
-                        const uint8_t display_interface = pQMsg->msg.cmd.data.interface_mode;
-                        vPortFree(pQMsg);
-
-                        pInfoDispMode                              = (QMsg *)pvPortMalloc(sizeof(QMsg));
-                        pInfoDispMode->id                          = QMSG_DISPLAY_INTERFACE;
-                        pInfoDispMode->msg.cmd.data.interface_mode = display_interface;
-                        PXP_SendQMsg((void *)&pInfoDispMode);
-
-                        pInfoDispMode                              = (QMsg *)pvPortMalloc(sizeof(QMsg));
-                        pInfoDispMode->id                          = QMSG_DISPLAY_INTERFACE;
-                        pInfoDispMode->msg.cmd.data.interface_mode = display_interface;
-                        Display_SendQMsg((void *)&pInfoDispMode);
+                        uint8_t display_interface = pQMsg->msg.cmd.data.interface_mode;
+                        Camera_SendPxpInfoModeMsg(display_interface);
+                        Camera_SendDispInfoModeMsg(display_interface);
                     }
                 }
                 break;
@@ -1082,6 +1138,8 @@ static void Camera_Task(void *param)
                     break;
             }
         }
+        if ((pQMsg->id != QMSG_CAMERA_USERID) && (pQMsg->id != QMSG_CAMERA_DQ))
+            vPortFree(pQMsg);
     }
     // end if while (1)
     if (s_pBufferQueue)
@@ -1105,14 +1163,6 @@ int Camera_Start()
     {
         DQMsg.id = QMSG_CAMERA_DQ;
     }
-
-    FResMsg.id = QMSG_FACEREC_FRAME_RES;
-    DResMsg.id = QMSG_DISPLAY_FRAME_RES;
-    FPxpMsg.id = QMSG_PXP_FACEREC;
-    DPxpMsg.id = QMSG_PXP_DISPLAY;
-
-    CmdMsg.id  = QMSG_CMD;
-    DIntMsg.id = QMSG_DISPLAY_INTERFACE;
     CameraMsgQ = xQueueCreate(CAMERA_MSG_Q_COUNT, sizeof(QMsg *));
 
     int buffersize = 0;

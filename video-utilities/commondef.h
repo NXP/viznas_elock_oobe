@@ -211,6 +211,7 @@ typedef struct
         QUIInfoMsg info;
         QCmdMsg cmd;
         QPXPMsg pxp;
+        uint8_t key_num;
     } msg;
 } QMsg;
 
