@@ -411,6 +411,7 @@ extern void __main(void);
 #endif
 extern int main(void);
 
+#define CONFIG_FLEXRAM_AT_STARTUP 1
 //*****************************************************************************
 // External declaration for the pointer to the stack top from the Linker Script
 //*****************************************************************************
@@ -464,21 +465,13 @@ static void map_flexram(void)
 // The vector table.
 // This relies on the linker script to place at correct location in memory.
 //*****************************************************************************
-#ifndef APP_VERSION_NUMBER
-#if (defined(APP_MAJ_VER) && defined(APP_MIN_VER) && defined(APP_BLD_VER))
-#define APP_VERSION_NUMBER (unsigned int)(((APP_MAJ_VER & 0xFFU ) << 24U) | ((APP_MIN_VER & 0xFFU) << 16U) | (APP_BLD_VER & 0xFFFFU ))
-#else
-#warning "No build version defined for this application!"
-#define APP_VERSION_NUMBER 0x00000000
-#endif
-#endif
-
 typedef void (*vector_entry_t)(void);
 
 #define PADDING_WORD	(vector_entry_t)0xFFFFFFFF
 
 extern void (* const g_pfnVectors[])(void);
 extern void * __Vectors __attribute__ ((alias ("g_pfnVectors")));
+extern const unsigned int gFWVersionNumber;
 
 __attribute__ ((used, section(".isr_vector")))
 void (* const g_pfnVectors[])(void) = {
@@ -729,7 +722,7 @@ void (* const g_pfnVectors[])(void) = {
     PADDING_WORD,                     // 239
 
     // Application Version number
-    (vector_entry_t)APP_VERSION_NUMBER, // 240
+    (vector_entry_t)gFWVersionNumber, // 240
 
     // Padding (could be used for more configuration data)
     PADDING_WORD,                     // 241

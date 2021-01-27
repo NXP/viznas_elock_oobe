@@ -17,7 +17,6 @@ extern "C" {
 #include "fsl_debug_console.h"
 #include "fsl_time.h"
 
-#ifdef NXP_MCU_FACE_SECURE_DEBUG
 #ifndef LOG_TAG
 #define LOG_TAG ""
 #endif
@@ -77,15 +76,6 @@ extern "C" {
 
 #ifndef LOGE
 #define LOGE(...) LOG(LOG_ERROR, LOG_TAG, __VA_ARGS__)
-#endif
-
-#else
-
-#define LOGV(...)
-#define LOGD(...)
-#define LOGI(...)
-#define LOGE(...)
-
 #endif
 
 #if defined(__cplusplus)

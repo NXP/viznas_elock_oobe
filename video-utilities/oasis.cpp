@@ -214,7 +214,7 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
                 // UsbShell_Printf("[EVT]:RGB detected:%d\r\n",para->faceBoxRGB->rect[0]);
                 memcpy(gui_info.rect2, para->faceBoxRGB->rect, sizeof(para->faceBoxRGB->rect));
             }
-#ifdef SHOW_FPS
+
             /*pit timer unit is us*/
             timeState->det_fps++;
             int diff = abs(timeState->det_fps_start - timeState->det_comp);
@@ -225,7 +225,7 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
                 timeState->det_fps         = 0;
                 timeState->det_fps_start   = timeState->det_comp;
             }
-#endif
+
             VIZN_DetectEvent(gApiHandle,
                              (para->faceBoxIR == NULL && para->faceBoxRGB == NULL) ? -1 : gui_info.dt);
         }
@@ -315,9 +315,10 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
             OASISLTRecognizeRes_t recResult = para->recResult;
 
             timeState->rec_comp = Time_Now();
+
             gui_info.rt  = timeState->rec_start - timeState->rec_comp;
             face_info.rt        = gui_info.rt;
-#ifdef SHOW_FPS
+
             /*pit timer unit is us*/
             timeState->rec_fps++;
             diff = abs(timeState->rec_fps_start - timeState->rec_comp);
@@ -328,7 +329,6 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
                 timeState->rec_fps            = 0;
                 timeState->rec_fps_start      = timeState->rec_comp;
             }
-#endif
             memset(gui_info.name, 0x0, sizeof(gui_info.name));
 
             if (recResult == OASIS_REC_RESULT_KNOWN_FACE)
@@ -570,11 +570,6 @@ static void Oasis_Task(void *param)
     VIZN_StartRecognition(NULL);
     while (1)
     {
-#if AUTO_CALIBRATION
-        // force to do liveness check in registration process
-        g_AddNewFace = 1;
-        s_lockstatus = 1;
-#endif
         // pick up one response message.
         ret = xQueueReceive(gFaceDetMsgQ, (void *)&rxQMsg, portMAX_DELAY);
 

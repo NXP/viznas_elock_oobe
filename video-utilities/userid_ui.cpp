@@ -37,7 +37,6 @@
 #include "ble_16x16.h"
 
 #if !SCREEN_PORTRAIT_MODE
-#if !AUTO_CALIBRATION
 /*******************************************************************************
  * Definitions
  *******************************************************************************/
@@ -603,5 +602,4 @@ void UIInfo_Update(uint16_t *pBufferAddr, QUIInfoMsg infoMsg, uint8_t p_DisplayI
     }
 }
 
-#endif //#if !AUTO_CALIBRATION
 #endif //#if !SCREEN_PORTRAIT_MODE

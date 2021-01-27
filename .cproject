@@ -31,53 +31,23 @@
 								<option id="gnu.cpp.compiler.option.preprocessor.nostdinc.1873812735" name="Do not search system directories (-nostdinc)" superClass="gnu.cpp.compiler.option.preprocessor.nostdinc" useByScannerDiscovery="false"/>
 								<option id="gnu.cpp.compiler.option.preprocessor.preprocess.567834321" name="Preprocess only (-E)" superClass="gnu.cpp.compiler.option.preprocessor.preprocess" useByScannerDiscovery="false"/>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.cpp.compiler.option.preprocessor.def.64849931" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
-									<listOptionValue builtIn="false" value="SKIP_SYSCLK_INIT"/>
-									<listOptionValue builtIn="false" value="USB_STACK_FREERTOS"/>
-									<listOptionValue builtIn="false" value="BOARD_USE_VIRTUALCOM=1"/>
-									<listOptionValue builtIn="false" value="USE_COMMON_CODEC=1"/>
-									<listOptionValue builtIn="false" value="DEBUG_CONSOLE_IO_USBCDC=1"/>
 									<listOptionValue builtIn="false" value="DEBUG_CONSOLE_TRANSFER_NON_BLOCKING"/>
-									<listOptionValue builtIn="false" value="USB_CDC_SERIAL_MANAGER_RUN_NO_HOST=1"/>
+									<listOptionValue builtIn="false" value="MBEDTLS_CONFIG_FILE=\&quot;aws_mbedtls_config.h\&quot;"/>
 									<listOptionValue builtIn="false" value="SERIAL_PORT_TYPE_USBCDC=1"/>
 									<listOptionValue builtIn="false" value="PRINTF_FLOAT_ENABLE=1"/>
-									<listOptionValue builtIn="false" value="SDK_I2C_BASED_COMPONENT_USED=1"/>
-									<listOptionValue builtIn="false" value="SDK_I2C_FREERTOS=1"/>
-									<listOptionValue builtIn="false" value="SDK_SAI_BASED_COMPONENT_USED=1"/>
 									<listOptionValue builtIn="false" value="RTVISION_BOARD=1"/>
 									<listOptionValue builtIn="false" value="RT106F_ELOCK_BOARD=0"/>
-									<listOptionValue builtIn="false" value="NXP_MCU_FACE_SECURE_DEBUG"/>
 									<listOptionValue builtIn="false" value="SDK_DEBUGCONSOLE=1"/>
-									<listOptionValue builtIn="false" value="CTP_28"/>
-									<listOptionValue builtIn="false" value="EVE_1"/>
-									<listOptionValue builtIn="false" value="NOSDRAM=0"/>
-									<listOptionValue builtIn="false" value="DUAL_CAMERA=1"/>
-									<listOptionValue builtIn="false" value="RTFFI_RV_DISP_DRIVER=1"/>
-									<listOptionValue builtIn="false" value="RTOS_MALLOC=1"/>
-									<listOptionValue builtIn="false" value="RTBOARD_REVC=1"/>
-									<listOptionValue builtIn="false" value="SHOW_FPS=1"/>
-									<listOptionValue builtIn="false" value="USE_RTOS_SPI=1"/>
-									<listOptionValue builtIn="false" value="DISP_USE_SPI_DMA=1"/>
-									<listOptionValue builtIn="false" value="RELOCATE_VECTOR_TABLE=1"/>
-									<listOptionValue builtIn="false" value="USB_DEVICE_CONFIG_BUFFER_PROPERTY_CACHEABLE=1"/>
-									<listOptionValue builtIn="false" value="AUTO_CALIBRATION=0"/>
+									<listOptionValue builtIn="false" value="DATA_SECTION_IS_CACHEABLE=1"/>
 									<listOptionValue builtIn="false" value="FSL_SDK_ENABLE_DRIVER_CACHE_CONTROL=1"/>
-									<listOptionValue builtIn="false" value="SLN_ENABLE_DRIVER_CACHE_CONTROL=1"/>
-									<listOptionValue builtIn="false" value="LPUART1_NON_BLOCKING_MODE=1"/>
 									<listOptionValue builtIn="false" value="USE_WIFI_CONNECTION=1"/>
-									<listOptionValue builtIn="false" value="MBEDTLS_CONFIG_FILE=\&quot;aws_mbedtls_config.h\&quot;"/>
 									<listOptionValue builtIn="false" value="FSL_RTOS_FREE_RTOS=1"/>
 									<listOptionValue builtIn="false" value="SDK_DELAY_USE_DWT=1"/>
 									<listOptionValue builtIn="false" value="DCP_USE_DCACHE=1"/>
 									<listOptionValue builtIn="false" value="HAL_UART_TRANSFER_MODE=1"/>
-									<listOptionValue builtIn="false" value="APP_MAJ_VER=2"/>
-									<listOptionValue builtIn="false" value="APP_MIN_VER=0"/>
-									<listOptionValue builtIn="false" value="APP_BLD_VER=0"/>
-									<listOptionValue builtIn="false" value="ADAPTIVE_WEIGHTED_AE=1"/>
-									<listOptionValue builtIn="false" value="CAMERA_DRIVE_STRENGTH_LOW=0"/>
-									<listOptionValue builtIn="false" value="CONFIG_FLEXRAM_AT_STARTUP=1"/>
 									<listOptionValue builtIn="false" value="SERIAL_PORT_TYPE_UART=1"/>
+									<listOptionValue builtIn="false" value="WICED_BLUETOOTH_PLATFORM"/>
 									<listOptionValue builtIn="false" value="CPU_MIMXRT106FDVL6A"/>
-									<listOptionValue builtIn="false" value="CPU_MIMXRT106FDVL6A_cm7"/>
 									<listOptionValue builtIn="false" value="__MCUXPRESSO"/>
 									<listOptionValue builtIn="false" value="__USE_CMSIS"/>
 									<listOptionValue builtIn="false" value="DEBUG"/>
@@ -208,73 +178,32 @@
 							</tool>
 							<tool id="com.crt.advproject.gcc.exe.debug.1741696981" name="MCU C Compiler" superClass="com.crt.advproject.gcc.exe.debug">
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.c.compiler.option.preprocessor.def.symbols.189145065" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
-									<listOptionValue builtIn="false" value="__NEWLIB__"/>
 									<listOptionValue builtIn="false" value="CPU_MIMXRT106FDVL6A"/>
-									<listOptionValue builtIn="false" value="CPU_MIMXRT106FDVL6A_cm7"/>
+									<listOptionValue builtIn="false" value="MBEDTLS_CONFIG_FILE=\&quot;aws_mbedtls_config.h\&quot;"/>
 									<listOptionValue builtIn="false" value="SDK_DEBUGCONSOLE=1"/>
-									<listOptionValue builtIn="false" value="SCANF_FLOAT_ENABLE=0"/>
-									<listOptionValue builtIn="false" value="PRINTF_ADVANCED_ENABLE=0"/>
-									<listOptionValue builtIn="false" value="SCANF_ADVANCED_ENABLE=0"/>
 									<listOptionValue builtIn="false" value="XIP_EXTERNAL_FLASH=1"/>
 									<listOptionValue builtIn="false" value="XIP_BOOT_HEADER_ENABLE=1"/>
 									<listOptionValue builtIn="false" value="XIP_BOOT_HEADER_DCD_ENABLE=1"/>
 									<listOptionValue builtIn="false" value="SKIP_SYSCLK_INIT"/>
-									<listOptionValue builtIn="false" value="USB_STACK_FREERTOS"/>
-									<listOptionValue builtIn="false" value="BOARD_USE_VIRTUALCOM=1"/>
-									<listOptionValue builtIn="false" value="USE_COMMON_CODEC=1"/>
-									<listOptionValue builtIn="false" value="DEBUG_CONSOLE_IO_USBCDC=1"/>
 									<listOptionValue builtIn="false" value="DEBUG_CONSOLE_TRANSFER_NON_BLOCKING"/>
-									<listOptionValue builtIn="false" value="USB_CDC_SERIAL_MANAGER_RUN_NO_HOST=1"/>
 									<listOptionValue builtIn="false" value="SERIAL_PORT_TYPE_USBCDC=1"/>
 									<listOptionValue builtIn="false" value="PRINTF_FLOAT_ENABLE=1"/>
-									<listOptionValue builtIn="false" value="SDK_I2C_BASED_COMPONENT_USED=1"/>
-									<listOptionValue builtIn="false" value="SDK_I2C_FREERTOS=1"/>
-									<listOptionValue builtIn="false" value="SDK_SAI_BASED_COMPONENT_USED=1"/>
 									<listOptionValue builtIn="false" value="RTVISION_BOARD=1"/>
 									<listOptionValue builtIn="false" value="RT106F_ELOCK_BOARD=0"/>
-									<listOptionValue builtIn="false" value="NXP_MCU_FACE_SECURE_DEBUG"/>
-									<listOptionValue builtIn="false" value="CTP_28"/>
-									<listOptionValue builtIn="false" value="EVE_1"/>
-									<listOptionValue builtIn="false" value="NOSDRAM=0"/>
-									<listOptionValue builtIn="false" value="RTFFI_RV_DISP_DRIVER=1"/>
-									<listOptionValue builtIn="false" value="RTOS_MALLOC=1"/>
-									<listOptionValue builtIn="false" value="RTBOARD_REVC=1"/>
-									<listOptionValue builtIn="false" value="SHOW_FPS=1"/>
-									<listOptionValue builtIn="false" value="DUAL_CAMERA=1"/>
-									<listOptionValue builtIn="false" value="USE_RTOS_SPI=1"/>
-									<listOptionValue builtIn="false" value="DISP_USE_SPI_DMA=1"/>
-									<listOptionValue builtIn="false" value="WDOG_ENABLE=1"/>
-									<listOptionValue builtIn="false" value="__SEMIHOST_HARDFAULT_DISABLE=1"/>
-									<listOptionValue builtIn="false" value="RELOCATE_VECTOR_TABLE=1"/>
-									<listOptionValue builtIn="false" value="USB_DEVICE_CONFIG_BUFFER_PROPERTY_CACHEABLE=1"/>
-									<listOptionValue builtIn="false" value="AUTO_CALIBRATION=0"/>
-									<listOptionValue builtIn="false" value="AMP_LPI2C_RTOS=1"/>
+									<listOptionValue builtIn="false" value="DATA_SECTION_IS_CACHEABLE=1"/>
 									<listOptionValue builtIn="false" value="FSL_SDK_ENABLE_DRIVER_CACHE_CONTROL=1"/>
-									<listOptionValue builtIn="false" value="SLN_ENABLE_DRIVER_CACHE_CONTROL=1"/>
-									<listOptionValue builtIn="false" value="LPUART1_NON_BLOCKING_MODE=1"/>
 									<listOptionValue builtIn="false" value="USE_WIFI_CONNECTION=1"/>
-									<listOptionValue builtIn="false" value="MBEDTLS_CONFIG_FILE='&quot;aws_mbedtls_config.h&quot;'"/>
 									<listOptionValue builtIn="false" value="FSL_RTOS_FREE_RTOS"/>
 									<listOptionValue builtIn="false" value="SDK_DELAY_USE_DWT=1"/>
 									<listOptionValue builtIn="false" value="DCP_USE_DCACHE=1"/>
 									<listOptionValue builtIn="false" value="HAL_UART_TRANSFER_MODE=1"/>
-									<listOptionValue builtIn="false" value="APP_MAJ_VER=2"/>
-									<listOptionValue builtIn="false" value="APP_MIN_VER=0"/>
-									<listOptionValue builtIn="false" value="APP_BLD_VER=0"/>
-									<listOptionValue builtIn="false" value="ADAPTIVE_WEIGHTED_AE=1"/>
-									<listOptionValue builtIn="false" value="CAMERA_DRIVE_STRENGTH_LOW=0"/>
-									<listOptionValue builtIn="false" value="CONFIG_FLEXRAM_AT_STARTUP=1"/>
-									<listOptionValue builtIn="false" value="BOARD_USE_CODEC=1"/>
-									<listOptionValue builtIn="false" value="CODEC_TFA9XXX_ENABLE"/>
-									<listOptionValue builtIn="false" value="WICED_BLUETOOTH_PLATFORM"/>
-									<listOptionValue builtIn="false" value="SDK_DEBUGCONSOLE_UART"/>
-									<listOptionValue builtIn="false" value="SDIO_ENABLED"/>
 									<listOptionValue builtIn="false" value="DEBUG_CONSOLE_RX_ENABLE=0"/>
 									<listOptionValue builtIn="false" value="SERIAL_PORT_TYPE_UART=1"/>
-									<listOptionValue builtIn="false" value="WIFI_WICED"/>
+									<listOptionValue builtIn="false" value="WICED_BLUETOOTH_PLATFORM"/>
 									<listOptionValue builtIn="false" value="__MCUXPRESSO"/>
 									<listOptionValue builtIn="false" value="__USE_CMSIS"/>
 									<listOptionValue builtIn="false" value="DEBUG"/>
+									<listOptionValue builtIn="false" value="__NEWLIB__"/>
 								</option>
 								<option id="com.crt.advproject.gcc.thumb.1248663621" name="Thumb mode" superClass="com.crt.advproject.gcc.thumb" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<option id="com.crt.advproject.gcc.hdrlib.1640819607" name="Library headers" superClass="com.crt.advproject.gcc.hdrlib" useByScannerDiscovery="false" value="com.crt.advproject.gcc.hdrlib.newlibnano" valueType="enumerated"/>
@@ -520,7 +449,7 @@
 							<tool id="com.crt.advproject.link.cpp.exe.debug.245791605" name="MCU C++ Linker" superClass="com.crt.advproject.link.cpp.exe.debug">
 								<option id="com.crt.advproject.link.cpp.thumb.889070168" name="Thumb mode" superClass="com.crt.advproject.link.cpp.thumb" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<option id="com.crt.advproject.link.memory.load.image.cpp.1725413807" name="Plain load image" superClass="com.crt.advproject.link.memory.load.image.cpp" useByScannerDiscovery="false" value="false;" valueType="string"/>
-								<option defaultValue="com.crt.advproject.heapAndStack.mcuXpressoStyle.cpp" id="com.crt.advproject.link.memory.heapAndStack.style.cpp.516411741" name="Heap and Stack placement" superClass="com.crt.advproject.link.memory.heapAndStack.style.cpp" useByScannerDiscovery="false" valueType="enumerated"/>
+								<option defaultValue="com.crt.advproject.heapAndStack.mcuXpressoStyle.cpp" id="com.crt.advproject.link.memory.heapAndStack.style.cpp.516411741" name="Heap and Stack placement" superClass="com.crt.advproject.link.memory.heapAndStack.style.cpp" useByScannerDiscovery="false" value="com.crt.advproject.heapAndStack.mcuXpressoStyle.cpp" valueType="enumerated"/>
 								<option id="com.crt.advproject.link.memory.heapAndStack.cpp.1557766510" name="Heap and Stack options" superClass="com.crt.advproject.link.memory.heapAndStack.cpp" useByScannerDiscovery="false" value="&amp;Heap:BOARD_SDRAM;Post Data;0x100000&amp;Stack:SRAM_DTC;End;0x2000" valueType="string"/>
 								<option id="com.crt.advproject.link.memory.data.cpp.581106390" name="Global data placement" superClass="com.crt.advproject.link.memory.data.cpp" useByScannerDiscovery="false" value="Default" valueType="string"/>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.crt.advproject.link.memory.sections.cpp.108303918" name="Extra linker script input sections" superClass="com.crt.advproject.link.memory.sections.cpp" useByScannerDiscovery="false" valueType="stringList">
@@ -663,32 +592,32 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="src/netif/ppp/polarssl/arc4.c|src/netif/ppp/polarssl/des.c|src/netif/ppp/polarssl/md4.c|src/netif/ppp/polarssl/md5.c|src/netif/ppp/polarssl/sha1.c" flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lwip"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="video-utilities"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="usb"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="mbedtls"/>
 						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="CMSIS"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="source"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="video"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="utilities"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="freertos"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="wiced"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="sdmmc"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="common"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="startup"/>
 						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="audio"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="xip"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="fatfs"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="cjson"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="riverdi"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="codec"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="component"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="sln_viznas_iot"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="linkscripts"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="libs"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="drivers"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="device"/>
 						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="board"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="cjson"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="codec"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="common"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="component"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="device"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="drivers"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="fatfs"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="freertos"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="libs"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="linkscripts"/>
+						<entry excluding="src/netif/ppp/polarssl/arc4.c|src/netif/ppp/polarssl/des.c|src/netif/ppp/polarssl/md4.c|src/netif/ppp/polarssl/md5.c|src/netif/ppp/polarssl/sha1.c" flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lwip"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="mbedtls"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="riverdi"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="sdmmc"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="sln_viznas_iot"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="source"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="startup"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="usb"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="utilities"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="video"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="video-utilities"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="wiced"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="xip"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -724,53 +653,23 @@
 								<option id="gnu.cpp.compiler.option.preprocessor.nostdinc.1224404046" name="Do not search system directories (-nostdinc)" superClass="gnu.cpp.compiler.option.preprocessor.nostdinc" useByScannerDiscovery="false"/>
 								<option id="gnu.cpp.compiler.option.preprocessor.preprocess.1289494926" name="Preprocess only (-E)" superClass="gnu.cpp.compiler.option.preprocessor.preprocess" useByScannerDiscovery="false"/>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.cpp.compiler.option.preprocessor.def.1190988337" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
-									<listOptionValue builtIn="false" value="SKIP_SYSCLK_INIT"/>
-									<listOptionValue builtIn="false" value="USB_STACK_FREERTOS"/>
-									<listOptionValue builtIn="false" value="BOARD_USE_VIRTUALCOM=1"/>
-									<listOptionValue builtIn="false" value="USE_COMMON_CODEC=1"/>
-									<listOptionValue builtIn="false" value="DEBUG_CONSOLE_IO_USBCDC=1"/>
 									<listOptionValue builtIn="false" value="DEBUG_CONSOLE_TRANSFER_NON_BLOCKING"/>
-									<listOptionValue builtIn="false" value="USB_CDC_SERIAL_MANAGER_RUN_NO_HOST=1"/>
+									<listOptionValue builtIn="false" value="WICED_BLUETOOTH_PLATFORM"/>
+									<listOptionValue builtIn="false" value="MBEDTLS_CONFIG_FILE=\&quot;aws_mbedtls_config.h\&quot;"/>
 									<listOptionValue builtIn="false" value="SERIAL_PORT_TYPE_USBCDC=1"/>
 									<listOptionValue builtIn="false" value="PRINTF_FLOAT_ENABLE=1"/>
-									<listOptionValue builtIn="false" value="SDK_I2C_BASED_COMPONENT_USED=1"/>
-									<listOptionValue builtIn="false" value="SDK_I2C_FREERTOS=1"/>
-									<listOptionValue builtIn="false" value="SDK_SAI_BASED_COMPONENT_USED=1"/>
 									<listOptionValue builtIn="false" value="RTVISION_BOARD=0"/>
 									<listOptionValue builtIn="false" value="RT106F_ELOCK_BOARD=1"/>
-									<listOptionValue builtIn="false" value="NXP_MCU_FACE_SECURE_DEBUG"/>
 									<listOptionValue builtIn="false" value="SDK_DEBUGCONSOLE=1"/>
-									<listOptionValue builtIn="false" value="CTP_28"/>
-									<listOptionValue builtIn="false" value="EVE_1"/>
-									<listOptionValue builtIn="false" value="NOSDRAM=0"/>
-									<listOptionValue builtIn="false" value="DUAL_CAMERA=1"/>
-									<listOptionValue builtIn="false" value="RTFFI_RV_DISP_DRIVER=1"/>
-									<listOptionValue builtIn="false" value="RTOS_MALLOC=1"/>
-									<listOptionValue builtIn="false" value="RTBOARD_REVC=1"/>
-									<listOptionValue builtIn="false" value="SHOW_FPS=1"/>
-									<listOptionValue builtIn="false" value="USE_RTOS_SPI=1"/>
-									<listOptionValue builtIn="false" value="DISP_USE_SPI_DMA=1"/>
-									<listOptionValue builtIn="false" value="RELOCATE_VECTOR_TABLE=1"/>
-									<listOptionValue builtIn="false" value="USB_DEVICE_CONFIG_BUFFER_PROPERTY_CACHEABLE=1"/>
-									<listOptionValue builtIn="false" value="AUTO_CALIBRATION=0"/>
+									<listOptionValue builtIn="false" value="DATA_SECTION_IS_CACHEABLE=1"/>
 									<listOptionValue builtIn="false" value="FSL_SDK_ENABLE_DRIVER_CACHE_CONTROL=1"/>
-									<listOptionValue builtIn="false" value="SLN_ENABLE_DRIVER_CACHE_CONTROL=1"/>
-									<listOptionValue builtIn="false" value="LPUART1_NON_BLOCKING_MODE=1"/>
 									<listOptionValue builtIn="false" value="USE_WIFI_CONNECTION=1"/>
-									<listOptionValue builtIn="false" value="MBEDTLS_CONFIG_FILE=\&quot;aws_mbedtls_config.h\&quot;"/>
 									<listOptionValue builtIn="false" value="FSL_RTOS_FREE_RTOS=1"/>
 									<listOptionValue builtIn="false" value="SDK_DELAY_USE_DWT=1"/>
 									<listOptionValue builtIn="false" value="DCP_USE_DCACHE=1"/>
 									<listOptionValue builtIn="false" value="HAL_UART_TRANSFER_MODE=1"/>
-									<listOptionValue builtIn="false" value="APP_MAJ_VER=2"/>
-									<listOptionValue builtIn="false" value="APP_MIN_VER=0"/>
-									<listOptionValue builtIn="false" value="APP_BLD_VER=0"/>
-									<listOptionValue builtIn="false" value="ADAPTIVE_WEIGHTED_AE=1"/>
-									<listOptionValue builtIn="false" value="CAMERA_DRIVE_STRENGTH_LOW=0"/>
-									<listOptionValue builtIn="false" value="CONFIG_FLEXRAM_AT_STARTUP=1"/>
 									<listOptionValue builtIn="false" value="SERIAL_PORT_TYPE_UART=1"/>
 									<listOptionValue builtIn="false" value="CPU_MIMXRT106FDVL6A"/>
-									<listOptionValue builtIn="false" value="CPU_MIMXRT106FDVL6A_cm7"/>
 									<listOptionValue builtIn="false" value="__MCUXPRESSO"/>
 									<listOptionValue builtIn="false" value="__USE_CMSIS"/>
 									<listOptionValue builtIn="false" value="DEBUG"/>
@@ -901,73 +800,32 @@
 							</tool>
 							<tool id="com.crt.advproject.gcc.exe.debug.565063088" name="MCU C Compiler" superClass="com.crt.advproject.gcc.exe.debug">
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.c.compiler.option.preprocessor.def.symbols.89373092" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
-									<listOptionValue builtIn="false" value="__NEWLIB__"/>
 									<listOptionValue builtIn="false" value="CPU_MIMXRT106FDVL6A"/>
-									<listOptionValue builtIn="false" value="CPU_MIMXRT106FDVL6A_cm7"/>
+									<listOptionValue builtIn="false" value="WICED_BLUETOOTH_PLATFORM"/>
+									<listOptionValue builtIn="false" value="MBEDTLS_CONFIG_FILE=\&quot;aws_mbedtls_config.h\&quot;"/>
 									<listOptionValue builtIn="false" value="SDK_DEBUGCONSOLE=1"/>
-									<listOptionValue builtIn="false" value="SCANF_FLOAT_ENABLE=0"/>
-									<listOptionValue builtIn="false" value="PRINTF_ADVANCED_ENABLE=0"/>
-									<listOptionValue builtIn="false" value="SCANF_ADVANCED_ENABLE=0"/>
 									<listOptionValue builtIn="false" value="XIP_EXTERNAL_FLASH=1"/>
 									<listOptionValue builtIn="false" value="XIP_BOOT_HEADER_ENABLE=1"/>
 									<listOptionValue builtIn="false" value="XIP_BOOT_HEADER_DCD_ENABLE=1"/>
 									<listOptionValue builtIn="false" value="SKIP_SYSCLK_INIT"/>
-									<listOptionValue builtIn="false" value="USB_STACK_FREERTOS"/>
-									<listOptionValue builtIn="false" value="BOARD_USE_VIRTUALCOM=1"/>
-									<listOptionValue builtIn="false" value="USE_COMMON_CODEC=1"/>
-									<listOptionValue builtIn="false" value="DEBUG_CONSOLE_IO_USBCDC=1"/>
 									<listOptionValue builtIn="false" value="DEBUG_CONSOLE_TRANSFER_NON_BLOCKING"/>
-									<listOptionValue builtIn="false" value="USB_CDC_SERIAL_MANAGER_RUN_NO_HOST=1"/>
 									<listOptionValue builtIn="false" value="SERIAL_PORT_TYPE_USBCDC=1"/>
 									<listOptionValue builtIn="false" value="PRINTF_FLOAT_ENABLE=1"/>
-									<listOptionValue builtIn="false" value="SDK_I2C_BASED_COMPONENT_USED=1"/>
-									<listOptionValue builtIn="false" value="SDK_I2C_FREERTOS=1"/>
-									<listOptionValue builtIn="false" value="SDK_SAI_BASED_COMPONENT_USED=1"/>
 									<listOptionValue builtIn="false" value="RTVISION_BOARD=0"/>
 									<listOptionValue builtIn="false" value="RT106F_ELOCK_BOARD=1"/>
-									<listOptionValue builtIn="false" value="NXP_MCU_FACE_SECURE_DEBUG"/>
-									<listOptionValue builtIn="false" value="CTP_28"/>
-									<listOptionValue builtIn="false" value="EVE_1"/>
-									<listOptionValue builtIn="false" value="NOSDRAM=0"/>
-									<listOptionValue builtIn="false" value="RTFFI_RV_DISP_DRIVER=1"/>
-									<listOptionValue builtIn="false" value="RTOS_MALLOC=1"/>
-									<listOptionValue builtIn="false" value="RTBOARD_REVC=1"/>
-									<listOptionValue builtIn="false" value="SHOW_FPS=1"/>
-									<listOptionValue builtIn="false" value="DUAL_CAMERA=1"/>
-									<listOptionValue builtIn="false" value="USE_RTOS_SPI=1"/>
-									<listOptionValue builtIn="false" value="DISP_USE_SPI_DMA=1"/>
-									<listOptionValue builtIn="false" value="WDOG_ENABLE=1"/>
-									<listOptionValue builtIn="false" value="__SEMIHOST_HARDFAULT_DISABLE=1"/>
-									<listOptionValue builtIn="false" value="RELOCATE_VECTOR_TABLE=1"/>
-									<listOptionValue builtIn="false" value="USB_DEVICE_CONFIG_BUFFER_PROPERTY_CACHEABLE=1"/>
-									<listOptionValue builtIn="false" value="AUTO_CALIBRATION=0"/>
-									<listOptionValue builtIn="false" value="AMP_LPI2C_RTOS=1"/>
+									<listOptionValue builtIn="false" value="DATA_SECTION_IS_CACHEABLE=1"/>
 									<listOptionValue builtIn="false" value="FSL_SDK_ENABLE_DRIVER_CACHE_CONTROL=1"/>
-									<listOptionValue builtIn="false" value="SLN_ENABLE_DRIVER_CACHE_CONTROL=1"/>
-									<listOptionValue builtIn="false" value="LPUART1_NON_BLOCKING_MODE=1"/>
 									<listOptionValue builtIn="false" value="USE_WIFI_CONNECTION=1"/>
-									<listOptionValue builtIn="false" value="MBEDTLS_CONFIG_FILE='&quot;aws_mbedtls_config.h&quot;'"/>
 									<listOptionValue builtIn="false" value="FSL_RTOS_FREE_RTOS"/>
 									<listOptionValue builtIn="false" value="SDK_DELAY_USE_DWT=1"/>
 									<listOptionValue builtIn="false" value="DCP_USE_DCACHE=1"/>
 									<listOptionValue builtIn="false" value="HAL_UART_TRANSFER_MODE=1"/>
-									<listOptionValue builtIn="false" value="APP_MAJ_VER=2"/>
-									<listOptionValue builtIn="false" value="APP_MIN_VER=0"/>
-									<listOptionValue builtIn="false" value="APP_BLD_VER=0"/>
-									<listOptionValue builtIn="false" value="ADAPTIVE_WEIGHTED_AE=1"/>
-									<listOptionValue builtIn="false" value="CAMERA_DRIVE_STRENGTH_LOW=0"/>
-									<listOptionValue builtIn="false" value="CONFIG_FLEXRAM_AT_STARTUP=1"/>
-									<listOptionValue builtIn="false" value="BOARD_USE_CODEC=1"/>
-									<listOptionValue builtIn="false" value="CODEC_TFA9XXX_ENABLE"/>
-									<listOptionValue builtIn="false" value="WICED_BLUETOOTH_PLATFORM"/>
-									<listOptionValue builtIn="false" value="SDK_DEBUGCONSOLE_UART"/>
-									<listOptionValue builtIn="false" value="SDIO_ENABLED"/>
 									<listOptionValue builtIn="false" value="DEBUG_CONSOLE_RX_ENABLE=0"/>
 									<listOptionValue builtIn="false" value="SERIAL_PORT_TYPE_UART=1"/>
-									<listOptionValue builtIn="false" value="WIFI_WICED"/>
 									<listOptionValue builtIn="false" value="__MCUXPRESSO"/>
 									<listOptionValue builtIn="false" value="__USE_CMSIS"/>
 									<listOptionValue builtIn="false" value="DEBUG"/>
+									<listOptionValue builtIn="false" value="__NEWLIB__"/>
 								</option>
 								<option id="com.crt.advproject.gcc.thumb.1286571067" name="Thumb mode" superClass="com.crt.advproject.gcc.thumb" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<option id="com.crt.advproject.gcc.hdrlib.807006433" name="Library headers" superClass="com.crt.advproject.gcc.hdrlib" useByScannerDiscovery="false" value="com.crt.advproject.gcc.hdrlib.newlibnano" valueType="enumerated"/>
@@ -1213,7 +1071,7 @@
 							<tool id="com.crt.advproject.link.cpp.exe.debug.1277732851" name="MCU C++ Linker" superClass="com.crt.advproject.link.cpp.exe.debug">
 								<option id="com.crt.advproject.link.cpp.thumb.944343118" name="Thumb mode" superClass="com.crt.advproject.link.cpp.thumb" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<option id="com.crt.advproject.link.memory.load.image.cpp.247298941" name="Plain load image" superClass="com.crt.advproject.link.memory.load.image.cpp" useByScannerDiscovery="false" value="false;" valueType="string"/>
-								<option defaultValue="com.crt.advproject.heapAndStack.mcuXpressoStyle.cpp" id="com.crt.advproject.link.memory.heapAndStack.style.cpp.1602920426" name="Heap and Stack placement" superClass="com.crt.advproject.link.memory.heapAndStack.style.cpp" useByScannerDiscovery="false" valueType="enumerated"/>
+								<option defaultValue="com.crt.advproject.heapAndStack.mcuXpressoStyle.cpp" id="com.crt.advproject.link.memory.heapAndStack.style.cpp.1602920426" name="Heap and Stack placement" superClass="com.crt.advproject.link.memory.heapAndStack.style.cpp" useByScannerDiscovery="false" value="com.crt.advproject.heapAndStack.mcuXpressoStyle.cpp" valueType="enumerated"/>
 								<option id="com.crt.advproject.link.memory.heapAndStack.cpp.1656684954" name="Heap and Stack options" superClass="com.crt.advproject.link.memory.heapAndStack.cpp" useByScannerDiscovery="false" value="&amp;Heap:BOARD_SDRAM;Post Data;0x100000&amp;Stack:SRAM_DTC;End;0x2000" valueType="string"/>
 								<option id="com.crt.advproject.link.memory.data.cpp.1614466971" name="Global data placement" superClass="com.crt.advproject.link.memory.data.cpp" useByScannerDiscovery="false" value="Default" valueType="string"/>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.crt.advproject.link.memory.sections.cpp.559092918" name="Extra linker script input sections" superClass="com.crt.advproject.link.memory.sections.cpp" useByScannerDiscovery="false" valueType="stringList">
@@ -1356,32 +1214,32 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="src/netif/ppp/polarssl/arc4.c|src/netif/ppp/polarssl/des.c|src/netif/ppp/polarssl/md4.c|src/netif/ppp/polarssl/md5.c|src/netif/ppp/polarssl/sha1.c" flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lwip"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="video-utilities"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="usb"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="mbedtls"/>
 						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="CMSIS"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="source"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="video"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="utilities"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="freertos"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="wiced"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="sdmmc"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="common"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="startup"/>
 						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="audio"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="xip"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="fatfs"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="cjson"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="riverdi"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="codec"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="component"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="sln_viznas_iot"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="linkscripts"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="libs"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="drivers"/>
-						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="device"/>
 						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="board"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="cjson"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="codec"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="common"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="component"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="device"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="drivers"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="fatfs"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="freertos"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="libs"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="linkscripts"/>
+						<entry excluding="src/netif/ppp/polarssl/arc4.c|src/netif/ppp/polarssl/des.c|src/netif/ppp/polarssl/md4.c|src/netif/ppp/polarssl/md5.c|src/netif/ppp/polarssl/sha1.c" flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lwip"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="mbedtls"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="riverdi"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="sdmmc"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="sln_viznas_iot"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="source"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="startup"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="usb"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="utilities"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="video"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="video-utilities"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="wiced"/>
+						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="xip"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -1390,27 +1248,6 @@
 	</storageModule>
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="sln_viznas_iot_elock_oobe.null.226653933" name="sln_viznas_iot_elock_oobe" projectType="com.crt.advproject.projecttype.exe"/>
-	</storageModule>
-	<storageModule moduleId="scannerConfiguration">
-		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.debug.1360454300;com.crt.advproject.config.exe.debug.1360454300.;com.crt.advproject.gas.exe.debug.405138790;com.crt.advproject.assembler.input.1880499705">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.debug.1360454300;com.crt.advproject.config.exe.debug.1360454300.;com.crt.advproject.cpp.exe.debug.2012106707;com.crt.advproject.compiler.cpp.input.378870521">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.debug.1360454300;com.crt.advproject.config.exe.debug.1360454300.;com.crt.advproject.gcc.exe.debug.402956294;com.crt.advproject.compiler.input.299346513">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.release.1200124418;com.crt.advproject.config.exe.release.1200124418.;com.crt.advproject.cpp.exe.release.2060693377;com.crt.advproject.compiler.cpp.input.1920533009">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.release.1200124418;com.crt.advproject.config.exe.release.1200124418.;com.crt.advproject.gas.exe.release.1590749263;com.crt.advproject.assembler.input.2112311785">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.release.1200124418;com.crt.advproject.config.exe.release.1200124418.;com.crt.advproject.gcc.exe.release.495849544;com.crt.advproject.compiler.input.878670928">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="com.nxp.mcuxpresso.core.datamodels">
@@ -1453,13 +1290,13 @@
 &lt;/TargetConfig&gt;</projectStorage>
 	</storageModule>
 	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="VIZN2_board">
+			<resource resourceType="PROJECT" workspacePath="/sln_viznas_iot_elock_oobe"/>
+		</configuration>
 		<configuration configurationName="Debug">
 			<resource resourceType="PROJECT" workspacePath="/sln_viznas_iot_elock_oobe"/>
 		</configuration>
 		<configuration configurationName="Release">
-			<resource resourceType="PROJECT" workspacePath="/sln_viznas_iot_elock_oobe"/>
-		</configuration>
-		<configuration configurationName="VIZN2_board">
 			<resource resourceType="PROJECT" workspacePath="/sln_viznas_iot_elock_oobe"/>
 		</configuration>
 		<configuration configurationName="eLock_board">
@@ -1467,4 +1304,44 @@
 		</configuration>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.debug.1360454300;com.crt.advproject.config.exe.debug.1360454300.;com.crt.advproject.gas.exe.debug.405138790;com.crt.advproject.assembler.input.1880499705">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.debug.1360454300;com.crt.advproject.config.exe.debug.1360454300.;com.crt.advproject.cpp.exe.debug.2012106707;com.crt.advproject.compiler.cpp.input.378870521">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.debug.1360454300.171095921;com.crt.advproject.config.exe.debug.1360454300.171095921.;com.crt.advproject.gcc.exe.debug.1741696981;com.crt.advproject.compiler.input.1664037651">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.crt.advproject.GCCManagedMakePerProjectProfile"/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.release.1200124418;com.crt.advproject.config.exe.release.1200124418.;com.crt.advproject.gas.exe.release.1590749263;com.crt.advproject.assembler.input.2112311785">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.debug.1360454300.71914309;com.crt.advproject.config.exe.debug.1360454300.71914309.;com.crt.advproject.cpp.exe.debug.539265210;com.crt.advproject.compiler.cpp.input.1934342704">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.crt.advproject.GCCManagedMakePerProjectProfileCPP"/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.debug.1360454300.71914309;com.crt.advproject.config.exe.debug.1360454300.71914309.;com.crt.advproject.gas.exe.debug.277099544;com.crt.advproject.assembler.input.1627076852">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.crt.advproject.GCCManagedMakePerProjectProfile"/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.debug.1360454300.71914309;com.crt.advproject.config.exe.debug.1360454300.71914309.;com.crt.advproject.gcc.exe.debug.565063088;com.crt.advproject.compiler.input.2055601261">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.crt.advproject.GCCManagedMakePerProjectProfile"/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.debug.1360454300;com.crt.advproject.config.exe.debug.1360454300.;com.crt.advproject.gcc.exe.debug.402956294;com.crt.advproject.compiler.input.299346513">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.release.1200124418;com.crt.advproject.config.exe.release.1200124418.;com.crt.advproject.cpp.exe.release.2060693377;com.crt.advproject.compiler.cpp.input.1920533009">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.debug.1360454300.171095921;com.crt.advproject.config.exe.debug.1360454300.171095921.;com.crt.advproject.gas.exe.debug.236138882;com.crt.advproject.assembler.input.463314270">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.crt.advproject.GCCManagedMakePerProjectProfile"/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.release.1200124418;com.crt.advproject.config.exe.release.1200124418.;com.crt.advproject.gcc.exe.release.495849544;com.crt.advproject.compiler.input.878670928">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.debug.1360454300.171095921;com.crt.advproject.config.exe.debug.1360454300.171095921.;com.crt.advproject.cpp.exe.debug.933039120;com.crt.advproject.compiler.cpp.input.446323539">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.crt.advproject.GCCManagedMakePerProjectProfileCPP"/>
+		</scannerConfigBuildInfo>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 </cproject>

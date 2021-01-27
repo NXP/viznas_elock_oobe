@@ -17,9 +17,6 @@
 #include "fsl_lpi2c.h"
 #endif /* SDK_I2C_FREERTOS */
 #endif /* SDK_I2C_BASED_COMPONENT_USED */
-#if defined BOARD_USE_CODEC
-//#include "fsl_wm8960.h"
-#endif
 #include "fsl_iomuxc.h"
 
 /*******************************************************************************
@@ -157,7 +154,7 @@ void BOARD_LPI2C_Init(LPI2C_Type *base, uint32_t clkSrc_Hz)
     LPI2C_MasterGetDefaultConfig(&lpi2cConfig);
     
     //Some HW may can not support 400Kbps speed
-    lpi2cConfig.baudRate_Hz = 100000U;//400000U;
+    lpi2cConfig.baudRate_Hz = 200000U;
 
 #if defined(SDK_I2C_FREERTOS) && SDK_I2C_FREERTOS
     LPI2C_RTOS_Init(&g_i2c_handle[i2cInstance], base, &lpi2cConfig, clkSrc_Hz);

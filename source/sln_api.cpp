@@ -592,9 +592,6 @@ vizn_api_status_t VIZN_SetDispMode(VIZN_api_client_t *clientHandle, cfg_displaym
 
 vizn_api_status_t VIZN_SetDispOutputDevice(VIZN_api_client_t *clientHandle, cfg_displayoutput_t output_mode)
 {
-#if !(RTFFI_RV_DISP_DRIVER)
-    return kStatus_API_Layer_SetDispOutputDevice_NotSupported;
-#else
     uint32_t status;
     bool already = false;
     sln_cfg_data_t cfg;
@@ -624,7 +621,7 @@ vizn_api_status_t VIZN_SetDispOutputDevice(VIZN_api_client_t *clientHandle, cfg_
     {
         return kStatus_API_Layer_Success;
     }
-#endif
+
 }
 
 vizn_api_status_t VIZN_SetDispOutputInterface(VIZN_api_client_t *clientHandle, cfg_displayinterface_t interface_mode)

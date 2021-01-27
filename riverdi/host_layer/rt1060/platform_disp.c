@@ -43,16 +43,10 @@
 */
 
 
-#ifdef	RTBOARD_REVC
 #define DISP_LPSPI_MASTER_BASEADDR (LPSPI4)
 #define DISP_LPSPI_MASTER_IRQN LPSPI4_IRQn
 #define DISP_LPSPI_MASTER_IRQHandler LPSPI4_IRQHandler
-#else
-/* Master related */
-#define DISP_LPSPI_MASTER_BASEADDR (LPSPI3)
-#define DISP_LPSPI_MASTER_IRQN LPSPI3_IRQn
-#define DISP_LPSPI_MASTER_IRQHandler LPSPI3_IRQHandler
-#endif
+
 
 /* Select SYS PLL2 PFD2 (328 MHz) as lpspi clock source */
 #define DISP_LPSPI_CLOCK_SOURCE_SELECT (3U)
@@ -78,11 +72,8 @@ static const IRQn_Type s_lpspiIRQ[] = LPSPI_IRQS;
 #define DISP_LPSPI_RX_DMA_CHANNEL   1U
 #define DISP_LPSPI_TX_IRQn          DMA0_DMA16_IRQn
 
-#ifdef  RTBOARD_REVC
 #define DISP_LPSPI_TX_DMA_REQUEST kDmaRequestMuxLPSPI4Tx
-#else
-#define DISP_LPSPI_TX_DMA_REQUEST kDmaRequestMuxLPSPI3Tx
-#endif
+
 
 #define DISP_LPSPI_DMA_TRANSFER_COMPLETED   ( 1 << 0 )
 
@@ -189,11 +180,7 @@ platform_sleep_ms (uint32_t ms)
 bool_t
 platform_spi_init (Gpu_Hal_Context_t *host, uint32_t maxclk)
 {
-#ifdef	RTBOARD_REVC
 	BOARD_InitLPSPI4Pins();
-#else
-	BOARD_InitLPSPI3Pins();
-#endif
 	initDisplayLPSPI(maxclk);
   return TRUE;
 }
@@ -304,7 +291,6 @@ platform_spi_recv_data (Gpu_Hal_Context_t  *host,
 	return;
 }
 
-#ifdef	RTBOARD_REVC
 /*
  * platform_gpio_init()
  */
@@ -447,128 +433,4 @@ platform_gpio_value (Gpu_Hal_Context_t  *host,
   return TRUE;
 }
 
-#else
-/*
- * platform_gpio_init()
- */
-bool_t
-platform_gpio_init (Gpu_Hal_Context_t *host,
-                    gpio_name          ngpio)
-{
-#if 0
-	__HAL_RCC_GPIOA_CLK_ENABLE();
-
-  GPIO_InitTypeDef gpio;
-  gpio.Mode = GPIO_MODE_OUTPUT_PP;
-  gpio.Pin = ngpio;
-  gpio.Speed = GPIO_SPEED_FREQ_HIGH;
-  gpio.Pull = GPIO_NOPULL;
-
-  HAL_GPIO_Init(GPIOA, &gpio);
-#endif
-  gpio_pin_config_t pin_config = {.direction = kGPIO_DigitalOutput, .outputLogic = 1};
-switch(ngpio)
-{
-case   GPIO_CS:
-	  {
-		  CLOCK_EnableClock(kCLOCK_Iomuxc);
-
-		  IOMUXC_SetPinMux(
-				  IOMUXC_GPIO_AD_B0_03_GPIO1_IO03,
-				  0U);
-		  IOMUXC_SetPinConfig(
-		  		  IOMUXC_GPIO_AD_B0_03_GPIO1_IO03,
-		  		  0x10B0u);
-
-		  GPIO_PinInit(GPIO1,3, &pin_config);
-		  break;
-	  }
-case   GPIO_CLK:
-	  {
-		  CLOCK_EnableClock(kCLOCK_Iomuxc);
-
-		  IOMUXC_SetPinMux(
-				  IOMUXC_GPIO_AD_B0_00_GPIO1_IO00,
-				  0U);
-		  IOMUXC_SetPinConfig(
-				  IOMUXC_GPIO_AD_B0_00_GPIO1_IO00,
-		  		  0x10B0u);
-
-		  GPIO_PinInit(GPIO1,0, &pin_config);
-		  break;
-	  }
-case   GPIO_SDO:
-	  {
-		  CLOCK_EnableClock(kCLOCK_Iomuxc);
-
-		  IOMUXC_SetPinMux(
-				  IOMUXC_GPIO_AD_B0_01_GPIO1_IO01,
-				  0U);
-		  IOMUXC_SetPinConfig(
-				  IOMUXC_GPIO_AD_B0_01_GPIO1_IO01,
-		  		  0x10B0u);
-		  GPIO_PinInit(GPIO1,1, &pin_config);
-		  break;
-	  }
-case   GPIO_PD:
-	  {
-		  set_iox_pin_dir(1, PCAL_PIN_DIR_OUTPUT);
-		  break;
-	  }
-case   GPIO_INT:
-	  {
-		  // Unused for now
-		  set_iox_pin_dir(0, PCAL_PIN_DIR_INPUT); // This does not seem right to set it as output
-		  break;
-	  }
-default:
-	  break;
-}
-
-  return TRUE;
-}
-
-
-/*
- * platform_gpio_value()
- */
-bool_t
-platform_gpio_value (Gpu_Hal_Context_t  *host,
-                     gpio_name           ngpio,
-                     gpio_val            vgpio)
-{
-  switch(ngpio)
-  {
-  case   GPIO_CS:
-  	  {
- 		  GPIO_PinWrite(GPIO1, 3, vgpio);
-  		  break;
-  	  }
-  case   GPIO_CLK:
-  	  {
-		  GPIO_PinWrite(GPIO1, 0, vgpio);
-  		  break;
-  	  }
-  case   GPIO_SDO:
-	  {
-		  GPIO_PinWrite(GPIO1, 1, vgpio);
-		  break;
-	  }
-  case   GPIO_PD:
-	  {
-		  set_iox_port_pin(OUTPUT_PORT0, 1, vgpio);
-		  break;
-	  }
-  case   GPIO_INT:
-  	  {
-  		  // Not used yet
-  		  // set_iox_port_pin(OUTPUT_PORT0, 0, vgpio);
-  		  break;
-  	  }
-  default:
-	  break;
-  }
-  return TRUE;
-}
-#endif
 #endif

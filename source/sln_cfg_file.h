@@ -22,19 +22,19 @@
 #define DEFAULT_ALERT_VOLUME_VAL \
     (6) // This is to ensure that going offline before first interaction with service doesn't effect volume
 
-#define DEFAULT_CFG_VALUES                                                                    \
-    {                                                                                         \
-        DEFAULT_USB_LOGGING_VAL, DEFAULT_AUDIO_AMP_CAL_STATE_VAL, DEFAULT_MIC_MUTE_STATE_VAL, \
-            DEFAULT_STREAM_VOLUME_VAL, DEFAULT_ALERT_VOLUME_VAL                               \
-    }
+//#define DEFAULT_CFG_VALUES                                                                    \
+//    {                                                                                         \
+//        DEFAULT_USB_LOGGING_VAL, DEFAULT_AUDIO_AMP_CAL_STATE_VAL, DEFAULT_MIC_MUTE_STATE_VAL, \
+//            DEFAULT_STREAM_VOLUME_VAL, DEFAULT_ALERT_VOLUME_VAL                               \
+//    }
 
-typedef struct _sln_dev_cfg
-{
-    uint8_t usb_logging_flag : 1;
-    uint8_t audio_amp_calibration_state : 1;
-    uint8_t mic_mute_mode : 1;
-    uint32_t streamVolume : 32;
-    uint32_t alertVolume : 32;
-} sln_dev_cfg_t;
+//typedef struct _sln_dev_cfg
+//{
+//    uint8_t usb_logging_flag : 1;
+//    uint8_t audio_amp_calibration_state : 1;
+//    uint8_t mic_mute_mode : 1;
+//    uint32_t streamVolume : 32;
+//    uint32_t alertVolume : 32;
+//} sln_dev_cfg_t;
 
 #endif //_SLN_CFG_FILE_

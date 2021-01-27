@@ -155,7 +155,6 @@ void APP_PXPInit()
 static float getFPS()
 {
     static float fps = 0.0f;
-#ifdef SHOW_FPS
     static int frameCount = 0;
     static int firstFrame = 1;
     static int tStart, tEnd;
@@ -177,7 +176,6 @@ static float getFPS()
         }
         // LOGD("[fps]:%.3f\r\n", fps);
     }
-#endif
     return fps;
 }
 

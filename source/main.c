@@ -5,11 +5,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#if RTVISION_BOARD
-#define WIFI_ENABLE      0
-#define VOICE_PROMPT     0
-#endif
-
 #include "fsl_device_registers.h"
 #include "fsl_debug_console.h"
 #include "fsl_dcp.h"
@@ -42,6 +37,10 @@
 #include "sln_wdog.h"
 #include "sln_audio.h"
 
+#define RELOCATE_VECTOR_TABLE 1
+
+const unsigned int gFWVersionNumber = APP_VERSION_NUMBER;
+
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -55,6 +54,7 @@ static void FileSystem_Init();
 /*******************************************************************************
  * Code
  ******************************************************************************/
+
 static void FileSystem_Init()
 {
     /* Initialize DCP to enable CRC generation */

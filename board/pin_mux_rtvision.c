@@ -1307,10 +1307,6 @@ void BOARD_InitLPSPI3Pins(void) {
 }
 
 
-#ifndef RTBOARD_REVC
-#define SPI4_USE_PCS 1
-#endif
-
 void BOARD_InitLPSPI4Pins(void) {
   CLOCK_EnableClock(kCLOCK_Iomuxc);           /* iomuxc clock (iomuxc_clk_enable): 0x03u */
 
@@ -1318,16 +1314,10 @@ void BOARD_InitLPSPI4Pins(void) {
 		  IOMUXC_GPIO_B0_03_LPSPI4_SCK,        /* GPIO_B0_03 is configured as LPSPI4_SCK */
 		  0U);                                    /* Software Input On Field: Input Path is determined by functionality */
 
-#ifdef SPI4_USE_PCS
-  IOMUXC_SetPinMux(
-		  IOMUXC_GPIO_B0_00_LPSPI4_PCS0,       /* GPIO_B0_00 is configured as LPSPI4_PCS0 */
-		  0U);                                    /* Software Input On Field: Input Path is determined by functionality */
-#else
   IOMUXC_SetPinMux(
 		  IOMUXC_GPIO_B0_00_GPIO2_IO00,       /* GPIO_B0_00 is configured as LPSPI4_PCS0 */
 		  0U);                                    /* Software Input On Field: Input Path is determined by functionality */
 
-#endif
 
   IOMUXC_SetPinMux(
 		  IOMUXC_GPIO_B0_02_LPSPI4_SDO,        /* GPIO_B0_02 is configured as LPSPI4_SDO */
@@ -1345,18 +1335,7 @@ void BOARD_InitLPSPI4Pins(void) {
                                                    Pull / Keep Select Field: Keeper
                                                    Pull Up / Down Config. Field: 100K Ohm Pull Down
                                                    Hyst. Enable Field: Hysteresis Disabled */
-#ifdef SPI4_USE_PCS
-  IOMUXC_SetPinConfig(
-		  IOMUXC_GPIO_B0_00_LPSPI4_PCS0,       /* GPIO_B0_00 PAD functional properties : */
-		  0x10B0u);                               /* Slew Rate Field: Slow Slew Rate
-                                                   Drive Strength Field: R0/6
-                                                   Speed Field: medium(100MHz)
-                                                   Open Drain Enable Field: Open Drain Disabled
-                                                   Pull / Keep Enable Field: Pull/Keeper Enabled
-                                                   Pull / Keep Select Field: Keeper
-                                                   Pull Up / Down Config. Field: 100K Ohm Pull Down
-                                                   Hyst. Enable Field: Hysteresis Disabled */
-#else
+
   IOMUXC_SetPinConfig(
 		  IOMUXC_GPIO_B0_00_GPIO2_IO00,       /* GPIO_B0_00 PAD functional properties : */
 		  0x10B0u);                               /* Slew Rate Field: Slow Slew Rate
@@ -1367,7 +1346,6 @@ void BOARD_InitLPSPI4Pins(void) {
                                                    Pull / Keep Select Field: Keeper
                                                    Pull Up / Down Config. Field: 100K Ohm Pull Down
                                                    Hyst. Enable Field: Hysteresis Disabled */
-#endif
 
   IOMUXC_SetPinConfig(
 		  IOMUXC_GPIO_B0_02_LPSPI4_SDO,        /* GPIO_B0_02 PAD functional properties : */

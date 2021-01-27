@@ -74,8 +74,9 @@ void BOARD_SDCardDetectInit(sd_cd_t cd, void *userData)
         kGPIO_IntRisingOrFallingEdge,
     };
     GPIO_PinInit(BOARD_SDMMC_SD_CD_GPIO_BASE, BOARD_SDMMC_SD_CD_GPIO_PIN, &sw_config);
-    GPIO_PortEnableInterrupts(BOARD_SDMMC_SD_CD_GPIO_BASE, 1U << BOARD_SDMMC_SD_CD_GPIO_PIN);
     GPIO_PortClearInterruptFlags(BOARD_SDMMC_SD_CD_GPIO_BASE, ~0);
+    GPIO_PortEnableInterrupts(BOARD_SDMMC_SD_CD_GPIO_BASE, 1U << BOARD_SDMMC_SD_CD_GPIO_PIN);
+
 
     /* set IRQ priority */
     NVIC_SetPriority(BOARD_SDMMC_SD_CD_IRQ, BOARD_SDMMC_SD_CD_IRQ_PRIORITY);

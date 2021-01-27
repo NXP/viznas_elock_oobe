@@ -7,6 +7,9 @@
 #define _MODULES_H_
 
 #if RTVISION_BOARD
+
+#define CTP_28
+#define EVE_1
 /*
  * Embedded Video Engine Series
  */

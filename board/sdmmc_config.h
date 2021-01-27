@@ -8,6 +8,9 @@
 #ifndef _SDMMC_CONFIG_H_
 #define _SDMMC_CONFIG_H_
 
+#define SDIO_ENABLED 1
+//#define SD_ENABLED
+
 #ifdef SD_ENABLED
 #include "fsl_sd.h"
 #endif

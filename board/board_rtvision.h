@@ -21,6 +21,8 @@
 /*! @brief The board name */
 #define BOARD_NAME "SLN-VIZNAS-IOT"
 
+#define USE_COMMON_CODEC 1
+
 //Flash type
 #define HYPER_FLASH 0
 #define QSPI_FLASH  1
@@ -179,8 +181,8 @@
             kGPIO_IntRisingOrFallingEdge,                                                   \
         };                                                                                  \
         GPIO_PinInit(BOARD_USDHC_CD_GPIO_BASE, BOARD_USDHC_CD_GPIO_PIN, &sw_config);        \
-        GPIO_PortEnableInterrupts(BOARD_USDHC_CD_GPIO_BASE, 1U << BOARD_USDHC_CD_GPIO_PIN); \
         GPIO_PortClearInterruptFlags(BOARD_USDHC_CD_GPIO_BASE, ~0);                         \
+        GPIO_PortEnableInterrupts(BOARD_USDHC_CD_GPIO_BASE, 1U << BOARD_USDHC_CD_GPIO_PIN); \
     }
 #define BOARD_HAS_SDCARD              (1U)
 #define BOARD_SD_POWER_RESET_GPIO     (GPIO5)

@@ -11,6 +11,8 @@
 #include "fsl_camera_device.h"
 #include "fsl_mt9m114.h"
 
+#define ADAPTIVE_WEIGHTED_AE 1
+
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -292,11 +294,12 @@ static const mt9m114_reg_t mt9m114InitConfig_15fps[] = {
     {MT9M114_VAR_CAM_SENSOR_CFG_LINE_LENGTH_PCK, 2u, 0x0644},     /*  cam_sensor_cfg_line_length_pck = 1604 */
     {MT9M114_VAR_CAM_SENSOR_CFG_FINE_CORRECTION, 2u, 0x0060},     /*  cam_sensor_cfg_fine_correction = 96 */
     {MT9M114_VAR_CAM_SENSOR_CFG_REG_0_DATA, 2u, 0x0020},          /*  cam_sensor_cfg_reg_0_data = 32 */
-#if ((DUAL_CAMERA))
+
     {MT9M114_VAR_CAM_SENSOR_CONTROL_READ_MODE, 2u, 0x0002}, /*  cam_sensor_control_read_mode = 2 */
-#else
-    {MT9M114_VAR_CAM_SENSOR_CONTROL_READ_MODE, 2u, 0x0001}, /*  cam_sensor_control_read_mode = 1 */
-#endif
+
+	//for single camera case
+    //{MT9M114_VAR_CAM_SENSOR_CONTROL_READ_MODE, 2u, 0x0001}, /*  cam_sensor_control_read_mode = 1 */
+
     {MT9M114_VAR_CAM_CROP_WINDOW_XOFFSET, 2u, 0x0000}, /*  cam_crop_window_xoffset = 0 */
     {MT9M114_VAR_CAM_CROP_WINDOW_YOFFSET, 2u, 0x0000}, /*  cam_crop_window_yoffset = 0 */
     {MT9M114_VAR_CAM_CROP_CROPMODE, 1u, 0x03},         /*  cam_crop_cropmode = 3 */

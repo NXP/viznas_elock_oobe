@@ -37,7 +37,7 @@
 
 #if SCREEN_PORTRAIT_MODE
 #include "welcomehome_240x131.h"
-#if !AUTO_CALIBRATION
+
 /*******************************************************************************
  * Definitions
  *******************************************************************************/
@@ -603,5 +603,4 @@ void UIInfo_Update(uint16_t *pBufferAddr, QUIInfoMsg infoMsg, uint8_t p_DisplayI
     }
 }
 
-#endif //#if !AUTO_CALIBRATION
 #endif //SCREEN_PORTRAIT_MODE

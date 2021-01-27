@@ -54,11 +54,7 @@ static int32_t CfgData_SanityCheck(sln_cfg_data_t *cfg)
         status                      = SanityCheckFailed;
     }
 
-#if !(RTFFI_RV_DISP_DRIVER)
-    if (cfg->output_mode != DISPLAY_USB)
-#else
     if (cfg->output_mode != DISPLAY_USB && cfg->output_mode != DISPLAY_LCD)
-#endif
     {
         cfg->output_mode = DISPLAY_USB;
         status           = SanityCheckFailed;

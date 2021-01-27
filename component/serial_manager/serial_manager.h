@@ -28,6 +28,9 @@
 #endif
 #endif
 
+//added by Raymond
+#define USB_CDC_SERIAL_MANAGER_RUN_NO_HOST 1
+
 /*! @brief Enable or disable uart port (1 - enable, 0 - disable) */
 #ifndef SERIAL_PORT_TYPE_UART
 #define SERIAL_PORT_TYPE_UART (0U)

@@ -253,14 +253,14 @@ static int32_t get_file_data(file_meta_t *meta, uint8_t *data)
     if (meta->useEncryption)
     {
         meta->fileDataAddr = SLN_Flash_Get_Read_Address(meta->fileDataAddr);
-#if defined(SLN_ENABLE_DRIVER_CACHE_CONTROL) && SLN_ENABLE_DRIVER_CACHE_CONTROL
+#if defined(FSL_SDK_ENABLE_DRIVER_CACHE_CONTROL) && FSL_SDK_ENABLE_DRIVER_CACHE_CONTROL
         DCACHE_CleanByRange((uint32_t)data, meta->dataPlainLen);
 #endif
         // Decrypt the message and store it in data
         ret = SLN_Decrypt_AES_CBC_PKCS7(&s_flashMgmtEncCtx, (uint8_t *)meta->fileDataAddr, meta->dataCryptLen, data,
                                         (size_t *)&(meta->dataPlainLen));
 
-#if defined(SLN_ENABLE_DRIVER_CACHE_CONTROL) && SLN_ENABLE_DRIVER_CACHE_CONTROL
+#if defined(FSL_SDK_ENABLE_DRIVER_CACHE_CONTROL) && FSL_SDK_ENABLE_DRIVER_CACHE_CONTROL
         DCACHE_InvalidateByRange((uint32_t)data, meta->dataPlainLen);
 #endif
         if (SLN_FLASH_MGMT_OK != ret)
@@ -283,14 +283,14 @@ static int32_t set_file_data(file_meta_t *meta, uint8_t *flashFile, uint8_t *dat
 
     if (meta->useEncryption)
     {
-#if defined(SLN_ENABLE_DRIVER_CACHE_CONTROL) && SLN_ENABLE_DRIVER_CACHE_CONTROL
+#if defined(FSL_SDK_ENABLE_DRIVER_CACHE_CONTROL) && FSL_SDK_ENABLE_DRIVER_CACHE_CONTROL
         DCACHE_CleanByRange((uint32_t)(flashFile + sizeof(sln_file_header_t)), meta->dataCryptLen);
 #endif
         // Encrypt the message and store it in flashFile
         ret = SLN_Encrypt_AES_CBC_PKCS7(&s_flashMgmtEncCtx, data, meta->dataPlainLen,
                                         flashFile + sizeof(sln_file_header_t), meta->dataCryptLen);
 
-#if defined(SLN_ENABLE_DRIVER_CACHE_CONTROL) && SLN_ENABLE_DRIVER_CACHE_CONTROL
+#if defined(FSL_SDK_ENABLE_DRIVER_CACHE_CONTROL) && FSL_SDK_ENABLE_DRIVER_CACHE_CONTROL
         DCACHE_InvalidateByRange((uint32_t)(flashFile + sizeof(sln_file_header_t)), meta->dataCryptLen);
 #endif
         if (ret != kStatus_Success)

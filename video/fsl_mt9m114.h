@@ -16,12 +16,8 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-#if DUAL_CAMERA
 #define MT9M114_I2C_ADDR    0x48
 #define MT9M114_I2C_ADDR_IR 0x5D
-#else
-#define MT9M114_I2C_ADDR 0x48
-#endif
 #define MT9M114_CHIP_ID 0x2481
 
 /*! @brief MT9M114 register definitions.*/

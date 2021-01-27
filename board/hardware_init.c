@@ -31,7 +31,6 @@ void BOARD_InitHardware(void)
     IOMUXC_GPR->GPR12 = 0x00000000;
 #endif
     BOARD_ConfigMPU();
-    // BOARD_ConfigUSBMPU();
     BOARD_BootClockRUN();
     BOARD_InitPins();
 #if RTVISION_BOARD
