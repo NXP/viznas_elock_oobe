@@ -757,12 +757,12 @@ static void LPM_Task(void *param)
     QMsg *pQMsg;
     bool isTriggered = false;
     uint8_t lowPower = Cfg_AppDataGetLowPowerMode();
-
+#if 0
     xEventGroupWaitBits(g_SyncVideoEvents,
                         1 << SYNC_VIDEO_DISPLAY_INIT_BIT | 1 << SYNC_VIDEO_CAMERA_INIT_BIT |
                             1 << SYNC_VIDEO_BLUETOOTH_SERVER_START_INIT,
                         pdFALSE, pdTRUE, portMAX_DELAY);
-
+#endif
     LOGD("[Lpm]:running\r\n");
 
     while (1)
@@ -851,14 +851,19 @@ static int LPM_SendQMsg(void *msg)
     return 0;
 }
 
-void LPM_SendControlStatus(lpm_control_type_t id, uint16_t status)
+int LPM_SendControlStatus(lpm_control_type_t id, uint16_t status)
 {
-    QMsg *pQMsg;
-    pQMsg                              = (QMsg *)pvPortMalloc(sizeof(QMsg));
+    QMsg *pQMsg                        = (QMsg *)pvPortMalloc(sizeof(QMsg));
+
+    if (NULL == pQMsg)
+    {
+        LOGE("[ERROR]: lpm pQMsg pvPortMalloc failed\r\n");
+        return -1;
+    }
     pQMsg->id                          = QMSG_LPM;
     pQMsg->msg.cmd.id                  = id;
     pQMsg->msg.cmd.data.control_status = status;
-    LPM_SendQMsg((void *)&pQMsg);
+    return LPM_SendQMsg((void *)&pQMsg);
 }
 
 int LPM_Start(void)

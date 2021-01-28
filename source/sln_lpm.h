@@ -110,7 +110,7 @@ void LPM_EnterSuspend(void);
 void LPM_EnterSNVS(void);
 void PIR_EnterSuspend(void);
 
-void LPM_SendControlStatus(lpm_control_type_t id, uint16_t status);
+int LPM_SendControlStatus(lpm_control_type_t id, uint16_t status);
 int LPM_Start(void);
 
 #if defined(__cplusplus)
