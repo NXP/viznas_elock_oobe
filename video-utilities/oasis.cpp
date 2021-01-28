@@ -244,8 +244,10 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
             gui_info.rgbLive = para->reserved[7];
             gui_info.irBrightness = para->reserved[10];
             gui_info.rgbBrightness = para->reserved[12];
-            Camera_GetPWM(LED_IR,&gui_info.irPwm);
-            Camera_GetPWM(LED_WHITE,&gui_info.rgbPwm);
+            VIZN_GetPulseWidth(NULL, LED_IR, &gui_info.irPwm);
+            VIZN_GetPulseWidth(NULL, LED_WHITE, &gui_info.rgbPwm);
+//            Camera_GetPWM(LED_IR,&gui_info.irPwm);
+//            Camera_GetPWM(LED_WHITE,&gui_info.rgbPwm);
 
             UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[irBrightness]:%d\r\n",gui_info.irBrightness);
             UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[rgbBrightness]:%d\r\n",gui_info.rgbBrightness);
@@ -502,7 +504,7 @@ static void Oasis_RGBControl(uint8_t direction)
     VIZN_GetPulseWidth(NULL, LED_WHITE, &pwm);
     //Camera_GetPWM(LED_WHITE,&pwm);
     UsbShell_Printf("[OASIS]:AdjustBrightnessHandler,RGB dir:%d pwm:%d mode:%d\r\n",direction, pwm, mode);
-    //Oasis_PWMControl(LED_WHITE, pwm, direction);
+    Oasis_PWMControl(LED_WHITE, pwm, direction);
     if (direction)
     {
         Camera_QMsgSetPWM(LED_WHITE, pwm);
@@ -524,7 +526,8 @@ static void AdjustBrightnessHandler(uint8_t frame_idx, uint8_t direction)
     uint8_t pwm;
     if (frame_idx == OASISLT_INT_FRAME_IDX_IR)
     {
-        Camera_GetPWM(LED_IR, &pwm);
+//        Camera_GetPWM(LED_IR, &pwm);
+        VIZN_GetPulseWidth(NULL, LED_IR, &pwm);
         Oasis_PWMControl(LED_IR, pwm, direction);
     }
     else

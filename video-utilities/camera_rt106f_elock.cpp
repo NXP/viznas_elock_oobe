@@ -369,17 +369,17 @@ static status_t Camera_SetPWM(uint8_t pwm_index, uint8_t pulse_width)
 }
 #endif
 
-void Camera_GetPWM(uint8_t led, uint8_t* pulse_width)
-{
-    if( led == LED_IR)
-    {
-        *pulse_width = s_PwmIR;
-    }
-    else
-    {
-        *pulse_width = s_PwmWhite;
-    }
-}
+//void Camera_GetPWM(uint8_t led, uint8_t* pulse_width)
+//{
+//    if( led == LED_IR)
+//    {
+//        *pulse_width = s_PwmIR;
+//    }
+//    else
+//    {
+//        *pulse_width = s_PwmWhite;
+//    }
+//}
 
 
 /* MT9M114 camera module has PWDN pin, but the pin is not
