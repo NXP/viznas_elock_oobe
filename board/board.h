@@ -18,7 +18,7 @@
 #ifndef APP_VERSION_NUMBER
 #define APP_MAJ_VER 2
 #define APP_MIN_VER 0
-#define APP_BLD_VER 0127
+#define APP_BLD_VER 0128
 #define APP_VERSION_NUMBER (unsigned int)(((APP_MAJ_VER & 0xFFU ) << 24U) | ((APP_MIN_VER & 0xFFU) << 16U) | (APP_BLD_VER & 0xFFFFU ))
 #endif
 
