@@ -407,17 +407,17 @@ static void CAMERA_RECEIVER_SwapBytes(camera_receiver_handle_t *handle)
 }
 #endif
 
-static uint32_t Camera_getAnotherRxBuf(uint32_t activeAddr)
-{
-    if (activeAddr == (uint32_t)s_pBufferQueue)
-    {
-        return (uint32_t)(s_pBufferQueue + APP_CAMERA_HEIGHT * APP_CAMERA_WIDTH);
-    }
-    else
-    {
-        return (uint32_t)s_pBufferQueue;
-    }
-}
+//static uint32_t Camera_getAnotherRxBuf(uint32_t activeAddr)
+//{
+//    if (activeAddr == (uint32_t)s_pBufferQueue)
+//    {
+//        return (uint32_t)(s_pBufferQueue + APP_CAMERA_HEIGHT * APP_CAMERA_WIDTH);
+//    }
+//    else
+//    {
+//        return (uint32_t)s_pBufferQueue;
+//    }
+//}
 
 static void Camera_RgbIrSwitch(int8_t cameraID)
 {
@@ -606,7 +606,11 @@ static void CameraDevice_Init_Task(void *param)
 #if (CAMERA_DIFF_I2C_BUS || (APP_CAMERA_TYPE == APP_CAMERA_MT9M114))
     camera_config_t *cameraConfig = (camera_config_t *)param;
     // IR camera
-    CAMERA_DEVICE_Init(&cameraDevice[1], cameraConfig);
+    int st = CAMERA_DEVICE_Init(&cameraDevice[1], cameraConfig);
+    if (st != kStatus_Success)
+    {
+    	LOGE("Camera device init error:%d\r\n", st);
+    }
     CAMERA_DEVICE_Control(&cameraDevice[1], kCAMERA_DeviceMonoMode, CAMERA_MONO_MODE_ENABLED);
     CAMERA_DEVICE_Stop(&cameraDevice[1]);
 
@@ -762,13 +766,13 @@ static int Camera_SendDPxpMsg(uint32_t in_buffer, QUIInfoMsg *info, uint32_t out
     pDPxpMsg->id = QMSG_PXP_DISPLAY;
     pDPxpMsg->msg.pxp.in_buffer = in_buffer;
     pDPxpMsg->msg.pxp.out_buffer = out_buffer;
-    pDPxpMsg->msg.pxp.info = info;
+    pDPxpMsg->msg.pxp.user_data = info;
 
     return PXP_SendQMsg((void *)&pDPxpMsg);
 }
 
 // Send msg to PXP Task by Camera task to signal that a frame is available for face rec .
-static int Camera_SendFPxpMsg(uint32_t in_buffer, uint32_t out_buffer)
+static int Camera_SendFPxpMsg(uint32_t in_buffer, uint32_t out_buffer, void* user_data)
 {
     QMsg *pFPxpMsg = (QMsg*)pvPortMalloc(sizeof(QMsg));
     if (NULL == pFPxpMsg)
@@ -779,6 +783,7 @@ static int Camera_SendFPxpMsg(uint32_t in_buffer, uint32_t out_buffer)
     pFPxpMsg->id = QMSG_PXP_FACEREC;
     pFPxpMsg->msg.pxp.in_buffer = in_buffer;
     pFPxpMsg->msg.pxp.out_buffer = out_buffer;
+    pFPxpMsg->msg.pxp.user_data = user_data;
     return PXP_SendQMsg((void *)&pFPxpMsg);
 }
 
@@ -818,7 +823,8 @@ static void Camera_Task(void *param)
 
     uint8_t *pDetIR     = NULL;
     uint8_t *pDetRGB    = NULL;
-    bool irReady        = false;
+    /*first bit indicate RGB frame is ready or not, 2nd bit indicate IR frame is ready or not*/
+    uint32_t oasis_frames_ready = 0;
     uint16_t *pDispData = NULL;
     uint8_t dispMode    = Cfg_AppDataGetDisplayMode();
     memset(&infoMsgIn, 0x0, sizeof(infoMsgIn));
@@ -859,7 +865,7 @@ static void Camera_Task(void *param)
 
                         if (pDetRGB)
                         {
-                            Camera_SendFPxpMsg(s_ActiveFrameAddr, (uint32_t)pDetRGB);
+                            Camera_SendFPxpMsg(s_ActiveFrameAddr, (uint32_t)pDetRGB, (void*)COLOR_CAMERA);
                             pDetRGB = NULL;
                         }
 
@@ -909,12 +915,11 @@ static void Camera_Task(void *param)
                                 pDispData = NULL;
                             }
 
-                            if (pDetRGB && irReady)
+                            if (pDetRGB)
                             {
-                                Camera_SendFPxpMsg(s_ActiveFrameAddr, (uint32_t)pDetRGB);
-                                irReady = false;
+                            	//there is RGB data request is pending
+                                Camera_SendFPxpMsg(s_ActiveFrameAddr, (uint32_t)pDetRGB, (void*)COLOR_CAMERA);
                                 pDetRGB = NULL;
-                                pDetIR  = NULL;
                             }
                         }
 #if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
@@ -930,10 +935,11 @@ static void Camera_Task(void *param)
                                 pDispData = NULL;
                             }
 
-                            if (pDetIR && (!irReady))
+                            if (pDetIR)
                             {
-                                Camera_SendFPxpMsg(s_ActiveFrameAddr, (uint32_t)pDetIR);
-                                irReady = true;
+                            	//IR frame req is pending
+                                Camera_SendFPxpMsg(s_ActiveFrameAddr, (uint32_t)pDetIR,(void*)IR_CAMERA);
+                                pDetIR = NULL;
                             }
                         }
 
@@ -970,32 +976,27 @@ static void Camera_Task(void *param)
 
                 case QMSG_PXP_FACEREC:
                 {
-                    if (!pDetIR && !pDetRGB)
+                	uint32_t mask = (1UL<<IR_CAMERA) |(1UL<<COLOR_CAMERA);
+                	oasis_frames_ready |= 1UL<<(uint32_t)pQMsg->msg.pxp.user_data;
+                    if ((oasis_frames_ready&mask) == mask)
                     {
                         Camera_SendFResMsg();
+                        oasis_frames_ready = 0;
                     }
                 }
                 break;
 
                 case QMSG_FACEREC_FRAME_REQ:
                 {
-                    if (pQMsg->msg.raw.data)
-                    {
-                        pDetIR = (uint8_t *)pQMsg->msg.raw.data;
-                    }
-                    if (pQMsg->msg.raw.data2)
-                    {
-                        pDetRGB = (uint8_t *)pQMsg->msg.raw.data2;
-                    }
+
+                    pDetIR = (uint8_t *)pQMsg->msg.raw.IR_frame_data;
+                    pDetRGB = (uint8_t *)pQMsg->msg.raw.RGB_frame_data;
                 }
                 break;
 
                 case QMSG_DISPLAY_FRAME_REQ:
                 {
-                    if (pQMsg->msg.raw.data)
-                    {
-                        pDispData = (uint16_t *)pQMsg->msg.raw.data;
-                    }
+                    pDispData = (uint16_t *)pQMsg->msg.raw.IR_frame_data;
                 }
                 break;
 

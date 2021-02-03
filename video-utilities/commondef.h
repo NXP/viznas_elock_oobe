@@ -28,13 +28,15 @@
  * Definitions
  *******************************************************************************/
 
-#define OASIS_BENCHMARK 0
-#define OASIS_PROFILING 0
+#define ENABLE_720P_RESOLUTION 0
 
-#define ENABLE_ANTISPOOFING 0
-
+#if ENABLE_720P_RESOLUTION
+#define APP_CAMERA_HEIGHT 720
+#define APP_CAMERA_WIDTH 1280
+#else
 #define APP_CAMERA_HEIGHT (Cfg_AppDataGetDetectResolutionMode() == DETECT_RESOLUTION_VGA ? 480 : 240)
 #define APP_CAMERA_WIDTH  (Cfg_AppDataGetDetectResolutionMode() == DETECT_RESOLUTION_VGA ? 640 : 320)
+#endif
 
 #define LCD_WIDTH  (SCREEN_PORTRAIT_MODE ? 240 : 320)
 #define LCD_HEIGHT (SCREEN_PORTRAIT_MODE ? 320 : 240)
@@ -47,15 +49,7 @@
 #define DISPLAY_PITCH_BYTES (LCD_WIDTH * 2)
 #define DISPLAY_ROTATION    (0)
 
-// face recognize parameter
-#define MINFACE_SIZE 100 // should fine tuning with the face images input.
-
-
-
-
 // AX surface
-#define FACEICON_WIDTH  80
-#define FACEICON_HEIGHT 80
 #define CAMERA_SURFACE_SHIFT 0
 
 
@@ -70,24 +64,7 @@
 #define REC_RECT_HEIGHT (CAMERA_ROTATE_FLAG ? APP_CAMERA_WIDTH  : APP_CAMERA_HEIGHT)
 #define REC_RECT_WIDTH  (CAMERA_ROTATE_FLAG ? APP_CAMERA_HEIGHT : APP_CAMERA_WIDTH)
 
-#define REC_RECT_X1  0
-#define REC_RECT_Y1  0
-#define REC_RECT_X2  REC_RECT_WIDTH
-#define REC_RECT_Y2  REC_RECT_HEIGHT
-
-// snapshot image
-#define SNAPSHOT_WIDTH  96
-#define SNAPSHOT_HEIGHT 96
-
-// aligned image
-#define ALIGNED_WIDTH  96
-#define ALIGNED_HEIGHT 96
-
-#define DISPLAY_AUTO_TURNOFF_TIMEOUT 60 // seconds
-
-#define AUTO_UPDATE_FACE_FEATURE 1
-
-#define CAMERA_HORIZONTAL_POINTS LCD_WIDTH // toolbard width
+#define CAMERA_HORIZONTAL_POINTS LCD_WIDTH // toolbar width
 #define CAMERA_VERTICAL_POINTS   LCD_HEIGHT
 #define CAMERA_BYTES_PER_PIXEL   2
 #define CAMERA_FRAME_BYTES       (CAMERA_HORIZONTAL_POINTS * CAMERA_VERTICAL_POINTS * CAMERA_BYTES_PER_PIXEL)
@@ -148,8 +125,8 @@ typedef enum
 
 typedef struct
 {
-    void *data;
-    void *data2;
+    void *IR_frame_data;
+    void *RGB_frame_data;
 } QRawMsg;
 
 typedef struct
@@ -180,7 +157,7 @@ typedef struct
     int dt;
     int rt;
     int registeredFaces;
-    unsigned char emotion;
+    //unsigned char emotion;
     float fps;
     float detect_fps;
     float recognize_fps;
@@ -199,7 +176,7 @@ typedef struct
 {
     uint32_t in_buffer;
     uint32_t out_buffer;
-    QUIInfoMsg *info;
+    void* user_data;
 } QPXPMsg;
 
 typedef struct

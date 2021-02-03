@@ -19,7 +19,7 @@ extern "C" {
 /*******************************************************************************
  * API
  *******************************************************************************/
-void UIInfo_Update(uint16_t *pBufferAddr, QUIInfoMsg infoMsg, uint8_t p_DisplayInterfaceMode);
+void UIInfo_Update(uint16_t *pBufferAddr, QUIInfoMsg* infoMsg, uint8_t p_DisplayInterfaceMode);
 
 #if defined(__cplusplus)
 }

@@ -103,15 +103,14 @@ const char *emotion_str[] = {
 static void draw_text(char *pText, int x, int y, int text_color, int bg_color, font_vizn type, uint16_t *pCanvasBuffer);
 static void draw_icon(uint16_t *pIcon, int x, int y, int w, int h, int alpha, uint16_t *pCanvasBuffer);
 static void draw_fillrect(int x, int y, int w, int h, int rect_color, uint16_t *pCanvasBuffer);
-static void UIInfo_UpdateBottomInfoBar(uint16_t *pBufferAddr, QUIInfoMsg infoMsg, uint8_t appType);
+static void UIInfo_UpdateBottomInfoBar(uint16_t *pBufferAddr, QUIInfoMsg* infoMsg, uint8_t appType);
 static void UIInfo_FaceGuideLines(uint16_t *pBufferAddr);
-static void UIInfo_UpdateFaceInfo(uint16_t *pBufferAddr, QUIInfoMsg infoMsg);
+static void UIInfo_UpdateFaceInfo(uint16_t *pBufferAddr, QUIInfoMsg* infoMsg);
 static void UIInfo_UpdateFaceBoxUYVY(uint16_t *pBufferAddr, int x1, int x2, int y1, int y2, int dim);
 static void UIInfo_UpdateFaceBoxRGB565(uint16_t *pBufferAddr, int x1, int x2, int y1, int y2, int dim);
-static void UIInfo_UpdateEmotion(uint16_t *pBufferAddr, uint8_t emotion, int x1, int x2, int y1, int y2, int dim);
 static void UIInfo_UpdateNameConf(uint16_t *pBufferAddr, std::string name, int x1, int x2, int y1, int y2, int dim);
-static void UIInfo_Userid(uint16_t *pBufferAddr, QUIInfoMsg infoMsg, uint8_t p_DisplayInterfaceMode);
-static void UIInfo_Elock(uint16_t *pBufferAddr, QUIInfoMsg infoMsg, uint8_t p_DisplayInterfaceMode);
+static void UIInfo_Userid(uint16_t *pBufferAddr, QUIInfoMsg* infoMsg, uint8_t p_DisplayInterfaceMode);
+static void UIInfo_Elock(uint16_t *pBufferAddr, QUIInfoMsg* infoMsg, uint8_t p_DisplayInterfaceMode);
 
 /*******************************************************************************
  * Code
@@ -143,7 +142,7 @@ static void draw_fillrect(int x, int y, int w, int h, int rect_color, uint16_t *
             *(pCanvasBuffer + j * APP_AS_WIDTH + i) = rect_color;
 }
 
-static void UIInfo_UpdateQualityInfo(uint16_t *pAsBufferAddr, QUIInfoMsg infoMsg)
+static void UIInfo_UpdateQualityInfo(uint16_t *pAsBufferAddr, QUIInfoMsg* infoMsg)
 {
     char tstring[64];
     int color;
@@ -153,9 +152,9 @@ static void UIInfo_UpdateQualityInfo(uint16_t *pAsBufferAddr, QUIInfoMsg infoMsg
         return;
 
     memset(tstring, 0x0, 64);
-    sprintf(tstring, "sim:%.2f",infoMsg.similar/100.0f);
+    sprintf(tstring, "sim:%.2f",infoMsg->similar/100.0f);
 
-    if ((int)infoMsg.similar > 0)
+    if ((int)infoMsg->similar > 0)
     {
         color = RGB565_BLUE;
     }
@@ -166,12 +165,12 @@ static void UIInfo_UpdateQualityInfo(uint16_t *pAsBufferAddr, QUIInfoMsg infoMsg
     draw_text(tstring, POS_QUALITY_INFO_X + CAMERA_SURFACE_SHIFT, POS_QUALITY_INFO_Y, color, -1, type, pAsBufferAddr);
 
     memset(tstring, 0x0, 64);
-    sprintf(tstring, "blur:%d", infoMsg.blur);
-    if (infoMsg.blur == 1)
+    sprintf(tstring, "blur:%d", infoMsg->blur);
+    if (infoMsg->blur == 1)
     {
         color = RGB565_RED;
     }
-    else if (infoMsg.blur == 0)
+    else if (infoMsg->blur == 0)
     {
         color = RGB565_GREEN;
     }
@@ -183,12 +182,12 @@ static void UIInfo_UpdateQualityInfo(uint16_t *pAsBufferAddr, QUIInfoMsg infoMsg
               pAsBufferAddr);
 
     memset(tstring, 0x0, 64);
-    sprintf(tstring, "rgbLive:%d", infoMsg.rgbLive);
-    if (infoMsg.rgbLive == 0)
+    sprintf(tstring, "rgbLive:%d", infoMsg->rgbLive);
+    if (infoMsg->rgbLive == 0)
     {
         color = RGB565_RED;
     }
-    else if (infoMsg.rgbLive == 1)
+    else if (infoMsg->rgbLive == 1)
     {
         color = RGB565_GREEN;
     }
@@ -200,12 +199,12 @@ static void UIInfo_UpdateQualityInfo(uint16_t *pAsBufferAddr, QUIInfoMsg infoMsg
               pAsBufferAddr);
 
     memset(tstring, 0x0, 64);
-    sprintf(tstring, "irLive:%d", infoMsg.irLive);
-    if (infoMsg.irLive == 0)
+    sprintf(tstring, "irLive:%d", infoMsg->irLive);
+    if (infoMsg->irLive == 0)
     {
         color = RGB565_RED;
     }
-    else if (infoMsg.irLive == 1)
+    else if (infoMsg->irLive == 1)
     {
         color = RGB565_GREEN;
     }
@@ -218,12 +217,12 @@ static void UIInfo_UpdateQualityInfo(uint16_t *pAsBufferAddr, QUIInfoMsg infoMsg
               pAsBufferAddr);
 
     memset(tstring, 0x0, 64);
-    sprintf(tstring, "front:%d", infoMsg.front);
-    if (infoMsg.front == 0)
+    sprintf(tstring, "front:%d", infoMsg->front);
+    if (infoMsg->front == 0)
     {
         color = RGB565_RED;
     }
-    else if (infoMsg.front == 1)
+    else if (infoMsg->front == 1)
     {
         color = RGB565_GREEN;
     }
@@ -236,11 +235,11 @@ static void UIInfo_UpdateQualityInfo(uint16_t *pAsBufferAddr, QUIInfoMsg infoMsg
               pAsBufferAddr);
 }
 
-static void UIInfo_UpdateBottomInfoBar(uint16_t *pBufferAddr, QUIInfoMsg infoMsg, uint8_t appType)
+static void UIInfo_UpdateBottomInfoBar(uint16_t *pBufferAddr, QUIInfoMsg* infoMsg, uint8_t appType)
 {
     char tstring[64];
     int db_count     = 0;
-    std::string name = infoMsg.name;
+    std::string name = infoMsg->name;
     uint16_t *pIcon  = NULL;
 
     draw_fillrect(POS_NXPGREEN_RECT_X, POS_RECT_Y, GREEN_RECT_WIDTH, RECT_HEIGHT, RGB565_NXPGREEN, pBufferAddr);
@@ -359,10 +358,10 @@ static void UIInfo_FaceGuideLines(uint16_t *pBufferAddr)
     }
 }
 
-static void UIInfo_UpdateFaceInfo(uint16_t *pBufferAddr, QUIInfoMsg infoMsg)
+static void UIInfo_UpdateFaceInfo(uint16_t *pBufferAddr, QUIInfoMsg* infoMsg)
 {
     char tstring[64];
-    std::string name = infoMsg.name;
+    std::string name = infoMsg->name;
 
     switch (s_OasisEvents)
     {
@@ -498,21 +497,8 @@ static void UIInfo_UpdateNameConf(uint16_t *pBufferAddr, std::string name, int x
     put_string(x1 + dim, y1 + dim, (char *)name.c_str(), RGB565_BLACK, s_Color, OPENSANS8, pBufferAddr, APP_AS_WIDTH);
 }
 
-static void UIInfo_UpdateEmotion(uint16_t *pBufferAddr, uint8_t emotion, int x1, int x2, int y1, int y2, int dim)
-{
-//    char tstring[64];
-//    if (pBufferAddr == NULL)
-//        return;
-//    // show the emotion info
-//    if (emotion >= E_ANGER && emotion <= E_SURPRISED)
-//    {
-//        sprintf(tstring, emotion_str[emotion]);
-//        draw_text(tstring, x2 - dim - get_stringwidth(tstring, OPENSANS8), y1 + dim, RGB565_BLACK, s_Color, OPENSANS8,
-//                  pBufferAddr);
-//    }
-}
 
-static void UIInfo_Userid(uint16_t *pBufferAddr, QUIInfoMsg infoMsg, uint8_t p_DisplayInterfaceMode)
+static void UIInfo_Userid(uint16_t *pBufferAddr, QUIInfoMsg *infoMsg, uint8_t p_DisplayInterfaceMode)
 {
     uint16_t screenWidth, screenHeight;
     int scale_factor = APP_CAMERA_WIDTH / APP_PS_WIDTH;
@@ -524,10 +510,10 @@ static void UIInfo_Userid(uint16_t *pBufferAddr, QUIInfoMsg infoMsg, uint8_t p_D
         scale_factor = 1;
     }
 
-    int x1 = CAMERA_SURFACE_SHIFT + (infoMsg.rect[0] + shift_x) / scale_factor;
-    int y1 = (infoMsg.rect[1] + shift_y) / scale_factor;
-    int x2 = CAMERA_SURFACE_SHIFT + (infoMsg.rect[2] + shift_x) / scale_factor;
-    int y2 = (infoMsg.rect[3] + shift_y) / scale_factor;
+    int x1 = CAMERA_SURFACE_SHIFT + (infoMsg->rect[0] + shift_x) / scale_factor;
+    int y1 = (infoMsg->rect[1] + shift_y) / scale_factor;
+    int x2 = CAMERA_SURFACE_SHIFT + (infoMsg->rect[2] + shift_x) / scale_factor;
+    int y2 = (infoMsg->rect[3] + shift_y) / scale_factor;
 
     screenWidth  = APP_CAMERA_WIDTH / scale_factor;
     screenHeight = APP_CAMERA_HEIGHT / scale_factor;
@@ -535,7 +521,7 @@ static void UIInfo_Userid(uint16_t *pBufferAddr, QUIInfoMsg infoMsg, uint8_t p_D
     if ((x1 >= CAMERA_SURFACE_SHIFT) && (y1 >= 0) && (x2 >= CAMERA_SURFACE_SHIFT) && (y2 > 0) && (x1 != x2) &&
         (y1 != y2) && x2 < screenWidth && y2 < screenHeight)
     {
-        std::string name = infoMsg.name;
+        std::string name = infoMsg->name;
 
         if (name.empty())
         {
@@ -549,7 +535,6 @@ static void UIInfo_Userid(uint16_t *pBufferAddr, QUIInfoMsg infoMsg, uint8_t p_D
         if (p_DisplayInterfaceMode == DISPLAY_INTERFACE_INFOBAR)
         {
             UIInfo_UpdateFaceBoxRGB565(pBufferAddr, x1, x2, y1, y2, LINE_DIMS);
-            UIInfo_UpdateEmotion(pBufferAddr, infoMsg.emotion, x1, x2, y1, y2, LINE_DIMS);
             UIInfo_UpdateNameConf(pBufferAddr, name, x1, x2, y1, y2, LINE_DIMS);
         }
         else
@@ -559,7 +544,7 @@ static void UIInfo_Userid(uint16_t *pBufferAddr, QUIInfoMsg infoMsg, uint8_t p_D
     }
 }
 
-static void UIInfo_Elock(uint16_t *pBufferAddr, QUIInfoMsg infoMsg, uint8_t p_DisplayInterfaceMode)
+static void UIInfo_Elock(uint16_t *pBufferAddr, QUIInfoMsg* infoMsg, uint8_t p_DisplayInterfaceMode)
 {
     if (p_DisplayInterfaceMode == DISPLAY_INTERFACE_INFOBAR)
     {
@@ -571,7 +556,7 @@ static void UIInfo_Elock(uint16_t *pBufferAddr, QUIInfoMsg infoMsg, uint8_t p_Di
     }
 }
 
-void UIInfo_Update(uint16_t *pBufferAddr, QUIInfoMsg infoMsg, uint8_t p_DisplayInterfaceMode)
+void UIInfo_Update(uint16_t *pBufferAddr, QUIInfoMsg* infoMsg, uint8_t p_DisplayInterfaceMode)
 {
     uint8_t appType = Cfg_AppDataGetApplicationType();
     if (p_DisplayInterfaceMode == DISPLAY_INTERFACE_INFOBAR)

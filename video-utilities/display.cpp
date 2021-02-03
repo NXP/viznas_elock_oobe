@@ -83,7 +83,7 @@ static int Display_sendReqMsg(void *data)
 {
     QMsg *pDisplayReqMsg = (QMsg*)pvPortMalloc(sizeof(QMsg));
     pDisplayReqMsg->id = QMSG_DISPLAY_FRAME_REQ;
-    pDisplayReqMsg->msg.raw.data = data;
+    pDisplayReqMsg->msg.raw.IR_frame_data = data;
     return Camera_SendQMsg((void *)&pDisplayReqMsg);
 }
 

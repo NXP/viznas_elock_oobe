@@ -333,12 +333,12 @@ void APP_SetPxpInCommomMode(uint32_t psBuffer, uint32_t outputBuf)
 }
 
 void APP_PXPStartCamera2Display(uint32_t cameraBuffer,
-                                QUIInfoMsg infoMsg,
+                                QUIInfoMsg* infoMsg,
                                 uint8_t displayInterfaceMode,
                                 uint32_t outBuffer)
 {
     pxp_output_pixel_format_t output_format = kPXP_OutputPixelFormatRGB565;
-    infoMsg.fps = getFPS();
+    infoMsg->fps = getFPS();
 #if CAMERA_ROTATE_FLAG
     APP_SetPxpInCommomMode(cameraBuffer, outBuffer);
 #endif
@@ -396,7 +396,7 @@ void APP_PXPStartCamera2DetBuf(uint32_t cameraBuffer, uint32_t detBuffer)
 }
 
 /* send msg to Camera Task by PXP task to signal that frame for face rec is done */
-static int PXP_SendFResMsg(void)
+static int PXP_SendFResMsg(QMsg* msg)
 {
     QMsg* pFResMsg = (QMsg*)pvPortMalloc(sizeof(QMsg));
     if (NULL == pFResMsg)
@@ -404,6 +404,7 @@ static int PXP_SendFResMsg(void)
         LOGE("[ERROR]: pFResMsg pvPortMalloc failed\r\n");
         return -1;
     }
+    memcpy(pFResMsg,msg,sizeof(*msg));
     pFResMsg->id = QMSG_PXP_FACEREC;
     return Camera_SendQMsg((void *)&pFResMsg);
 }
@@ -443,7 +444,7 @@ static void PXP_Task(void *param)
 #else
                     APP_PXPStartCamera2DetBuf(pQMsg->msg.pxp.in_buffer, pQMsg->msg.pxp.out_buffer);
 #endif
-                    PXP_SendFResMsg(); 
+                    PXP_SendFResMsg(pQMsg);
                 }
                 break;
 
@@ -451,10 +452,10 @@ static void PXP_Task(void *param)
                 {
 #if CAMERA_ROTATE_FLAG
                     APP_SetPxpRotate(pQMsg->msg.pxp.in_buffer, (uint32_t)g_pRotateBuff);
-                    APP_PXPStartCamera2Display((uint32_t)g_pRotateBuff, *pQMsg->msg.pxp.info, s_DisplayInterfaceMode,
+                    APP_PXPStartCamera2Display((uint32_t)g_pRotateBuff, (QUIInfoMsg*)pQMsg->msg.pxp.user_data, s_DisplayInterfaceMode,
                                                pQMsg->msg.pxp.out_buffer);
 #else
-                    APP_PXPStartCamera2Display(pQMsg->msg.pxp.in_buffer, *pQMsg->msg.pxp.info, s_DisplayInterfaceMode,
+                    APP_PXPStartCamera2Display(pQMsg->msg.pxp.in_buffer, (QUIInfoMsg*)pQMsg->msg.pxp.user_data, s_DisplayInterfaceMode,
                                                pQMsg->msg.pxp.out_buffer);
 #endif
                     PXP_SendDResMsg();

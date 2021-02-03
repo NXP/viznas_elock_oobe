@@ -117,7 +117,7 @@ static void clearFaceInfoMsg(QUIInfoMsg *info)
     info->dt              = 0;
     info->rt              = 0;
     info->registeredFaces = featurenames.size();
-    info->emotion         = 0;
+//    info->emotion         = 0;
     info->blur            = 0xFF;
     info->rgbLive         = 0xFF;
     info->front           = 0xFF;
@@ -161,8 +161,8 @@ static int Oasis_SendFaceDetReqMsg(void *dataIR, void *dataRGB)
         return -1;
     }
     pFaceDetReqMsg->id            = QMSG_FACEREC_FRAME_REQ;
-    pFaceDetReqMsg->msg.raw.data  = dataIR;
-    pFaceDetReqMsg->msg.raw.data2 = dataRGB;
+    pFaceDetReqMsg->msg.raw.IR_frame_data  = dataIR;
+    pFaceDetReqMsg->msg.raw.RGB_frame_data = dataRGB;
     return Camera_SendQMsg((void *)&pFaceDetReqMsg);
 }
 
@@ -765,15 +765,16 @@ int Oasis_Start()
 
     if (ret == OASIS_INIT_INVALID_MEMORYPOOL)
     {
-#if (configSUPPORT_STATIC_ALLOCATION == 1)
-        if (s_InitPara.size <= sizeof(s_OasisMemPool))
+#if configSUPPORT_STATIC_ALLOCATION
+        if (s_InitPara.size <= (int)sizeof(s_OasisMemPool))
         {
             s_InitPara.mem_pool = (char *)s_OasisMemPool;
             s_InitPara.size = sizeof(s_OasisMemPool);
         }
         else
         {
-            s_InitPara.mem_pool = NULL;
+        	//allocate from heap
+        	s_InitPara.mem_pool = (char *)pvPortMalloc(s_InitPara.size);
         }
 #else
         s_InitPara.mem_pool = (char *)pvPortMalloc(s_InitPara.size);
@@ -782,10 +783,9 @@ int Oasis_Start()
         if (s_InitPara.mem_pool == NULL)
         {
             UsbShell_Printf("[ERROR]: Unable to allocate memory for oasis mem pool\r\n");
-            while (1)
-                ;
+            while (1);
         }
-        ret             = OASISLT_init(&s_InitPara);
+        ret = OASISLT_init(&s_InitPara);
     }
 
     assert(ret == 0);
