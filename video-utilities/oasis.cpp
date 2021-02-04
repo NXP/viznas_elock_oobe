@@ -475,14 +475,13 @@ static void Oasis_PWMControl(uint8_t led, uint8_t curPWM, uint8_t direction)
     uint8_t pwm_min      = ((led == LED_IR) ? IR_PWM_MIN : WHITE_PWM_MIN);
     uint8_t pwm_max      = ((led == LED_IR) ? IR_PWM_MAX : WHITE_PWM_MAX);
     uint8_t pwm_interval = ((led == LED_IR) ? IR_PWM_INTERVAL : WHITE_PWM_INTERVAL);
-    UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[LED:%d][curPWM:%d][dir:%d]\r\n", led, curPWM, direction);
+
 
     if (direction)
     {
         pwm = curPWM + pwm_interval;
         if (pwm >= pwm_max)
             pwm = pwm_max;
-        Camera_QMsgSetPWM(led, pwm);
     }
     else
     {
@@ -490,29 +489,61 @@ static void Oasis_PWMControl(uint8_t led, uint8_t curPWM, uint8_t direction)
             pwm = pwm_min;
         else
             pwm = curPWM - pwm_interval;
-        Camera_QMsgSetPWM(led, pwm);
+
     }
+    UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[LED:%d][curPWM:%d]\r\n", led, curPWM);
+    Camera_QMsgSetPWM(led, pwm);
 }
 
 //For GC0308, we can combine maunal exposure and pwm to adjust rgb face brightness.
 //For MT9M114, only use pwm to adjust rgb face brightness.
-static void Oasis_RGBControl(uint8_t direction)
+//static void Oasis_RGBControl(uint8_t direction)
+//{
+//    uint8_t mode = Camera_GetRGBExposureMode();
+//    uint8_t pwm;
+//    Camera_GetPWM(LED_WHITE,&pwm);
+//    UsbShell_Printf("[OASIS]:AdjustBrightnessHandler,RGB dir:%d pwm:%d mode:%d\r\n",direction, pwm, mode);
+//    Oasis_PWMControl(LED_WHITE, pwm, direction);
+//
+//    if ()
+//    if (direction)
+//    {
+//        //Camera_QMsgSetPWM(LED_WHITE, pwm);
+//        mode = (mode < CAMERA_EXPOSURE_MODE_AUTO_LEVEL3)? (mode + 1):CAMERA_EXPOSURE_MODE_AUTO_LEVEL3;
+//    }else
+//    {
+//        //Camera_QMsgSetPWM(LED_WHITE,0);
+//        mode = (mode > CAMERA_EXPOSURE_MODE_AUTO_LEVEL0)? (mode-1):CAMERA_EXPOSURE_MODE_AUTO_LEVEL0;
+//    }
+//    Camera_SetRGBExposureMode(mode);
+//}
+
+//For GC0308, we can combine maunal exposure and pwm to adjust rgb face brightness.
+//For MT9M114, only use pwm to adjust rgb face brightness.
+static void Oasis_LedControl(cfg_led_t ledID,uint8_t direction, uint8_t enableRGBModeCtrl)
 {
-    uint8_t mode = Camera_GetRGBExposureMode();
+
     uint8_t pwm;
-    Camera_GetPWM(LED_WHITE,&pwm);
-    UsbShell_Printf("[OASIS]:AdjustBrightnessHandler,RGB dir:%d pwm:%d mode:%d\r\n",direction, pwm, mode);
-    Oasis_PWMControl(LED_WHITE, pwm, direction);
-    if (direction)
+    Camera_GetPWM(ledID,&pwm);
+    UsbShell_DbgPrintf(VERBOSE_MODE_L2,"Oasis_LedControl,led:%d dir:%d pwm:%d\r\n",ledID, direction, pwm);
+    Oasis_PWMControl(ledID, pwm, direction);
+
+    if (LED_WHITE == ledID && enableRGBModeCtrl)
     {
-        Camera_QMsgSetPWM(LED_WHITE, pwm);
-        mode = (mode < CAMERA_EXPOSURE_MODE_AUTO_LEVEL3)? (mode + 1):CAMERA_EXPOSURE_MODE_AUTO_LEVEL3;
-    }else
-    {
-        Camera_QMsgSetPWM(LED_WHITE,0);
-        mode = (mode > CAMERA_EXPOSURE_MODE_AUTO_LEVEL0)? (mode-1):CAMERA_EXPOSURE_MODE_AUTO_LEVEL0;
+        uint8_t mode = Camera_GetRGBExposureMode();
+        UsbShell_Printf("[OASIS]:Oasis_LedControl mode %d",mode);
+		if (direction)
+		{
+			//Camera_QMsgSetPWM(LED_WHITE, pwm);
+			mode = (mode < CAMERA_EXPOSURE_MODE_AUTO_LEVEL3)? (mode + 1):CAMERA_EXPOSURE_MODE_AUTO_LEVEL3;
+		}else
+		{
+			//Camera_QMsgSetPWM(LED_WHITE,0);
+			mode = (mode > CAMERA_EXPOSURE_MODE_AUTO_LEVEL0)? (mode-1):CAMERA_EXPOSURE_MODE_AUTO_LEVEL0;
+		}
+        UsbShell_Printf("----> %d\r\n",mode);
+		Camera_SetRGBExposureMode(mode);
     }
-    Camera_SetRGBExposureMode(mode);
 }
 
 /* Used to dynamically adjust face brightness, user can adjust brightness by modifing LED's light intensity or using manual exposure.
@@ -521,17 +552,16 @@ static void Oasis_RGBControl(uint8_t direction)
  */
 static void AdjustBrightnessHandler(uint8_t frame_idx, uint8_t direction)
 {
-    uint8_t pwm;
+
     if (frame_idx == OASISLT_INT_FRAME_IDX_IR)
     {
-        Camera_GetPWM(LED_IR, &pwm);
-        Oasis_PWMControl(LED_IR, pwm, direction);
+        Oasis_LedControl(LED_IR,direction,0);
     }
     else
     {
         //There is a HW limitation to control LED_WHITE and LED_IR at the same time, so diable RGB part.
 #if RT106F_ELOCK_BOARD
-        Oasis_RGBControl(direction);
+    	Oasis_LedControl(LED_WHITE,direction,1);
 #endif
     }
 }

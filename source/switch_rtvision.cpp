@@ -52,7 +52,7 @@ static void TimerCallback(TimerHandle_t xTimer);
 static QueueHandle_t SwitchMsgQ = NULL;
 static QMsg SW1Msg;
 static QMsg PCALMsg;
-static uint8_t s_DisplayInterfaceMode = 1;
+//static uint8_t s_DisplayInterfaceMode = 1;
 static int s_Running;
 static TimerHandle_t s_DebouncingTimer = NULL;
 static int s_TimerDebounceID           = TIMER_DEBOUNCE_SWITCH_1;
@@ -209,10 +209,10 @@ static void Switch_Task(void *param)
             {
                 case QMSG_SWITCH_1:
                 {
-                    s_DisplayInterfaceMode = (Cfg_AppDataGetInterfaceMode() + 1) % DISPLAY_LAST_INTERFACE;
+                    int mode = (Cfg_AppDataGetInterfaceMode() + 1) % DISPLAY_LAST_INTERFACE;
                     if (kStatus_API_Layer_Success !=
                         VIZN_SetDispOutputInterface(&VIZN_API_CLIENT(Buttons),
-                                                    (cfg_displayinterface_t)s_DisplayInterfaceMode))
+                                                    (cfg_displayinterface_t)mode))
                     {
                         LOGE("[WARNING]: Failed to set new interface\r\n");
                     }

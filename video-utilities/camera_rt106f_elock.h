@@ -57,7 +57,6 @@ int Camera_QMsgSetPWM(uint8_t led, uint8_t pulse_width);
 void Camera_GetPWM(uint8_t led, uint8_t *pulse_width);
 int Camera_SetMonoMode(uint8_t enable);
 int Camera_SetDispMode(uint8_t displayMode);
-int Camera_SelectLED(uint8_t led);
 uint8_t Camera_GetRGBExposureMode(void);
 int Camera_SetRGBExposureMode(uint8_t mode);
 int Camera_ChangeInterfaceMode(uint8_t mode);

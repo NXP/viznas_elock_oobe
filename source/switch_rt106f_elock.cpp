@@ -175,10 +175,10 @@ static void Switch_Task(void *param)
                 }
 #if !BOARD_SUPPORT_PARALLEL_LCD
                 else if(keyNum == SW4_GPIO_PIN) {
-                    s_DisplayInterfaceMode = (Cfg_AppDataGetInterfaceMode() + 1) % DISPLAY_LAST_INTERFACE;
+                	int mode = (Cfg_AppDataGetInterfaceMode() + 1) % DISPLAY_LAST_INTERFACE;
                     if (kStatus_API_Layer_Success !=
                         VIZN_SetDispOutputInterface(&VIZN_API_CLIENT(Buttons),
-                                                    (cfg_displayinterface_t)s_DisplayInterfaceMode))
+                                                    (cfg_displayinterface_t)mode))
                     {
                         LOGE("[WARNING]: Failed to set new interface\r\n");
                     }

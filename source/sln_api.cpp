@@ -460,7 +460,7 @@ vizn_api_status_t VIZN_SetPulseWidth(VIZN_api_client_t *clientHandle, cfg_led_t 
         cfg.camera_ir_pulse_width = pulse_width;
     status = Cfg_AppDataSave(&cfg);
     Cfg_Unlock();
-    Camera_QMsgSetPWM(led, pulse_width);
+    //Camera_QMsgSetPWM(led, pulse_width);
     if (status != SLN_FLASH_MGMT_OK)
     {
         return kStatus_API_Layer_SetCameraPulseWidth_SaveFailed;

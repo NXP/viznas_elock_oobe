@@ -31,8 +31,8 @@
 //LCD_TYPE
 #define LCD_SPI_RIVERDI          0x00
 #define LCD_SPI_WZ032HN89V022    0x01   //
+#define LCD_RGB_PJ2805H02        0x80   //PengJi Photo electricity
 
-#define LCD_RGB_PJ2805H02        0x80   //PengJi Photoelectricity
 #ifndef LCD_TYPE
 #define LCD_TYPE  LCD_RGB_PJ2805H02 //LCD_SPI_WZ032HN89V022
 #endif

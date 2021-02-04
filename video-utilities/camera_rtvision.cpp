@@ -115,8 +115,7 @@ static unsigned int DQIndex = 0;
 static uint16_t *s_pBufferQueue = NULL;
 uint16_t *g_pRotateBuff         = NULL;
 
-static uint8_t s_PwmIR;
-static uint8_t s_PwmWhite;
+static uint8_t sCurrentLedPwmValue[LED_NUM];
 
 #if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
 static int8_t s_CurrentCameraID = COLOR_CAMERA;
@@ -234,7 +233,6 @@ static void Camera_LedTimer_Init()
 
     /* Start the counter */
     QTMR_StartTimer(CAMERA_QTMR_BASEADDR, CAMERA_QTMR_PWM_CHANNEL, kQTMR_PriSrcRiseEdge);
-
     return;
 }
 
@@ -246,7 +244,7 @@ static void Camera_LedTimer_Deinit()
     return;
 }
 
-int Camera_SelectLED(uint8_t led)
+static int Camera_SelectLED(uint8_t led)
 {
     if (led == LED_WHITE)
     {
@@ -273,23 +271,31 @@ int Camera_QMsgSetPWM(uint8_t led, uint8_t pulse_width)
 
 void Camera_GetPWM(uint8_t led, uint8_t* pulse_width)
 {
-    if( led == LED_IR)
-    {
-        *pulse_width = s_PwmIR;
-    }
-    else
-    {
-        *pulse_width = s_PwmWhite;
-    }
+//    if( led == LED_IR)
+//    {
+//        *pulse_width = s_PwmIR;
+//    }
+//    else
+//    {
+//        *pulse_width = s_PwmWhite;
+//    }
+    *pulse_width = sCurrentLedPwmValue[led];
 }
 
 static status_t Camera_SetPWM(uint8_t pwm_index, uint8_t pulse_width)
 {
+
     status_t status = kStatus_Fail;
+    if (pwm_index == LED_WHITE)
+    {
+    	return status;
+    }
+    Camera_SelectLED(pwm_index);
     QTMR_StopTimer(CAMERA_QTMR_BASEADDR, CAMERA_QTMR_PWM_CHANNEL);
     status = QTMR_SetupPwm(CAMERA_QTMR_BASEADDR, CAMERA_QTMR_PWM_CHANNEL, CAMERA_QTMR_PWM_FREQ, pulse_width, false,
                            CAMERA_QTMR_SOURCE_CLOCK / 64);
     QTMR_StartTimer(CAMERA_QTMR_BASEADDR, CAMERA_QTMR_PWM_CHANNEL, kQTMR_PriSrcRiseEdge);
+    sCurrentLedPwmValue[pwm_index] = pulse_width;
     return status;
 }
 
@@ -725,7 +731,6 @@ static void Camera_CheckOverRun()
     }
 }
 
-
 // Send msg to Dispaly Task by Camera task to signal that a frame is available for display.
 static int Camera_SendDResMsg(void)
 {
@@ -830,11 +835,12 @@ static void Camera_Task(void *param)
     memset(&infoMsgIn, 0x0, sizeof(infoMsgIn));
     memset(&infoMsgOut, 0x0, sizeof(infoMsgOut));
 
-    VIZN_GetPulseWidth(NULL, LED_IR, &s_PwmIR);
-    VIZN_GetPulseWidth(NULL, LED_WHITE, &s_PwmWhite);
+    uint8_t tmp_pwm_value;
+    VIZN_GetPulseWidth(NULL, LED_IR, &tmp_pwm_value);
+    Camera_SetPWM(LED_IR,tmp_pwm_value);
 
-    Camera_SelectLED(LED_IR);
-    Camera_SetPWM(LED_IR,s_PwmIR);
+    VIZN_GetPulseWidth(NULL, LED_WHITE, &tmp_pwm_value);
+    Camera_SetPWM(LED_WHITE,tmp_pwm_value);
 
     xEventGroupWaitBits(g_SyncVideoEvents, 1 << SYNC_VIDEO_CAMERA_INIT_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
     while (1)
@@ -991,6 +997,7 @@ static void Camera_Task(void *param)
 
                     pDetIR = (uint8_t *)pQMsg->msg.raw.IR_frame_data;
                     pDetRGB = (uint8_t *)pQMsg->msg.raw.RGB_frame_data;
+
                 }
                 break;
 
@@ -1020,18 +1027,8 @@ static void Camera_Task(void *param)
                     }
                     else if (pQMsg->msg.cmd.id == QCMD_SET_PWM)
                     {
-                        if (pQMsg->msg.cmd.data.led_pwm[0] == LED_IR)
-                        {
-                            s_PwmIR = pQMsg->msg.cmd.data.led_pwm[1];
-                            Camera_SelectLED(LED_IR);
-                            Camera_SetPWM(LED_IR,s_PwmIR);
-                        }
-                        else
-                        {
-                            s_PwmWhite = pQMsg->msg.cmd.data.led_pwm[1];
-                            Camera_SelectLED(LED_WHITE);
-                            Camera_SetPWM(LED_WHITE,s_PwmWhite);
-                        }
+                    	Camera_SetPWM(pQMsg->msg.cmd.data.led_pwm[0],pQMsg->msg.cmd.data.led_pwm[1]);
+
                     }
                     else if(pQMsg->msg.cmd.id == QCMD_CHANGE_RGB_EXPOSURE_MODE)
                     {

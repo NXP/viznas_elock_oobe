@@ -77,7 +77,8 @@ typedef enum _cfg_displaymode
 typedef enum _cfg_led
 {
     LED_WHITE = 0,
-    LED_IR    = 1
+    LED_IR    = 1,
+	LED_NUM,
 } cfg_led_t;
 
 typedef enum _cfg_displayoutput
