@@ -83,7 +83,7 @@ extern uint8_t g_RemoveExistingFace;
 extern VIZN_api_client_t VIZN_API_CLIENT(Buttons);
 extern std::string g_AddNewFaceName;
 static QUIInfoMsg gui_info;
-static FaceRecBuffer s_FaceRecBuf;
+static FaceRecBuffer s_FaceRecBuf = {NULL,NULL};
 static QueueHandle_t gFaceDetMsgQ = NULL;
 static OASISLTInitPara_t s_InitPara;
 static uint8_t s_lockstatus       = 1;
@@ -244,10 +244,9 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
             gui_info.rgbLive = para->reserved[7];
             gui_info.irBrightness = para->reserved[10];
             gui_info.rgbBrightness = para->reserved[12];
-            VIZN_GetPulseWidth(NULL, LED_IR, &gui_info.irPwm);
-            VIZN_GetPulseWidth(NULL, LED_WHITE, &gui_info.rgbPwm);
-//            Camera_GetPWM(LED_IR,&gui_info.irPwm);
-//            Camera_GetPWM(LED_WHITE,&gui_info.rgbPwm);
+
+            Camera_GetPWM(LED_IR,&gui_info.irPwm);
+            Camera_GetPWM(LED_WHITE,&gui_info.rgbPwm);
 
             UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[irBrightness]:%d\r\n",gui_info.irBrightness);
             UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[rgbBrightness]:%d\r\n",gui_info.rgbBrightness);
@@ -501,8 +500,7 @@ static void Oasis_RGBControl(uint8_t direction)
 {
     uint8_t mode = Camera_GetRGBExposureMode();
     uint8_t pwm;
-    VIZN_GetPulseWidth(NULL, LED_WHITE, &pwm);
-    //Camera_GetPWM(LED_WHITE,&pwm);
+    Camera_GetPWM(LED_WHITE,&pwm);
     UsbShell_Printf("[OASIS]:AdjustBrightnessHandler,RGB dir:%d pwm:%d mode:%d\r\n",direction, pwm, mode);
     Oasis_PWMControl(LED_WHITE, pwm, direction);
     if (direction)
@@ -526,8 +524,7 @@ static void AdjustBrightnessHandler(uint8_t frame_idx, uint8_t direction)
     uint8_t pwm;
     if (frame_idx == OASISLT_INT_FRAME_IDX_IR)
     {
-//        Camera_GetPWM(LED_IR, &pwm);
-        VIZN_GetPulseWidth(NULL, LED_IR, &pwm);
+        Camera_GetPWM(LED_IR, &pwm);
         Oasis_PWMControl(LED_IR, pwm, direction);
     }
     else
@@ -728,14 +725,16 @@ int Oasis_Start()
         s_FaceRecBuf.dataIR = (uint8_t *)pvPortMalloc(REC_RECT_WIDTH * REC_RECT_HEIGHT * 3);
         if (s_FaceRecBuf.dataIR == NULL)
         {
-            return -1;
+        	ret = -1;
+        	goto error_cases;
         }
     }
 
     s_FaceRecBuf.dataRGB = (uint8_t *)pvPortMalloc(REC_RECT_WIDTH * REC_RECT_HEIGHT * 3);
     if (s_FaceRecBuf.dataRGB == NULL)
     {
-        return -1;
+        ret = -2;
+        goto error_cases;
     }
 
     memset(&s_InitPara, 0, sizeof(s_InitPara));
@@ -783,12 +782,20 @@ int Oasis_Start()
         if (s_InitPara.mem_pool == NULL)
         {
             UsbShell_Printf("[ERROR]: Unable to allocate memory for oasis mem pool\r\n");
-            while (1);
+            ret = -3;
+            goto error_cases;
+        }else
+        {
+        	ret = OASISLT_init(&s_InitPara);
         }
-        ret = OASISLT_init(&s_InitPara);
     }
 
-    assert(ret == 0);
+    if (ret != OASISLT_OK)
+    {
+    	//if library init error, just return
+    	ret = -4;
+    	goto error_cases;
+    }
 
     /*get authentication result*/
     g_IsAuthenticated = s_InitPara.auth;
@@ -798,10 +805,11 @@ int Oasis_Start()
     if (gFaceDetMsgQ == NULL)
     {
         UsbShell_Printf("[ERROR]:xQueueCreate facedet queue\r\n");
-        return -1;
+        ret = -5;
+        goto error_cases;
     }
 
-    UsbShell_Printf("[OASIS]:start\r\n");
+    UsbShell_Printf("[OASIS]:starting\r\n");
 
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
     if (NULL == xTaskCreateStatic(Oasis_Task, "Oasis Task", OASISDETTASK_STACKSIZE, &s_InitPara, OASISDETTASK_PRIORITY,
@@ -812,26 +820,59 @@ int Oasis_Start()
 #endif
     {
         UsbShell_Printf("[ERROR]:oasis Task created failed\r\n");
-        Oasis_Exit();
-        while (1)
-            ;
+        ret = -6;
+        goto error_cases;
     }
 
-    UsbShell_Printf("[OASIS]:starting\r\n");
+    UsbShell_Printf("[OASIS]:started\r\n");
+
+error_cases:
+    if (ret != 0)
+    {
+    	//some errors happened
+    	Oasis_Exit();
+    }
+
     return ret;
 }
 
 static int Oasis_Exit()
 {
-    int ret = OASISLT_uninit();
+
     if (s_appType != APP_TYPE_USERID)
     {
-        vPortFree(s_FaceRecBuf.dataIR);
+    	if (s_FaceRecBuf.dataIR != NULL)
+    	{
+    		vPortFree(s_FaceRecBuf.dataIR);
+    		s_FaceRecBuf.dataIR = NULL;
+    	}
     }
-#if !(configSUPPORT_STATIC_ALLOCATION == 1)
-    vPortFree(s_InitPara.mem_pool);
+    if (s_InitPara.mem_pool)
+    {
+#if configSUPPORT_STATIC_ALLOCATION
+		if (s_InitPara.size > (int)sizeof(s_OasisMemPool))
+		{
+			vPortFree(s_InitPara.mem_pool);
+		}
+#else
+    	vPortFree(s_InitPara.mem_pool);
 #endif
-    vPortFree(s_FaceRecBuf.dataRGB);
+    	s_InitPara.mem_pool = NULL;
+    }
+
+    if (s_FaceRecBuf.dataRGB != NULL)
+    {
+    	vPortFree(s_FaceRecBuf.dataRGB);
+    	s_FaceRecBuf.dataRGB = NULL;
+    }
+
+    if (gFaceDetMsgQ)
+    {
+    	vQueueDelete(gFaceDetMsgQ);
+    	gFaceDetMsgQ = NULL;
+    }
+
+    int ret = OASISLT_uninit();
 
     return ret;
 }
@@ -839,12 +880,19 @@ static int Oasis_Exit()
 int Oasis_SendQMsg(void *msg)
 {
     BaseType_t ret;
-    ret = xQueueSend(gFaceDetMsgQ, msg, (TickType_t)0);
-
-    if (ret != pdPASS)
+    if (gFaceDetMsgQ != NULL)
     {
-        UsbShell_Printf("[ERROR]:FaceDet_SendQMsg failed\r\n");
-        return -1;
+		ret = xQueueSend(gFaceDetMsgQ, msg, (TickType_t)0);
+
+		if (ret != pdPASS)
+		{
+			UsbShell_Printf("[ERROR]:Oasis_SendQMsg failed\r\n");
+			return -1;
+		}
+    }else
+    {
+    	UsbShell_Printf("[ERROR]:Oasis_SendQMsg queue is NULL!\r\n");
+    	return -2;
     }
 
     return 0;
