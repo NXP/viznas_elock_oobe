@@ -269,10 +269,10 @@ typedef struct
 #define FLASH_NPAGE_PER_SECTOR     (FLASH_SECTOR_SIZE / FACEREC_FS_FLASH_PAGE_SIZE)
 
 #if FLASH_TYPE == HYPER_FLASH
-#define FACEREC_FS_MAP_ADDR  (0x800000U)
+#define FACEREC_FS_MAP_ADDR  (0xB00000U)
 #else
-//0x800000 to 0x820000 are used by configuration file
-#define FACEREC_FS_MAP_ADDR  (0x820000U)
+//0xB00000 to 0xB20000 are used by configuration file
+#define FACEREC_FS_MAP_ADDR  (0xB20000U)
 #endif
 
 #define FACEREC_FS_ITEM_ADDR  (FACEREC_FS_MAP_ADDR + FLASH_SECTOR_SIZE)
@@ -289,13 +289,13 @@ typedef struct
 
 /********************************************************
  * item        |  address   |  size/sector |
- * FeatureMap  | 0x60800000 |      1       |
- * FeatureItem | 0x60840000 |      1       |
+ * FeatureMap  | 0x60B00000 |      1       |
+ * FeatureItem | 0x60B40000 |      1       |
  */
 /********************************************************
  * item        |  address   |  size/sector | for RT106F_ELOCK_BOARD
- * FeatureMap  | 0x60820000 |      1      |
- * FeatureItem | 0x60821000~0x6083A000 |       25      |
+ * FeatureMap  | 0x60B20000 |      1      |
+ * FeatureItem | 0x60B21000~0x60B3A000 |       25      |
  */
 typedef struct
 {
