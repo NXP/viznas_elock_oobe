@@ -323,7 +323,7 @@ status_t SLN_Erase_Blocks(uint32_t address, int block_num)
     for (int ii = 0 ;ii< block_num;ii++)
     {
 		/* Erase sectors. */
-		status = flexspi_nor_flash_erase_block(FLEXSPI, address);
+		status = flexspi_nor_flash_erase_block(FLEXSPI, address + ii*BOARD_FLASH_BLOCK_SIZE);
 		if (status != kStatus_Success)
 		{
 			break;
