@@ -48,6 +48,11 @@ static pxp_ps_buffer_config_t s_PsBufferConfig;
 static pxp_as_buffer_config_t s_AsBufferConfig;
 static pxp_as_blend_config_t s_AsBlendConfig;
 
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+DTC_BSS static StackType_t s_PXPTaskStack[PXPTASK_STACKSIZE];
+DTC_BSS static StaticTask_t s_PXPTaskTCB;
+#endif
+
 static uint16_t s_asBufferPxp[APP_AS_HEIGHT * APP_AS_WIDTH];
 extern uint16_t *g_pRotateBuff;
 
@@ -492,13 +497,26 @@ void APP_PXP_Start(void)
             ;
     }
 
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
+    if (NULL == xTaskCreateStatic(PXP_Task, "PXP Task", PXPTASK_STACKSIZE, NULL, PXPTASK_PRIORITY,
+                                  s_PXPTaskStack, &s_PXPTaskTCB))
+#else
     if (xTaskCreate(PXP_Task, "PXP Task", PXPTASK_STACKSIZE, NULL, PXPTASK_PRIORITY, NULL) != pdPASS)
+#endif
     {
-        LOGE("[ERROR]PXP_Task created failed\r\n");
+        LOGE("[ERROR]PXPTask created failed\r\n");
 
         while (1)
             ;
     }
+//
+//    if (xTaskCreate(PXP_Task, "PXP Task", PXPTASK_STACKSIZE, NULL, PXPTASK_PRIORITY, NULL) != pdPASS)
+//    {
+//        LOGE("[ERROR]PXP_Task created failed\r\n");
+//
+//        while (1)
+//            ;
+//    }
 }
 
 int PXP_SendQMsg(void *msg)

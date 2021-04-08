@@ -67,9 +67,9 @@ static void clearFaceInfo(face_info_t *face_info);
 static void clearFaceInfoMsg(QUIInfoMsg *info);
 static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t *para, void *user_data);
 // static void EvtHandler2(ImageFrame_t* frame,OASISLTEvt_t evt,OASISLTCbPara_t* para,void* user_data);
-static int GetRegisteredFacesHandler(uint16_t *face_ids, void **faces, unsigned int *size);
-static int AddNewFaceHandler(uint16_t *face_id, void *face, void* snapshot, int snapshot_len);
-static int UpdateFaceHandler(uint16_t face_id, void *face, void* snapshot_data, int length, int offset);
+static int GetRegisteredFacesHandler(uint16_t *face_ids, void **faces, uint32_t *size, void* user_data);
+static int AddNewFaceHandler(uint16_t *face_id, void *face, void* snapshot, int snapshot_len, void* user_data);
+static int UpdateFaceHandler(uint16_t face_id, void *face, void* snapshot_data, int length, int offset, void* user_data);
 static int Oasis_Printf(const char *formatString);
 static int Oasis_Exit();
 static void Oasis_Task(void *param);
@@ -280,29 +280,29 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
         }
         break;
 
-        case OASISLT_EVT_MASK_CHK_START:
-        break;
-
-        case OASISLT_EVT_MASK_CHK_COMPLETE: {
-            if (para->maskResult == OASIS_MASK_CHECK_RESULT_FACE_WITH_MASK) {
-                UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[EVT]:Face with mask!\r\n");
-            } else {
-                UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[EVT]:Face without mask!\r\n");
-            }
-        }
-        break;
-
-        case OASISLT_EVT_GLASSES_CHK_START:
-        break;
-
-        case OASISLT_EVT_GLASSES_CHK_COMPLETE: {
-            if (para->glassesResult == OASIS_GLASSES_CHECK_RESULT_FACE_WITH_GLASSES) {
-                UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[EVT]:Face with glasses!\r\n");
-            } else {
-                UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[EVT]:Face without glasses!\r\n");
-            }
-        }
-        break;
+//        case OASISLT_EVT_MASK_CHK_START:
+//        break;
+//
+//        case OASISLT_EVT_MASK_CHK_COMPLETE: {
+//            if (para->maskResult == OASIS_MASK_CHECK_RESULT_FACE_WITH_MASK) {
+//                UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[EVT]:Face with mask!\r\n");
+//            } else {
+//                UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[EVT]:Face without mask!\r\n");
+//            }
+//        }
+//        break;
+//
+//        case OASISLT_EVT_GLASSES_CHK_START:
+//        break;
+//
+//        case OASISLT_EVT_GLASSES_CHK_COMPLETE: {
+//            if (para->glassesResult == OASIS_GLASSES_CHECK_RESULT_FACE_WITH_GLASSES) {
+//                UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[EVT]:Face with glasses!\r\n");
+//            } else {
+//                UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[EVT]:Face without glasses!\r\n");
+//            }
+//        }
+//        break;
 
         case OASISLT_EVT_REC_START:
         {
@@ -408,7 +408,7 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
     }
 }
 
-static int GetRegisteredFacesHandler(uint16_t *face_ids, void **faces, unsigned int *size)
+static int GetRegisteredFacesHandler(uint16_t *face_ids, void **faces, uint32_t *size, void* user_data)
 {
     /*caller ask for the total records numbers*/
     if (*size == 0)
@@ -430,7 +430,7 @@ static int GetRegisteredFacesHandler(uint16_t *face_ids, void **faces, unsigned 
     return 0;
 }
 
-static int AddNewFaceHandler(uint16_t *face_id, void *face,void* snapshot, int snapshot_len)
+static int AddNewFaceHandler(uint16_t *face_id, void *face,void* snapshot, int snapshot_len, void* user_data)
 {
     vizn_api_status_t status;
 
@@ -447,7 +447,7 @@ static int AddNewFaceHandler(uint16_t *face_id, void *face,void* snapshot, int s
     return 0;
 }
 
-static int UpdateFaceHandler(uint16_t face_id, void *face,void* snapshot_data, int length, int offset)
+static int UpdateFaceHandler(uint16_t face_id, void *face,void* snapshot_data, int length, int offset, void* user_data)
 {
     int ret;
     float *feature_data = (float *)face;
@@ -550,7 +550,7 @@ static void Oasis_LedControl(cfg_led_t ledID,uint8_t direction, uint8_t enableRG
  *  frame_idx: which frame needs to be adjusted on, OASISLT_INT_FRAME_IDX_RGB or OASISLT_INT_FRAME_IDX_IR ?
  *  direction: 1: up, need to increase brightness;  0: down, need to reduce brightness.
  */
-static void AdjustBrightnessHandler(uint8_t frame_idx, uint8_t direction)
+static void AdjustBrightnessHandler(uint8_t frame_idx, uint8_t direction, void* user_data)
 {
 
     if (frame_idx == OASISLT_INT_FRAME_IDX_IR)
@@ -586,7 +586,7 @@ static void Oasis_Task(void *param)
     ImageFrame_t frameRGB     = {(short)init_p->height, (short)init_p->width, 0, NULL};
     ImageFrame_t frameIR      = {(short)init_p->height, (short)init_p->width, 0, NULL};
     ImageFrame_t *frames[]    = {&frameRGB, &frameIR, NULL};
-    uint8_t reg_mode          = 0;
+//    uint8_t reg_mode          = 0;
     uint8_t run_flag          = OASIS_DET_REC;
     UsbShell_Printf("[OASIS DETECT]:running\r\n");
 
@@ -656,17 +656,26 @@ static void Oasis_Task(void *param)
 
                 case QMSG_FACEREC_ADDNEWFACE:
                 {
-                    run_flag &= ~(OASIS_REG_MODE);
-                    reg_mode = (rxQMsg->msg.cmd.data.add_newface) ? OASIS_REG_MODE : 0;
-                    run_flag |= reg_mode;
-                    if (reg_mode == OASIS_REG_MODE)
-                    {
-                        Oasis_SetState(OASIS_STATE_FACE_REG_START);
-                    }
-                    else
-                    {
-                        Oasis_SetState(OASIS_STATE_FACE_REG_STOP);
-                    }
+                	if (rxQMsg->msg.cmd.data.add_newface)
+                	{
+                		run_flag = OASIS_DET_REC_REG;
+                		Oasis_SetState(OASIS_STATE_FACE_REG_START);
+                	}else
+                	{
+                		run_flag = OASIS_DET_REC;
+                		Oasis_SetState(OASIS_STATE_FACE_REG_STOP);
+                	}
+//                    run_flag &= ~(OASIS_REG_MODE);
+//                    reg_mode = (rxQMsg->msg.cmd.data.add_newface) ? OASIS_REG_MODE : 0;
+//                    run_flag |= reg_mode;
+//                    if (reg_mode == OASIS_REG_MODE)
+//                    {
+//                        Oasis_SetState(OASIS_STATE_FACE_REG_START);
+//                    }
+//                    else
+//                    {
+//                        Oasis_SetState(OASIS_STATE_FACE_REG_STOP);
+//                    }
                 }
                 break;
 
@@ -775,8 +784,12 @@ int Oasis_Start()
     Oasis_SetModelClass(&s_InitPara.mod_class);
 
     s_InitPara.min_face = OASIS_DETECT_MIN_FACE;
-    s_InitPara.cbs      = {EvtHandler,        GetRegisteredFacesHandler, AddNewFaceHandler,
-                      UpdateFaceHandler, AdjustBrightnessHandler,   (void *)Oasis_Printf};
+    s_InitPara.cbs.EvtCb = EvtHandler;
+	s_InitPara.cbs.GetFaces = GetRegisteredFacesHandler;
+	s_InitPara.cbs.AddFace = AddNewFaceHandler;
+	s_InitPara.cbs.reserved = (void*)Oasis_Printf;
+    s_InitPara.cbs.UpdateFace = UpdateFaceHandler;
+    s_InitPara.cbs.AdjustBrightness = AdjustBrightnessHandler;
 
     s_InitPara.enable_flags = 0;
     if (s_appType != APP_TYPE_USERID)

@@ -891,21 +891,6 @@
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="sln_viznas_iot_bootloader_4343W.null.1055641384" name="sln_viznas_iot_bootloader_4343W" projectType="com.crt.advproject.projecttype.exe"/>
 	</storageModule>
-	<storageModule moduleId="scannerConfiguration">
-		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.debug.1972860780;com.crt.advproject.config.exe.debug.1972860780.;com.crt.advproject.gas.exe.debug.1269216112;com.crt.advproject.assembler.input.1096076812">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.release.1425938116;com.crt.advproject.config.exe.release.1425938116.;com.crt.advproject.gas.exe.release.166565472;com.crt.advproject.assembler.input.1163811172">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.debug.1972860780;com.crt.advproject.config.exe.debug.1972860780.;com.crt.advproject.gcc.exe.debug.971722403;com.crt.advproject.compiler.input.541793313">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.release.1425938116;com.crt.advproject.config.exe.release.1425938116.;com.crt.advproject.gcc.exe.release.851164058;com.crt.advproject.compiler.input.1641644236">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="com.nxp.mcuxpresso.core.datamodels">
 		<sdkName>SDK_2.x_SLN-VIZNAS-IOT</sdkName>
@@ -951,5 +936,26 @@
 		<configuration configurationName="VIZN_board">
 			<resource resourceType="PROJECT" workspacePath="/sln_viznas_iot_bootloader_4343W"/>
 		</configuration>
+	</storageModule>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.debug.1972860780.652780216;com.crt.advproject.config.exe.debug.1972860780.652780216.;com.crt.advproject.gcc.exe.debug.130580709;com.crt.advproject.compiler.input.1581976563">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.crt.advproject.GCCManagedMakePerProjectProfile"/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.debug.1972860780.652780216;com.crt.advproject.config.exe.debug.1972860780.652780216.;com.crt.advproject.gas.exe.debug.1433166502;com.crt.advproject.assembler.input.1766877729">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.crt.advproject.GCCManagedMakePerProjectProfile"/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.debug.1972860780;com.crt.advproject.config.exe.debug.1972860780.;com.crt.advproject.gas.exe.debug.1269216112;com.crt.advproject.assembler.input.1096076812">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.release.1425938116;com.crt.advproject.config.exe.release.1425938116.;com.crt.advproject.gas.exe.release.166565472;com.crt.advproject.assembler.input.1163811172">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.debug.1972860780;com.crt.advproject.config.exe.debug.1972860780.;com.crt.advproject.gcc.exe.debug.971722403;com.crt.advproject.compiler.input.541793313">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="com.crt.advproject.config.exe.release.1425938116;com.crt.advproject.config.exe.release.1425938116.;com.crt.advproject.gcc.exe.release.851164058;com.crt.advproject.compiler.input.1641644236">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
 	</storageModule>
 </cproject>

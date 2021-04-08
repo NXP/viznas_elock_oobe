@@ -1,5 +1,5 @@
 /*
-* Copyright 2020 NXP.
+* Copyright 2021 NXP.
 * This software is owned or controlled by NXP and may only be used strictly in accordance with the
 * license terms that accompany it. By expressly accepting such terms or by downloading, installing,
 * activating and/or otherwise using the software, you are agreeing that you have read, and that you
@@ -15,7 +15,7 @@
 
 
 #define VERSION_MAJOR 4
-#define VERSION_MINOR 34
+#define VERSION_MINOR 38
 /*this version number only used for hot fix on frozen release or branch*/
 #define VERSION_HOTFIX 0
 
@@ -40,7 +40,6 @@ enum {
 };
 
 
-#define OASIS_REG_MODE_SHIFT (5)
 typedef enum {
     OASISLT_OK = 0,
     OASIS_INIT_INVALID_PARAMETERS,
@@ -52,14 +51,14 @@ typedef enum {
     OASIS_INIT_INVALID_MEMORYPOOL,
     OASIS_INIT_INVALID_IMAGE_MIN_DIM,
     OASIS_INIT_INVALID_MASK_BUF,
-	OASIS_INIT_INVALID_IMG_TYPE_FOR_MASK_FACE,
+    OASIS_INIT_INVALID_IMG_TYPE_FOR_MASK_FACE,
     OASIS_INIT_MASK_REC_NOTSUPORTED,
     OASIS_INIT_INVALID_IMAGE_TYPE,
-	OASISLT_SNAPSHOT_INVALID_INPUT_PARAMETERS,
-	OASISLT_SNAPSHOT_LIB_UNINIT,
-	OASISLT_SNAPSHOT_INVALID_FRAME_NUM,
-	OASISLT_SNAPSHOT_IMG_TYPE_NOT_SUPPORT,
-	OASISLT_SNAPSHOT_RESIZE_FAILED,
+    OASISLT_SNAPSHOT_INVALID_INPUT_PARAMETERS,
+    OASISLT_SNAPSHOT_LIB_UNINIT,
+    OASISLT_SNAPSHOT_INVALID_FRAME_NUM,
+    OASISLT_SNAPSHOT_IMG_TYPE_NOT_SUPPORT,
+    OASISLT_SNAPSHOT_RESIZE_FAILED,
 
 } OASISLTResult_t;
 
@@ -67,12 +66,10 @@ typedef enum {
 
 typedef enum {
     OASIS_DET_ONLY = 0,
+    OASIS_DET_WITH_QUALITY_CHECK,
     OASIS_DET_REC,
-    OASIS_RUN_FLAG_NUM,
-
-    //reg mode can be ored with OASIS_DET_REC,OASIS_DET_REC_EMO flags if needed
-    OASIS_REG_MODE = 1 << OASIS_REG_MODE_SHIFT,
-    OASIS_INVALID_RUN_FLAG = 0xFF
+    OASIS_DET_REC_REG,
+    OASIS_RUN_FLAG_NUM
 } OASISRunFlag_t;
 
 
@@ -102,7 +99,7 @@ typedef enum {
     OASIS_QUALITY_RESULT_FACE_BLUR,
     OASIS_QUALITY_RESULT_FAIL_LIVENESS_IR,
     OASIS_QUALITY_RESULT_FAIL_LIVENESS_RGB,
-	OASIS_QUALITY_RESULT_FAIL_LIVENESS_3D,
+    OASIS_QUALITY_RESULT_FAIL_LIVENESS_3D,
     OASIS_QUALITY_RESULT_FAIL_BRIGHTNESS_DARK,
     OASIS_QUALITY_RESULT_FAIL_BRIGHTNESS_OVEREXPOSURE,
     OASIS_QUALITY_RESULT_INVALID = 0xFF
@@ -228,15 +225,6 @@ typedef enum {
     OASISLT_EVT_QUALITY_CHK_START,
     OASISLT_EVT_QUALITY_CHK_COMPLETE,
 
-    /*Face mask check is done after quality check and before face recognition
-     * These events is only valid for library with mask face support*/
-    OASISLT_EVT_MASK_CHK_START,
-    OASISLT_EVT_MASK_CHK_COMPLETE,
-
-    /*Face glasses check is done after quality check and  before face recognition*/
-    OASISLT_EVT_GLASSES_CHK_START,
-    OASISLT_EVT_GLASSES_CHK_COMPLETE,
-
     /*Start of face recognition*/
     OASISLT_EVT_REC_START,
 
@@ -267,6 +255,10 @@ typedef enum {
  *for single frame type, only frames[0] is valid and it points to the single input frame
  *for dual frame type, frames[0] point to RGB frame input while frames[1] point to IR frame input
  *for triple frame type,frames[0] point to RGB frame input while frames[1] point to IR frame input, frame[2] point to 3D frame input
+ *frames [input]: frames input.
+ *evt [input]: event type
+ *para [input]: parameters related to this event.
+ *user_data [input]: user data transferring from OASISLT_run_extend
  **/
 typedef void (*OASISLTEvtCb)(ImageFrame_t* frames[OASISLT_INT_FRAME_IDX_LAST], OASISLTEvt_t evt, OASISLTCbPara_t* para, void* user_data);
 
@@ -279,9 +271,10 @@ typedef void (*OASISLTEvtCb)(ImageFrame_t* frames[OASISLT_INT_FRAME_IDX_LAST], O
  * as output, it indicates how many items in face_id array and pfaces returned actually.
  * specially, if *face_num is 0, actual face record number should be set in *face_num before return.
  * in this case, no "face_id" and 'pFaces' be returned.
+ * user_data [input]: user data transferring from OASISLT_run_extend
  * return 0 if call succeed, otherwise failed.
  *  */
-typedef int (*GetRegisteredFaces)(uint16_t* face_id, void** pFaces, unsigned int* face_num);
+typedef int (*GetRegisteredFaces)(uint16_t* face_id, void** pFaces, uint32_t* face_num, void* userData);
 
 /*in register mode, OASIS LITE would call this function to add new face data to database.
  *face_data:[input]pointer to the faces data, the data length can be get by OASISLT_getFaceItemSize()
@@ -290,8 +283,9 @@ typedef int (*GetRegisteredFaces)(uint16_t* face_id, void** pFaces, unsigned int
  *snapshot:[input]snapshot data corresponding to this face. it can be saved for face feature generating
            purpose. if caller don't need it,ignore it.
  *snapshot_length:[input]snapshot data length.
+ *user_data [input]: user data transferring from OASISLT_run_extend/OASISLT_registration_by_feature
  *return 0 if succeed; otherwise failed*/
-typedef int (*FaceOperationAdd)(uint16_t* face_id, void* face_data, void* snapshot, int snapshot_length);
+typedef int (*FaceOperationAdd)(uint16_t* face_id, void* face_data, void* snapshot, int snapshot_length, void* userData);
 
 /*When library beleives a face data/snapshot need to be update during face recognition procedure,
 this function will be called to update corresponding data in database.
@@ -301,9 +295,10 @@ this function will be called to update corresponding data in database.
 *data_length:[input] snapshot data length.
 *offset:[input] in most cases, not whole snapshot need update, offset indicate start position of
         snapshot where snapshot_data should be writen.
+*user_data [input]: user data transferring from OASISLT_run_extend
 */
-typedef int (*FaceOperationUpdate)(uint16_t face_id, void* face_data, void* snapshot_data, int data_length, 
-int offset);
+typedef int (*FaceOperationUpdate)(uint16_t face_id, void* face_data, void* snapshot_data, int data_length,
+                                   int offset, void* userData);
 
 /*Using for print out ANSI string in self test API*/
 typedef void (*StringPrint)(const char* str);
@@ -314,7 +309,7 @@ typedef uint32_t (*GetSystemCurrentMS)(void);
 /*Used to dynamically adjust face brightness
   * frame_idx: which frame is need to be adjusted on, OASISLT_INT_FRAME_IDX_RGB or OASISLT_INT_FRAME_IDX_IR ?
   * direction: 1: up 0: down*/
-typedef void (*FaceBrightnessAdjust)(uint8_t frame_idx, uint8_t direction);
+typedef void (*FaceBrightnessAdjust)(uint8_t frame_idx, uint8_t direction, void* userData);
 
 
 typedef struct {
@@ -394,6 +389,8 @@ void OASISLT_getVersion(char* verStrBuf, int length);
 
 /*this API can be used to replace OASISLT_run and OASISLT_run2D API with a more flexiable input parameters.
  * user can input RGB/IR/3D frame with different combinations according image types in intializing.
+ * this API also can be used to extract feature from a given image, user can get face feature by AddFace
+ * callback.
  * */
 int OASISLT_run_extend(ImageFrame_t* frames[OASISLT_INT_FRAME_IDX_LAST], uint8_t flag, int minFace, void* userData);
 
@@ -419,7 +416,18 @@ int OASISLT_run_identification(ImageFrame_t* input, ImageFrame_t* target, float*
  * face_data:[output] point to a buffer which is used for saving of face data extracted. The length of
  * this buffer should not less than OASISLT_getFaceItemSize().
  * OASIS_IMG_FORMAT_RGB888 and OASIS_IMG_FORMAT_BGR888 are supported*/
-OASISLTResult_t OASISLT_snapshot2feature(const void* snapshot, int snapshot_lenght,void* face_data);
+OASISLTResult_t OASISLT_snapshot2feature(const void* snapshot, int snapshot_lenght, void* face_data);
+
+
+/*This function is used for registration by a face feature generated by OASISLT_run_extend and AddFace
+ * callback.
+ * face_data: [input] face feature is trying to be added to face database.
+ * user_data:[input] this user data is going to be transfered to getFace/addFace/updateFace directly.
+ * id:[output] if registration successful, it is a unique ID allocated for the input feature
+ * snapshot/snapshot_len:[input] if there is snapshot, it can be also saved.
+ * */
+OASISLTRegisterRes_t OASISLT_registration_by_feature(void* face_data,
+        void* snapshot, int snapshot_len, uint16_t* id, void* user_data);
 
 
 /*return minimum free memory size since OASISLT initialization.
