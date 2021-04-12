@@ -86,7 +86,9 @@ static void Camera_RgbIrSwitch(int8_t cameraID);
 //static uint32_t Camera_getAnotherRxBuf(uint32_t activeAddr);
 static void Camera_Callback(camera_receiver_handle_t *handle, status_t status, void *userData);
 static void Camera_CheckOverRun();
-//static void CameraDevice_Init_Task(void *param);
+#if (CAMERA_DIFF_I2C_BUS || (APP_CAMERA_TYPE == APP_CAMERA_MT9M114))
+static void CameraDevice_Init_Task(void *param);
+#endif
 static void Camera_Init_Task(void *param);
 static void Camera_Task(void *param);
 
@@ -111,9 +113,11 @@ DTC_BSS static StaticTask_t s_CameraTaskTCB;
 
 DTC_BSS static StackType_t s_CameraInitTaskStack[CAMERAINITTASK_STACKSIZE];
 DTC_BSS static StaticTask_t s_CameraInitTaskTCB;
+#if (CAMERA_DIFF_I2C_BUS || (APP_CAMERA_TYPE == APP_CAMERA_MT9M114))
+DTC_BSS static StackType_t s_CameraDeviceInitTaskStack[CAMERAINITTASK_STACKSIZE];
+DTC_BSS static StaticTask_t s_CameraDeviceInitTaskTCB;
+#endif
 
-//static StackType_t s_CameraDeviceInitTaskStack[CAMERAINITTASK_STACKSIZE];
-//static StaticTask_t s_CameraDeviceInitTaskTCB;
 #endif
 
 static uint32_t s_ActiveFrameAddr;
@@ -696,23 +700,26 @@ static void Camera_Callback(camera_receiver_handle_t *handle, status_t status, v
     DQIndex++;
 }
 
-//static void CameraDevice_Init_Task(void *param)
-//{
-//#if (CAMERA_DIFF_I2C_BUS || (APP_CAMERA_TYPE == APP_CAMERA_MT9M114))
-//    camera_config_t *cameraConfig = (camera_config_t *)param;
-//    // IR camera
-//    int st = CAMERA_DEVICE_Init(&cameraDevice[1], cameraConfig);
-//    if (st != kStatus_Success)
-//    {
-//    	LOGE("Camera device init error:%d\r\n", st);
-//    }
-//    CAMERA_DEVICE_Control(&cameraDevice[1], kCAMERA_DeviceMonoMode, CAMERA_MONO_MODE_ENABLED);
-//    CAMERA_DEVICE_Stop(&cameraDevice[1]);
-//
-//    xEventGroupSetBits(g_SyncVideoEvents, 1 << SYNC_VIDEO_CAMERADEVICE_INIT_BIT);
-//    vTaskDelete(NULL);
-//#endif
-//}
+#if (CAMERA_DIFF_I2C_BUS || (APP_CAMERA_TYPE == APP_CAMERA_MT9M114))
+static void CameraDevice_Init_Task(void *param)
+{
+
+    camera_config_t *cameraConfig = (camera_config_t *)param;
+    // IR camera
+    int st = CAMERA_DEVICE_Init(&cameraDevice[1], cameraConfig);
+    if (st != kStatus_Success)
+    {
+    	LOGE("Camera device init error:%d\r\n", st);
+    }
+    CAMERA_DEVICE_Control(&cameraDevice[1], kCAMERA_DeviceMonoMode, CAMERA_MONO_MODE_ENABLED);
+    CAMERA_DEVICE_Stop(&cameraDevice[1]);
+
+    xEventGroupSetBits(g_SyncVideoEvents, 1 << SYNC_VIDEO_CAMERADEVICE_INIT_BIT);
+    vTaskDelete(NULL);
+
+}
+#endif
+
 
 static void Camera_Deinit(void)
 {
