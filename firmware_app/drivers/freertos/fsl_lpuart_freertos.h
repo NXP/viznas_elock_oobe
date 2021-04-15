@@ -24,8 +24,8 @@
 
 /*! @name Driver version */
 /*@{*/
-/*! @brief LPUART FreeRTOS driver version 2.3.0. */
-#define FSL_LPUART_FREERTOS_DRIVER_VERSION (MAKE_VERSION(2, 3, 0))
+/*! @brief LPUART FreeRTOS driver version 2.4.0. */
+#define FSL_LPUART_FREERTOS_DRIVER_VERSION (MAKE_VERSION(2, 4, 0))
 /*@}*/
 
 /*! @brief LPUART RTOS configuration structure. */
@@ -54,12 +54,20 @@ typedef struct _lpuart_rtos_config
  */
 /*@{*/
 /*! @brief Event flag - transfer complete. */
-#define RTOS_LPUART_COMPLETE 0x1
+#define RTOS_LPUART_TX_COMPLETE 0x1U
+#define RTOS_LPUART_RX_COMPLETE 0x20U
 /*! @brief Event flag - ring buffer overrun. */
-#define RTOS_LPUART_RING_BUFFER_OVERRUN 0x2
+#define RTOS_LPUART_RING_BUFFER_OVERRUN 0x2U
 /*! @brief Event flag - hardware buffer overrun. */
-#define RTOS_LPUART_HARDWARE_BUFFER_OVERRUN 0x4
+#define RTOS_LPUART_HARDWARE_BUFFER_OVERRUN 0x4U
+#define RTOS_LPUART_RX_TIMEOUT 0x8U
+#define RTOS_LPUART_TX_TIMEOUT 0x10U
 /*@}*/
+
+typedef enum {
+    RX_TIMEOUT = 0,
+    TX_TIMEOUT,
+} TimerID;
 
 /*! @brief LPUART FreeRTOS transfer structure. */
 typedef struct _lpuart_rtos_handle
@@ -71,6 +79,10 @@ typedef struct _lpuart_rtos_handle
     SemaphoreHandle_t txSemaphore; /*!< TX semaphore for resource sharing */
     EventGroupHandle_t rxEvent;    /*!< RX completion event */
     EventGroupHandle_t txEvent;    /*!< TX completion event */
+    TimerHandle_t rxTimer;
+    TimerHandle_t txTimer;
+    uint32_t rxTimerId;
+    uint32_t txTimerId;
     void *t_state;                 /*!< Transactional state of the underlying driver */
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
     StaticSemaphore_t txSemaphoreBuffer; /*!< Statically allocated memory for txSemaphore */
@@ -129,7 +141,8 @@ int LPUART_RTOS_Deinit(lpuart_rtos_handle_t *handle);
  * @param buffer The pointer to buffer to send.
  * @param length The number of bytes to send.
  */
-int LPUART_RTOS_Send(lpuart_rtos_handle_t *handle, const uint8_t *buffer, uint32_t length);
+int LPUART_RTOS_Send(lpuart_rtos_handle_t *handle, uint8_t *buffer, uint32_t length);
+int LPUART_RTOS_SendTimeout(lpuart_rtos_handle_t *handle, uint8_t *buffer, uint32_t length, uint32_t timeout_ms);
 
 /*!
  * @brief Receives data.
@@ -143,6 +156,7 @@ int LPUART_RTOS_Send(lpuart_rtos_handle_t *handle, const uint8_t *buffer, uint32
  * @param received The pointer to a variable of size_t where the number of received data is filled.
  */
 int LPUART_RTOS_Receive(lpuart_rtos_handle_t *handle, uint8_t *buffer, uint32_t length, size_t *received);
+int LPUART_RTOS_ReceiveTimeout(lpuart_rtos_handle_t *handle, uint8_t *buffer, uint32_t length, size_t *received, uint32_t timeout_ms);
 
 /* @} */
 

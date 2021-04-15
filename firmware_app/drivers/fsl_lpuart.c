@@ -300,9 +300,9 @@ status_t LPUART_Init(LPUART_Type *base, const lpuart_config_t *config, uint32_t 
         uint32_t instance = LPUART_GetInstance(base);
 
         /* Enable lpuart clock */
-        CLOCK_EnableClock(s_lpuartClock[instance]);
+        (void)CLOCK_EnableClock(s_lpuartClock[instance]);
 #if defined(LPUART_PERIPH_CLOCKS)
-        CLOCK_EnableClock(s_lpuartPeriphClocks[instance]);
+        (void)CLOCK_EnableClock(s_lpuartPeriphClocks[instance]);
 #endif
 
 #endif /* FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL */
@@ -488,10 +488,10 @@ void LPUART_Deinit(LPUART_Type *base)
     uint32_t instance = LPUART_GetInstance(base);
 
     /* Disable lpuart clock */
-    CLOCK_DisableClock(s_lpuartClock[instance]);
+    (void)CLOCK_DisableClock(s_lpuartClock[instance]);
 
 #if defined(LPUART_PERIPH_CLOCKS)
-    CLOCK_DisableClock(s_lpuartPeriphClocks[instance]);
+    (void)CLOCK_DisableClock(s_lpuartPeriphClocks[instance]);
 #endif
 
 #endif /* FSL_SDK_DISABLE_DRIVER_CLOCK_CONTROL */
@@ -639,6 +639,57 @@ status_t LPUART_SetBaudRate(LPUART_Type *base, uint32_t baudRate_Bps, uint32_t s
     }
 
     return status;
+}
+
+/*!
+ * brief Enable 9-bit data mode for LPUART.
+ *
+ * This function set the 9-bit mode for LPUART module. The 9th bit is not used for parity thus can be modified by user.
+ *
+ * param base LPUART peripheral base address.
+ * param enable true to enable, flase to disable.
+ */
+void LPUART_Enable9bitMode(LPUART_Type *base, bool enable)
+{
+    assert(base != NULL);
+
+    uint32_t temp = 0U;
+
+    if (enable)
+    {
+        /* Set LPUART_CTRL_M for 9-bit mode, clear LPUART_CTRL_PE to disable parity. */
+        temp = base->CTRL & ~((uint32_t)LPUART_CTRL_PE_MASK | (uint32_t)LPUART_CTRL_M_MASK);
+        temp |= (uint32_t)LPUART_CTRL_M_MASK;
+        base->CTRL = temp;
+    }
+    else
+    {
+        /* Clear LPUART_CTRL_M. */
+        base->CTRL &= ~(uint32_t)LPUART_CTRL_M_MASK;
+    }
+#if defined(FSL_FEATURE_LPUART_HAS_7BIT_DATA_SUPPORT) && FSL_FEATURE_LPUART_HAS_7BIT_DATA_SUPPORT
+    /* Clear LPUART_CTRL_M7 to disable 7-bit mode. */
+    base->CTRL &= ~(uint32_t)LPUART_CTRL_M7_MASK;
+#endif
+#if defined(FSL_FEATURE_LPUART_HAS_10BIT_DATA_SUPPORT) && FSL_FEATURE_LPUART_HAS_10BIT_DATA_SUPPORT
+    /* Clear LPUART_BAUD_M10 to disable 10-bit mode. */
+    base->BAUD &= ~(uint32_t)LPUART_BAUD_M10_MASK;
+#endif
+}
+
+/*!
+ * brief Transmit an address frame in 9-bit data mode.
+ *
+ * param base LPUART peripheral base address.
+ * param address LPUART slave address.
+ */
+void LPUART_SendAddress(LPUART_Type *base, uint8_t address)
+{
+    assert(base != NULL);
+
+    uint32_t temp = base->DATA & 0xFFFFFC00UL;
+    temp |= ((uint32_t)address | (1UL << LPUART_DATA_R8T8_SHIFT));
+    base->DATA = temp;
 }
 
 /*!
@@ -1328,9 +1379,9 @@ status_t LPUART_TransferReceiveNonBlocking(LPUART_Type *base,
             if (0U != bytesToReceive)
             {
                 /* No data in ring buffer, save the request to LPUART handle. */
-                handle->rxData        = xfer->data + bytesCurrentReceived;
+                handle->rxData        = &xfer->data[bytesCurrentReceived];
                 handle->rxDataSize    = bytesToReceive;
-                handle->rxDataSizeAll = bytesToReceive;
+                handle->rxDataSizeAll = xfer->dataSize;
                 handle->rxState       = (uint8_t)kLPUART_RxBusy;
             }
             /* Enable LPUART RX IRQ if previously enabled. */
@@ -1348,7 +1399,7 @@ status_t LPUART_TransferReceiveNonBlocking(LPUART_Type *base,
         /* Ring buffer not used. */
         else
         {
-            handle->rxData        = xfer->data + bytesCurrentReceived;
+            handle->rxData        = &xfer->data[bytesCurrentReceived];
             handle->rxDataSize    = bytesToReceive;
             handle->rxDataSizeAll = bytesToReceive;
             handle->rxState       = (uint8_t)kLPUART_RxBusy;
@@ -1474,7 +1525,7 @@ void LPUART_TransferHandleIRQ(LPUART_Type *base, lpuart_handle_t *handle)
 
             /* Using non block API to read the data from the registers. */
             LPUART_ReadNonBlocking(base, handle->rxData, tempCount);
-            handle->rxData += tempCount;
+            handle->rxData = &handle->rxData[tempCount];
             handle->rxDataSize -= tempCount;
             count -= tempCount;
 
@@ -1528,7 +1579,7 @@ void LPUART_TransferHandleIRQ(LPUART_Type *base, lpuart_handle_t *handle)
 
             /* Using non block API to read the data from the registers. */
             LPUART_ReadNonBlocking(base, handle->rxData, tempCount);
-            handle->rxData += tempCount;
+            handle->rxData = &handle->rxData[tempCount];
             handle->rxDataSize -= tempCount;
             count -= tempCount;
 
@@ -1632,7 +1683,7 @@ void LPUART_TransferHandleIRQ(LPUART_Type *base, lpuart_handle_t *handle)
 
             /* Using non block API to write the data to the registers. */
             LPUART_WriteNonBlocking(base, handle->txData, tempCount);
-            handle->txData += tempCount;
+            handle->txData = &handle->txData[tempCount];
             handle->txDataSize -= tempCount;
             count -= tempCount;
 
