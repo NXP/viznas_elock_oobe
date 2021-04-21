@@ -13,7 +13,6 @@
 #define _OASIS_H_
 
 #include "commondef.h"
-#include "oasislite_runtime.h"
 
 #ifdef __cplusplus
 extern "C" {

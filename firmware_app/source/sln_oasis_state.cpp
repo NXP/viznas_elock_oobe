@@ -24,7 +24,6 @@
 #include <string>
 
 #include "oasis.h"
-#include "oasislite_runtime.h"
 #include "fsl_log.h"
 
 static uint8_t s_appType;
@@ -36,7 +35,7 @@ extern volatile uint8_t g_RemoveExistingFace;
 extern volatile uint8_t g_RecFace;
 extern volatile uint8_t g_FaceSystemLocked;
 volatile static uint32_t s_API_Events = 0;
-extern std::string g_AddNewFaceName;
+//extern std::string g_AddNewFaceName;
 
 static void SendDelFaceQMsg(uint8_t start)
 {
@@ -51,7 +50,7 @@ static void SendDelFaceQMsg(uint8_t start)
     Oasis_SendQMsg((void *)&pQMsg);
 }
 
-static void SendAddFaceQMsg(uint8_t start)
+static void SendAddFaceQMsg(uint8_t start, char* name)
 {
     QMsg *pQMsg = (QMsg*)pvPortMalloc(sizeof(QMsg));
     if (NULL == pQMsg)
@@ -60,7 +59,14 @@ static void SendAddFaceQMsg(uint8_t start)
         return;
     }
     pQMsg->id = QMSG_FACEREC_ADDNEWFACE;
-    pQMsg->msg.cmd.data.add_newface = start;
+    pQMsg->msg.cmd.data.add_face.add_newface = start;
+    if (name)
+    {
+    	memcpy(pQMsg->msg.cmd.data.add_face.new_face_name,name,strlen(name) + 1);
+    }else
+    {
+    	memset(pQMsg->msg.cmd.data.add_face.new_face_name,0,sizeof(pQMsg->msg.cmd.data.add_face.new_face_name));
+    }
     Oasis_SendQMsg((void *)&pQMsg);
 }
 
@@ -116,12 +122,12 @@ void StopDeregistrationProcess(uint8_t event)
     }
 }
 
-void StartRegistrationProcess(void)
+void StartRegistrationProcess(char* name)
 {
     s_face_detect                        = false;
     s_firstDetected                      = false;
     g_AddNewFace                         = 1;
-    SendAddFaceQMsg(g_AddNewFace);
+    SendAddFaceQMsg(g_AddNewFace,name);
     StartRegistrationTimers();
     StopLockProcess();
 }
@@ -146,9 +152,9 @@ void StopRegistrationProcess(uint8_t event)
         }
     }
     s_API_Events = 1 << event;
-    g_AddNewFaceName.assign("");
+//    g_AddNewFaceName.assign("");
     g_AddNewFace = 0;
-    SendAddFaceQMsg(g_AddNewFace);
+    SendAddFaceQMsg(g_AddNewFace, NULL);
     if (event != kEvents_API_Layer_RegCanceled)
     {
         StartLockProcess(true);

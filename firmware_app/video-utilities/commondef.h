@@ -22,7 +22,7 @@
 #include "clock_config.h"
 #include "sln_dev_cfg.h"
 
-#include "oasislite_runtime.h"
+#include "oasislite2D_runtime.h"
 
 /*******************************************************************************
  * Definitions
@@ -91,6 +91,7 @@ typedef enum
     QMSG_FACEREC_FRAME_RES,
     QMSG_FACEREC_ENROLMENTMODE,
     QMSG_FACEREC_ADDNEWFACE,
+	QMSG_FACEREC_ADDNEWFACEBY_FEA,
     QMSG_FACEREC_DELFACE,
     QMSG_FACEREC_RECFACE,
     QMSG_FACEREC_STOP,
@@ -141,7 +142,11 @@ typedef struct
         uint8_t enrolment_mode;
         uint8_t rec_face;
         uint8_t del_face;
-        uint8_t add_newface;
+        struct{
+			uint8_t add_newface;
+			char new_face_name[31];
+			void* feature;
+        }add_face;
         uint8_t interface_mode;
         uint16_t control_status;
     } data;

@@ -1,5 +1,5 @@
 /*
-* Copyright 2021 NXP.
+* Copyright 2020 NXP.
 * This software is owned or controlled by NXP and may only be used strictly in accordance with the
 * license terms that accompany it. By expressly accepting such terms or by downloading, installing,
 * activating and/or otherwise using the software, you are agreeing that you have read, and that you
@@ -8,14 +8,14 @@
 *
 */
 
-#ifndef OASIS_LT_RT_H
-#define OASIS_LT_RT_H
+#ifndef OASIS_LT_2D_RT_H
+#define OASIS_LT_2D_RT_H
 #include "stdbool.h"
 #include "stdint.h"
 
 
 #define VERSION_MAJOR 4
-#define VERSION_MINOR 38
+#define VERSION_MINOR 40
 /*this version number only used for hot fix on frozen release or branch*/
 #define VERSION_HOTFIX 0
 
@@ -68,7 +68,8 @@ typedef enum {
     OASIS_DET_ONLY = 0,
     OASIS_DET_WITH_QUALITY_CHECK,
     OASIS_DET_REC,
-    OASIS_DET_REC_REG,
+    OASIS_DET_REC_REG,    //face registration
+    OASIS_DET_REC_DEREG,  //face deregistration
     OASIS_RUN_FLAG_NUM
 } OASISRunFlag_t;
 
@@ -90,6 +91,13 @@ typedef enum {
     OASIS_REG_RESULT_INVALID = 0xFF
 } OASISLTRegisterRes_t;
 
+typedef enum {
+    /*these results are used by event OASISLT_EVT_REG_COMPLETE*/
+    OASIS_DEREG_RESULT_OK,
+	OASIS_DEREG_RESULT_CANCELED,
+	OASIS_DEREG_RESULT_DB_OP_FAILED,
+    OASIS_DEREG_RESULT_INVALID = 0xFF
+} OASISLTDeregisterRes_t;
 
 typedef enum {
     /*these results are used by event OASISLT_EVT_QUALITY_CHK_COMPLETE*/
@@ -201,6 +209,7 @@ typedef struct {
     FBox* faceBoxRGB; //face rect and landmark on RGB image
     uint16_t faceID;//only valid when a face recognized or registered
     OASISLTRegisterRes_t regResult; // only valid for registration
+    OASISLTDeregisterRes_t deregResult; //only valid for deregistration
     OASISLTRecognizeRes_t recResult;//only valid for face recognition
     OASISLTFaceQualityRes_t qualityResult;//only valid for face quality check event.
     OASISLTFaceMaskCheckRes_t maskResult;//only valid for face mask check event.
@@ -246,6 +255,11 @@ typedef enum {
      * */
     OASISLT_EVT_REG_IN_PROGRESS,
     OASISLT_EVT_REG_COMPLETE,
+
+    //for face deregistration
+    OASISLT_EVT_DEREG_START,
+    OASISLT_EVT_DEREG_COMPLETE,
+
     OASISLT_EVT_NUM
 
 } OASISLTEvt_t;
@@ -296,9 +310,16 @@ this function will be called to update corresponding data in database.
 *offset:[input] in most cases, not whole snapshot need update, offset indicate start position of
         snapshot where snapshot_data should be writen.
 *user_data [input]: user data transferring from OASISLT_run_extend
+*return 0 if successful, other value means failed.
 */
 typedef int (*FaceOperationUpdate)(uint16_t face_id, void* face_data, void* snapshot_data, int data_length,
                                    int offset, void* userData);
+
+
+/*when library is going to delete a face feature, this function will be called
+ * return 0 if successful, other value means failed.
+ * */
+typedef int (*FaceOperationDelete)(uint16_t face_id, void* userData);
 
 /*Using for print out ANSI string in self test API*/
 typedef void (*StringPrint)(const char* str);
@@ -325,6 +346,8 @@ typedef struct {
 
     /*By this function,library can update a face item. if is NULL, no update will be done.*/
     FaceOperationUpdate UpdateFace;
+
+    FaceOperationDelete DeleteFace;
 
     /*By this function, caller can know RGB and IR image's brightness according input parameters */
     FaceBrightnessAdjust AdjustBrightness;

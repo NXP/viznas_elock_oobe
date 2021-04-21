@@ -62,6 +62,10 @@ vizn_api_status_t VIZN_StartRecognition(VIZN_api_client_t *clientHandle);
  * @param face            Points to a buffer in which face feature are saved for the face which will be added
  * @return                Status of VIZN_StartRecognition
  */
-vizn_api_status_t VIZN_EnrolmentAddNewFace(VIZN_api_client_t *clientHandle, uint16_t *face_id, void *face);
+//vizn_api_status_t VIZN_EnrolmentAddNewFace(VIZN_api_client_t *clientHandle, uint16_t *face_id, void *face);
+vizn_api_status_t VIZN_EnrolmentAddNewFace(VIZN_api_client_t *clientHandle,
+		                                   uint16_t *face_id,
+										   void *face,
+										   char* name);
 
 #endif /*SLN_API_INTERNAL_H_*/

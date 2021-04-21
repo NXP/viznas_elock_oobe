@@ -9,7 +9,6 @@
  * Created by: NXP China Solution Team.
  */
 
-#include "oasislite_runtime.h"
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "camera.h"
@@ -45,14 +44,14 @@ struct TimeStat
     int det_comp;
     int rec_start;
     int rec_comp;
-    int emo_start;
-    int emo_comp;
 
     int det_fps_start;
     int det_fps;
 
     int rec_fps_start;
     int rec_fps;
+
+    char new_name[31]; //used for add user
 
 } gTimeStat;
 
@@ -81,7 +80,7 @@ static int Oasis_SetImgType(OASISLTImageType_t *img_type);
  *******************************************************************************/
 extern uint8_t g_RemoveExistingFace;
 extern VIZN_api_client_t VIZN_API_CLIENT(Buttons);
-extern std::string g_AddNewFaceName;
+//extern std::string g_AddNewFaceName;
 static QUIInfoMsg gui_info;
 static FaceRecBuffer s_FaceRecBuf = {NULL,NULL};
 static QueueHandle_t gFaceDetMsgQ = NULL;
@@ -433,18 +432,20 @@ static int GetRegisteredFacesHandler(uint16_t *face_ids, void **faces, uint32_t 
 static int AddNewFaceHandler(uint16_t *face_id, void *face,void* snapshot, int snapshot_len, void* user_data)
 {
     vizn_api_status_t status;
+    int ret = 0;
+    struct TimeStat *timeState = (struct TimeStat *)user_data;
 
-    status = VIZN_EnrolmentAddNewFace(NULL, face_id, face);
+    char* name = timeState->new_name;
+    status = VIZN_EnrolmentAddNewFace(NULL, face_id, face, (strlen(name) == 0? NULL:name));
     if (status != kStatus_API_Layer_Success)
     {
         if (status == kStatus_API_Layer_EnrolmentAddNewFace_NoMemory)
         {
             UsbShell_Printf("Maximum number of users reached\r\n");
         }
-        return -1;
+        ret = -1;
     }
-
-    return 0;
+    return ret;
 }
 
 static int UpdateFaceHandler(uint16_t face_id, void *face,void* snapshot_data, int length, int offset, void* user_data)
@@ -654,12 +655,29 @@ static void Oasis_Task(void *param)
                 }
                 break;
 
+                case QMSG_FACEREC_ADDNEWFACEBY_FEA:
+                {
+                	memcpy(gTimeStat.new_name,rxQMsg->msg.cmd.data.add_face.new_face_name,
+                			strlen(rxQMsg->msg.cmd.data.add_face.new_face_name) + 1);
+                	uint16_t face_id;
+                	OASISLTRegisterRes_t ret = OASISLT_registration_by_feature(rxQMsg->msg.cmd.data.add_face.feature,NULL,0,&face_id,&gTimeStat);
+                	UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[OASIS]:add new face by FEA, ret:%d!\r\n",ret);
+                	vPortFree(rxQMsg->msg.cmd.data.add_face.feature);
+
+
+                	break;
+                }
+
                 case QMSG_FACEREC_ADDNEWFACE:
                 {
-                	if (rxQMsg->msg.cmd.data.add_newface)
+                	if (rxQMsg->msg.cmd.data.add_face.add_newface)
                 	{
                 		run_flag = OASIS_DET_REC_REG;
                 		Oasis_SetState(OASIS_STATE_FACE_REG_START);
+
+                		memcpy(gTimeStat.new_name,
+                				rxQMsg->msg.cmd.data.add_face.new_face_name,
+								sizeof(rxQMsg->msg.cmd.data.add_face.new_face_name));
                 	}else
                 	{
                 		run_flag = OASIS_DET_REC;

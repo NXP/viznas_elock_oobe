@@ -58,7 +58,7 @@ volatile uint8_t g_AddNewFace         = 0;
 volatile uint8_t g_RemoveExistingFace = 0;
 volatile uint8_t g_RecFace            = 0;
 volatile uint8_t g_FaceSystemLocked   = 0;
-std::string g_AddNewFaceName;
+//std::string g_AddNewFaceName;
 VIZN_api_handle_t gApiHandle;
 
 static uint8_t sApiHandleBuffer[VIZN_API_HANDLE_SIZE];
@@ -244,12 +244,13 @@ vizn_api_status_t VIZN_AddUser(VIZN_api_client_t *clientHandle)
         {
             StopRecognitionProcess(kEvents_API_Layer_RecCanceled);
         }
-        StartRegistrationProcess();
+        StartRegistrationProcess(NULL);
         status = kStatus_API_Layer_Success;
     }
     Cfg_Unlock();
     return status;
 }
+
 
 vizn_api_status_t VIZN_AddUser(VIZN_api_client_t *clientHandle, char *userName)
 {
@@ -279,7 +280,7 @@ vizn_api_status_t VIZN_AddUser(VIZN_api_client_t *clientHandle, char *userName)
         return kStatus_API_Layer_AddUser_InvalidUserName;
     }
 
-    g_AddNewFaceName.assign(userName);
+    //g_AddNewFaceName.assign(userName);
     if (g_RemoveExistingFace)
     {
         StopDeregistrationProcess(kEvents_API_Layer_DeregCanceled);
@@ -288,7 +289,7 @@ vizn_api_status_t VIZN_AddUser(VIZN_api_client_t *clientHandle, char *userName)
     {
         StopRecognitionProcess(kEvents_API_Layer_RecCanceled);
     }
-    StartRegistrationProcess();
+    StartRegistrationProcess(userName);
     Cfg_Unlock();
     return kStatus_API_Layer_Success;
 }
@@ -908,7 +909,10 @@ vizn_api_status_t VIZN_StartRecognition(VIZN_api_client_t *clientHandle)
     return status;
 }
 
-vizn_api_status_t VIZN_EnrolmentAddNewFace(VIZN_api_client_t *clientHandle, uint16_t *face_id, void *face)
+vizn_api_status_t VIZN_EnrolmentAddNewFace(VIZN_api_client_t *clientHandle,
+		                                   uint16_t *face_id,
+										   void *face,
+										   char* name)
 {
     vizn_api_status_t status = kStatus_API_Layer_Success;
     float *feature_data      = (float *)face;
@@ -916,10 +920,10 @@ vizn_api_status_t VIZN_EnrolmentAddNewFace(VIZN_api_client_t *clientHandle, uint
 
     Cfg_Lock();
 
-    if (!g_AddNewFace)
-    {
-        status = kStatus_API_Layer_Error;
-    }
+//    if (!g_AddNewFace)
+//    {
+//        status = kStatus_API_Layer_Error;
+//    }
 
     if (status == kStatus_API_Layer_Success)
     {
@@ -932,9 +936,9 @@ vizn_api_status_t VIZN_EnrolmentAddNewFace(VIZN_api_client_t *clientHandle, uint
 
     if (status == kStatus_API_Layer_Success)
     {
-        if (g_AddNewFaceName != "")
+        if (name != NULL)
         {
-            ret = DB_Add(*face_id, g_AddNewFaceName, feature_data);
+            ret = DB_Add(*face_id, name, feature_data);
         }
         else
         {

@@ -2,7 +2,6 @@
 <launchConfiguration type="com.nxp.mcuxpresso.core.debug.support.segger.launchConfigurationType">
 <stringAttribute key="com.crt.ctrlcenter.OFSemuDetails" value="JLink504501214"/>
 <booleanAttribute key="com.crt.ctrlcenter.mainBreakIsHardware" value="true"/>
-<booleanAttribute key="com.crt.ctrlcenter.saveState" value="true"/>
 <stringAttribute key="com.crt.ctrlcenter.serialNumber" value="USB 504501214"/>
 <mapAttribute key="com.crt.ctrlcenter.symbolsGroupSettings"/>
 <intAttribute key="com.nxp.mcuxpresso.core.debug.support.segger.launches.JLinkLaunchConfigHandler.version" value="2"/>
@@ -11,7 +10,7 @@
 <stringAttribute key="com.nxp.mcuxpresso.ide.probe.manufacturer" value="SEGGER"/>
 <stringAttribute key="com.nxp.mcuxpresso.ide.probe.name" value="J-Link ULTRA+"/>
 <stringAttribute key="com.nxp.mcuxpresso.ide.probe.type" value="USB"/>
-<stringAttribute key="com.nxp.mcuxpresso.jlink.flash.base.address" value="0x60000000"/>
+<stringAttribute key="com.nxp.mcuxpresso.jlink.flash.base.address" value="0x60100000"/>
 <stringAttribute key="com.nxp.mcuxpresso.jlink.flash.executable" value="hex"/>
 <booleanAttribute key="com.nxp.mcuxpresso.jlink.flash.halt.target" value="true"/>
 <booleanAttribute key="com.nxp.mcuxpresso.jlink.flash.reset.target" value="true"/>
@@ -70,7 +69,6 @@
 <stringAttribute key="org.eclipse.cdt.dsf.gdb.TRACEPOINT_MODE" value="TP_NORMAL_ONLY"/>
 <booleanAttribute key="org.eclipse.cdt.dsf.gdb.UPDATE_THREADLIST_ON_SUSPEND" value="false"/>
 <intAttribute key="org.eclipse.cdt.launch.ATTR_BUILD_BEFORE_LAUNCH_ATTR" value="2"/>
-<stringAttribute key="org.eclipse.cdt.launch.DEBUGGER_ID" value="gdb"/>
 <stringAttribute key="org.eclipse.cdt.launch.DEBUGGER_START_MODE" value="remote"/>
 <stringAttribute key="org.eclipse.cdt.launch.PROGRAM_NAME" value="VIZN2_board/sln_viznas_iot_elock_oobe.axf"/>
 <stringAttribute key="org.eclipse.cdt.launch.PROJECT_ATTR" value="sln_viznas_iot_elock_oobe"/>

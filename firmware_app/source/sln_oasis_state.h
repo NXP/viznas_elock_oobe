@@ -30,7 +30,8 @@ void StopRecognitionProcess(uint8_t event);
 /**
  * @brief Start registration process
  */
-void StartRegistrationProcess(void);
+//void StartRegistrationProcess(void);
+void StartRegistrationProcess(char* name);
 
 /**
  * @brief Stop registration process
