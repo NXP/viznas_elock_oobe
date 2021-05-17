@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 NXP.
+ * Copyright 2019-2021 NXP.
  * This software is owned or controlled by NXP and may only be used strictly in accordance with the
  * license terms that accompany it. By expressly accepting such terms or by downloading, installing,
  * activating and/or otherwise using the software, you are agreeing that you have read, and that you
@@ -88,7 +88,6 @@ static OASISLTInitPara_t s_InitPara;
 static uint8_t s_lockstatus       = 1;
 static OasisState s_CurOasisState = OASIS_STATE_FACE_REC_START;
 static uint8_t s_appType;
-int g_IsAuthenticated = 0;
 
 volatile int g_OASISLT_heap_debug;
 
@@ -808,6 +807,7 @@ int Oasis_Start()
 	s_InitPara.cbs.reserved = (void*)Oasis_Printf;
     s_InitPara.cbs.UpdateFace = UpdateFaceHandler;
     s_InitPara.cbs.AdjustBrightness = AdjustBrightnessHandler;
+    s_InitPara.cbs.lock = s_InitPara.cbs.unlock = NULL;
 
     s_InitPara.enable_flags = 0;
     if (s_appType != APP_TYPE_USERID)
@@ -857,9 +857,6 @@ int Oasis_Start()
     	ret = -4;
     	goto error_cases;
     }
-
-    /*get authentication result*/
-    g_IsAuthenticated = s_InitPara.auth;
 
     gFaceDetMsgQ = xQueueCreate(FACEREC_MSG_Q_COUNT, sizeof(QMsg *));
 

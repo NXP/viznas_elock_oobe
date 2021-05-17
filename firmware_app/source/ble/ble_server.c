@@ -1,7 +1,7 @@
 /*
  * Copyright 2018, Cypress Semiconductor Corporation or a subsidiary of
  * Cypress Semiconductor Corporation. All Rights Reserved.
- * Copyright 2020 NXP.
+ * Copyright 2021 NXP.
  *
  * This software, associated documentation and materials ("Software"),
  * is owned by Cypress Semiconductor Corporation

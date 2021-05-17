@@ -1,5 +1,5 @@
 /*
-* Copyright 2020 NXP.
+* Copyright 2021 NXP.
 * This software is owned or controlled by NXP and may only be used strictly in accordance with the
 * license terms that accompany it. By expressly accepting such terms or by downloading, installing,
 * activating and/or otherwise using the software, you are agreeing that you have read, and that you
@@ -15,7 +15,7 @@
 
 
 #define VERSION_MAJOR 4
-#define VERSION_MINOR 40
+#define VERSION_MINOR 41
 /*this version number only used for hot fix on frozen release or branch*/
 #define VERSION_HOTFIX 0
 
@@ -46,19 +46,22 @@ typedef enum {
     OASIS_INIT_INVALID_MODEL_CLASS,
     OASIS_INIT_ALREADY_INIT,
     OASIS_INIT_INVALID_FAR,
-    OASIS_INIT_INVALID_CB,
+    OASIS_INIT_INVALID_CB,  //5
     OASIS_INIT_MEMORYPOOL_SMALL,
     OASIS_INIT_INVALID_MEMORYPOOL,
     OASIS_INIT_INVALID_IMAGE_MIN_DIM,
     OASIS_INIT_INVALID_MASK_BUF,
-    OASIS_INIT_INVALID_IMG_TYPE_FOR_MASK_FACE,
+    OASIS_INIT_INVALID_IMG_TYPE_FOR_MASK_FACE, //10
     OASIS_INIT_MASK_REC_NOTSUPORTED,
     OASIS_INIT_INVALID_IMAGE_TYPE,
+    OASIS_INIT_INSTANCE_NUM_OVERFLOW,
+    OASIS_INIT_AUTHENTICATION_FAIL,
+    OASIS_INIT_MEM_ALLOCATE_FAIL,   //15
     OASISLT_SNAPSHOT_INVALID_INPUT_PARAMETERS,
     OASISLT_SNAPSHOT_LIB_UNINIT,
     OASISLT_SNAPSHOT_INVALID_FRAME_NUM,
     OASISLT_SNAPSHOT_IMG_TYPE_NOT_SUPPORT,
-    OASISLT_SNAPSHOT_RESIZE_FAILED,
+    OASISLT_SNAPSHOT_RESIZE_FAILED,  //20
 
 } OASISLTResult_t;
 
@@ -86,18 +89,19 @@ typedef enum {
     OASIS_REG_RESULT_OK,
     OASIS_REG_RESULT_DUP,
     OASIS_REG_RESULT_CANCELED,
-    OASIS_REG_RESULT_WITHMASK,
     OASIS_REG_RESULT_DB_OP_FAILED,
     OASIS_REG_RESULT_INVALID = 0xFF
 } OASISLTRegisterRes_t;
 
+
 typedef enum {
-    /*these results are used by event OASISLT_EVT_REG_COMPLETE*/
+    /*these results are used by event OASISLT_EVT_DEREG_COMPLETE*/
     OASIS_DEREG_RESULT_OK,
-	OASIS_DEREG_RESULT_CANCELED,
-	OASIS_DEREG_RESULT_DB_OP_FAILED,
+    OASIS_DEREG_RESULT_CANCELED,
+    OASIS_DEREG_RESULT_DB_OP_FAILED,
     OASIS_DEREG_RESULT_INVALID = 0xFF
 } OASISLTDeregisterRes_t;
+
 
 typedef enum {
     /*these results are used by event OASISLT_EVT_QUALITY_CHK_COMPLETE*/
@@ -264,6 +268,7 @@ typedef enum {
 
 } OASISLTEvt_t;
 
+typedef void* OASISLTHandler_t;
 
 /*this callback definition is used for calling of OASISLT_run
  *for single frame type, only frames[0] is valid and it points to the single input frame
@@ -324,8 +329,8 @@ typedef int (*FaceOperationDelete)(uint16_t face_id, void* userData);
 /*Using for print out ANSI string in self test API*/
 typedef void (*StringPrint)(const char* str);
 
-/*Used to get current system millisecond number*/
-typedef uint32_t (*GetSystemCurrentMS)(void);
+typedef void (*EnterCriticalArea)(void);
+typedef void (*ExitCriticalArea)(void);
 
 /*Used to dynamically adjust face brightness
   * frame_idx: which frame is need to be adjusted on, OASISLT_INT_FRAME_IDX_RGB or OASISLT_INT_FRAME_IDX_IR ?
@@ -352,6 +357,10 @@ typedef struct {
     /*By this function, caller can know RGB and IR image's brightness according input parameters */
     FaceBrightnessAdjust AdjustBrightness;
 
+    /*These 2 callback functions are used for multi-thread support. can be set to NULL for non-multi-thread environment*/
+    EnterCriticalArea lock;
+    ExitCriticalArea unlock;
+
     //internal debugging use only
     void* reserved;
 
@@ -375,9 +384,6 @@ typedef struct {
     /*memory pool size*/
     int size;
 
-    /*output parameter,indicate authenticated or not*/
-    int auth;
-
     /*callback functions provided by caller*/
     InfCallbacks_t cbs;
 
@@ -393,31 +399,6 @@ typedef struct {
 } OASISLTInitPara_t;
 
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-/* Initialize OASIS LITE lib, it should be called before any other APIs.
- * para: initializing parameter. refer to OASISLTInitPara_t for detail information.
- * */
-OASISLTResult_t OASISLT_init(OASISLTInitPara_t* para);
-OASISLTResult_t OASISLT_uninit(void);
-
-/*return version information string of OASIS LITE library, please note that:
- * string buffer size input should not less than 64 bytes
- * verStrBuf: buffer used to save version string.
- * length: verStrBuf lenght, unit: byte, it should not less than 64*/
-void OASISLT_getVersion(char* verStrBuf, int length);
-
-
-/*this API can be used to replace OASISLT_run and OASISLT_run2D API with a more flexiable input parameters.
- * user can input RGB/IR/3D frame with different combinations according image types in intializing.
- * this API also can be used to extract feature from a given image, user can get face feature by AddFace
- * callback.
- * */
-int OASISLT_run_extend(ImageFrame_t* frames[OASISLT_INT_FRAME_IDX_LAST], uint8_t flag, int minFace, void* userData);
-
-
 enum {
     OASISLT_RUN_IDENTIFY_RESULT_OK,
     OASISLT_RUN_IDENTIFY_RESULT_NO_FACE_ON_BOTH,
@@ -428,18 +409,55 @@ enum {
     OASISLT_RUN_IDENTIFY_RESULT_FAIL_UNKNOW,
 
 };
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+//=====================================================================
+/*These APIs are used for all libraries.*/
+//=====================================================================
+
+/* Initialize OASIS LITE lib, it should be called before any other APIs.
+ * para: initializing parameter. refer to OASISLTInitPara_t for detail information.
+ * */
+OASISLTResult_t OASISLT_init(OASISLTInitPara_t* para);
+
+OASISLTResult_t OASISLT_uninit();
+
+/*return version information string of OASIS LITE library, please note that:
+ * string buffer size input should not less than 64 bytes
+ * verStrBuf: buffer used to save version string.
+ * length: verStrBuf lenght, unit: byte, it should not less than 64*/
+/*return minimum free memory size since OASISLT initialization.
+ **/
+unsigned int OASISHeapGetMinimumEverFreeHeapSize();
+
+/*return the size of each face feature. unit: byte*/
+uint32_t OASISLT_getFaceItemSize(void);
+
+void OASISLT_getVersion(char* verStrBuf, int length);
+
+
+//=====================================================================
+/*These APIs are used only for RT106F and RT117F libraries.*/
+//=====================================================================
+/*this API can be used to replace OASISLT_run and OASISLT_run2D API with a more flexiable input parameters.
+ * user can input RGB/IR/3D frame with different combinations according image types in intializing.
+ * this API also can be used to extract feature from a given image, user can get face feature by AddFace
+ * callback.
+ * */
+//int OASISLT_run_extend(ImageFrame_t* frames[OASISLT_INT_FRAME_IDX_LAST], uint8_t flag, int minFace, void* userData);
+int OASISLT_run_extend(ImageFrame_t* frames[OASISLT_INT_FRAME_IDX_LAST],
+                       uint8_t flag, int minFace, void* userData);
+
+
+
 /*Used to compare and get similarity of faces in input image and target image.
  * OASIS_IMG_FORMAT_RGB888 and OASIS_IMG_FORMAT_BGR888 are supported*/
-int OASISLT_run_identification(ImageFrame_t* input, ImageFrame_t* target, float* sim);
+int OASISLT_run_identification(ImageFrame_t* input,
+                               ImageFrame_t* target,
+                               float* sim);
 
-
-/*Used to extract face data(features) from a snapshot.
- * snapshot:[input] point to snapshot packet.
- * snapshot_length:[input] length of snapshot packet in bytes.
- * face_data:[output] point to a buffer which is used for saving of face data extracted. The length of
- * this buffer should not less than OASISLT_getFaceItemSize().
- * OASIS_IMG_FORMAT_RGB888 and OASIS_IMG_FORMAT_BGR888 are supported*/
-OASISLTResult_t OASISLT_snapshot2feature(const void* snapshot, int snapshot_lenght, void* face_data);
 
 
 /*This function is used for registration by a face feature generated by OASISLT_run_extend and AddFace
@@ -453,17 +471,22 @@ OASISLTRegisterRes_t OASISLT_registration_by_feature(void* face_data,
         void* snapshot, int snapshot_len, uint16_t* id, void* user_data);
 
 
-/*return minimum free memory size since OASISLT initialization.
- **/
-unsigned int OASISHeapGetMinimumEverFreeHeapSize(void);
-
-/*return the size of each face feature. unit: byte*/
-uint32_t OASISLT_getFaceItemSize(void);
 
 
-/*OASIS LITE runtime library self test. Internal use only*/
-int OASISLT_selftest(void* mempool, int size, StringPrint print, GetSystemCurrentMS getMS);
-
+//=====================================================================
+/*These APIs are used only for Linux64 and Android libraries.*/
+//=====================================================================
+OASISLTRegisterRes_t OASISLT_MT_registration_by_feature(OASISLTHandler_t handler, void* face_data,
+        void* snapshot, int snapshot_len, uint16_t* id, void* user_data);
+int OASISLT_MT_run_identification(OASISLTHandler_t handler,
+                               ImageFrame_t* input,
+                               ImageFrame_t* target,
+                               float* sim);
+int OASISLT_MT_run_extend(OASISLTHandler_t handler, ImageFrame_t* frames[OASISLT_INT_FRAME_IDX_LAST],
+                       uint8_t flag, int minFace, void* userData);
+/*These 2 callback functions are used for multi-thread support. can be set to NULL for non-multi-thread environment*/
+OASISLTResult_t OASISLT_CreateInstance(OASISLTHandler_t* pHandler);
+OASISLTResult_t OASISLT_DeleteInstance(OASISLTHandler_t handler);
 
 #ifdef __cplusplus
 }
