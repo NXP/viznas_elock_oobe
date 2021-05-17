@@ -23,12 +23,14 @@
 #include "fsl_debug_console.h"
 #include "fsl_log.h"
 
+#include "fica_definition.h"
+
 /*******************************************************************************
  * Defines
  ******************************************************************************/
 #define APPLICATION_RESET_ISR_ADDRESS (SCB->VTOR + 0x4)
-#define APP_VECTOR_TABLE_APP_A (0x60300000U)
-#define APP_VECTOR_TABLE_APP_B (0x60D00000U)
+#define APP_VECTOR_TABLE_APP_A (0x60000000U + FICA_IMG_APP_A_ADDR)
+#define APP_VECTOR_TABLE_APP_B (0x60000000U + FICA_IMG_APP_B_ADDR)
 #define JSON_FILEPATH_APPA "AppA"
 #define JSON_FILEPATH_APPB "AppB"
 #define JSON_FILEPATH_APPUNK "UnknownApp"
