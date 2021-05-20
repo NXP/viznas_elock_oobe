@@ -610,16 +610,18 @@ static void Camera_Callback(camera_receiver_handle_t *handle, status_t status, v
 static void CameraDevice_Init_Task(void *param)
 {
 #if (CAMERA_DIFF_I2C_BUS || (APP_CAMERA_TYPE == APP_CAMERA_MT9M114))
-    camera_config_t *cameraConfig = (camera_config_t *)param;
-    // IR camera
-    int st = CAMERA_DEVICE_Init(&cameraDevice[1], cameraConfig);
-    if (st != kStatus_Success)
+    if (APP_TYPE_USERID != s_appType)
     {
-    	LOGE("Camera device init error:%d\r\n", st);
+        camera_config_t *cameraConfig = (camera_config_t *)param;
+        // IR camera
+        int st = CAMERA_DEVICE_Init(&cameraDevice[1], cameraConfig);
+        if (st != kStatus_Success)
+        {
+            LOGE("Camera device init error:%d\r\n", st);
+        }
+        CAMERA_DEVICE_Control(&cameraDevice[1], kCAMERA_DeviceMonoMode, CAMERA_MONO_MODE_ENABLED);
+        CAMERA_DEVICE_Stop(&cameraDevice[1]);
     }
-    CAMERA_DEVICE_Control(&cameraDevice[1], kCAMERA_DeviceMonoMode, CAMERA_MONO_MODE_ENABLED);
-    CAMERA_DEVICE_Stop(&cameraDevice[1]);
-
     xEventGroupSetBits(g_SyncVideoEvents, 1 << SYNC_VIDEO_CAMERADEVICE_INIT_BIT);
     vTaskDelete(NULL);
 #endif
@@ -688,6 +690,7 @@ static void Camera_Init_Task(void *param)
         while (1)
             ;
     }
+
     // RGB camera
     CAMERA_DEVICE_Init(&cameraDevice[0], &cameraConfig);
     CAMERA_DEVICE_Control(&cameraDevice[0], kCAMERA_DeviceMonoMode, CAMERA_MONO_MODE_DISABLED);
@@ -982,8 +985,16 @@ static void Camera_Task(void *param)
 
                 case QMSG_PXP_FACEREC:
                 {
-                	uint32_t mask = (1UL<<IR_CAMERA) |(1UL<<COLOR_CAMERA);
-                	oasis_frames_ready |= 1UL<<(uint32_t)pQMsg->msg.pxp.user_data;
+                    uint32_t mask;
+                    if (s_appType == APP_TYPE_USERID)
+                    {
+                        mask = (1UL<<COLOR_CAMERA);
+                    }
+                    else
+                    {
+                        mask = (1UL<<IR_CAMERA) |(1UL<<COLOR_CAMERA);
+                    }
+                    oasis_frames_ready |= 1UL<<(uint32_t)pQMsg->msg.pxp.user_data;
                     if ((oasis_frames_ready&mask) == mask)
                     {
                         Camera_SendFResMsg();

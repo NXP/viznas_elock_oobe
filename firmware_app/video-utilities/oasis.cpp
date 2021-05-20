@@ -94,7 +94,7 @@ volatile int g_OASISLT_heap_debug;
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
 DTC_BSS static StackType_t s_OasisTaskStack[OASISDETTASK_STACKSIZE];
 DTC_BSS static StaticTask_t s_OasisTaskTCB;
-OCRAM_CACHED_BSS RAM_ADDRESS_ALIGNMENT(4) static uint8_t s_OasisMemPool[750 * 1024];
+OCRAM_CACHED_BSS RAM_ADDRESS_ALIGNMENT(4) static uint8_t s_OasisMemPool[760 * 1024];
 #endif
 
 /*******************************************************************************
@@ -174,7 +174,7 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
      The MCUX11 optimize copy trait. face_info.name = std::string(name) won't make a copy. Not seen with MCUX10.*/
     // memset(&face_info, 0, sizeof(face_info_t));
     clearFaceInfo(&face_info);
-    // UsbShell_Printf("[OASIS]:evt:%d\r\n",evt);
+    //UsbShell_Printf("[OASIS]:evt:%d\r\n",evt);
 
     timeState = (struct TimeStat *)user_data;
     switch (evt)
@@ -411,15 +411,7 @@ static int GetRegisteredFacesHandler(uint16_t *face_ids, void **faces, uint32_t 
     /*caller ask for the total records numbers*/
     if (*size == 0)
     {
-        if (APP_TYPE_USERID == s_appType)
-        {
-            *size = 1;
-        }
-        else
-        {
-        	DB_Count((int*)size);
-        }
-
+        DB_Count((int*)size);
         return 0;
     }
 
@@ -806,7 +798,10 @@ int Oasis_Start()
 	s_InitPara.cbs.AddFace = AddNewFaceHandler;
 	s_InitPara.cbs.reserved = (void*)Oasis_Printf;
     s_InitPara.cbs.UpdateFace = UpdateFaceHandler;
-    s_InitPara.cbs.AdjustBrightness = AdjustBrightnessHandler;
+    if (s_appType != APP_TYPE_USERID)
+    {
+        s_InitPara.cbs.AdjustBrightness = AdjustBrightnessHandler;
+    }
     s_InitPara.cbs.lock = s_InitPara.cbs.unlock = NULL;
 
     s_InitPara.enable_flags = 0;
