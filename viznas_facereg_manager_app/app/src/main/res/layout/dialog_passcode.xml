@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/ll_dialog"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="10dp"
+    android:orientation="vertical">
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/inputDeviceName"
+        style="@style/text_layout_edit_text_dialog"
+        app:errorEnabled="true"
+        app:hintTextAppearance="@style/TextLabel">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/edtDeviceName"
+            style="@style/reg_edit_text_dialog"
+            android:drawableStart="@drawable/ic_device_name"
+            android:hint="@string/device_name"
+            android:inputType="textPersonName" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/inputPassCode"
+        style="@style/text_layout_edit_text_dialog"
+        app:errorEnabled="true"
+        app:hintTextAppearance="@style/TextLabel">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/edtPassCode"
+            style="@style/reg_edit_text_dialog"
+            android:drawableStart="@drawable/ic_vpn_key_selected"
+            android:hint="@string/please_enter_passcode"
+            android:importantForAutofill="no"
+            android:maxLength="6"
+            android:inputType="numberPassword"
+            tools:ignore="UnusedAttribute" />
+    </com.google.android.material.textfield.TextInputLayout>
+</LinearLayout>

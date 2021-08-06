@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@android:id/progress">
+        <shape android:innerRadiusRatio="2.5" android:shape="ring" android:thicknessRatio="30.0">
+            <gradient android:centerColor="@color/colorPrimary" android:endColor="@color/colorPrimary" android:startColor="@color/colorPrimary" android:type="sweep" />
+
+        </shape>
+    </item>
+    <item android:id="@android:id/secondaryProgress">
+        <shape android:innerRadiusRatio="2.5" android:shape="ring" android:thicknessRatio="30.0">
+            <gradient android:centerColor="@android:color/darker_gray" android:endColor="@android:color/darker_gray" android:startColor="@android:color/darker_gray" android:type="sweep" />
+        </shape>
+    </item>
+</selector>

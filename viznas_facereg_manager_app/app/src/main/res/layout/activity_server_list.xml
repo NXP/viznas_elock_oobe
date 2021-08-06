@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar_server"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:background="?attr/colorPrimary"
+            android:elevation="10dp"
+            app:logo="@drawable/toolbar_icon"
+            app:title="Server List"
+            app:titleMarginStart="30dp"
+            app:titleTextColor="?attr/colorAccent" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/toolbar_server"
+            android:background="@android:color/white"
+            tools:listitem="@layout/server_listitems" />
+
+
+        <!-- com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_server"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_gravity="end|bottom"
+            android:layout_margin="16dp"
+            android:backgroundTint="?attr/color_clickable"
+            android:elevation="6dp"
+            app:borderWidth="0dp"
+            app:srcCompat="@drawable/ic_add_fab"
+            tools:ignore="RtlHardcoded" / -->
+
+        <EditText
+            android:id="@+id/textView"
+            android:layout_width="300dp"
+            android:layout_height="100dp"
+            android:layout_below="@+id/recyclerview"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="0dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:focusable="auto"
+            android:inputType="text"
+            android:paddingTop="100dp"
+            android:text="192.168.1.1"
+            android:visibility="visible"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.337"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="1.0" />
+
+    </RelativeLayout>
+
+</layout>

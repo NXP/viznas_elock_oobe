@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "97622610227",
+    "firebase_url": "https://face-manager.firebaseio.com",
+    "project_id": "face-manager",
+    "storage_bucket": "face-manager.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:97622610227:android:cf32d1f9582827c37bae46",
+        "android_client_info": {
+          "package_name": "com.nxp.facemanager"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "97622610227-g8j8c9721hf3cbrcvhc86e9i3gq5e95k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD6R6w0fdUzhTfrUPN7_d8BaquFkXBqcXY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "97622610227-g8j8c9721hf3cbrcvhc86e9i3gq5e95k.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

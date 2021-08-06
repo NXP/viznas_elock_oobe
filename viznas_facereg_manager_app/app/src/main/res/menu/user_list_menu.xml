@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/menuProfile"
+        android:icon="@drawable/ic_edit"
+        android:title="@string/edit_profile" />
+
+    <item
+        android:id="@+id/menuTraining"
+        android:icon="@drawable/ic_man_user_colored_20dp"
+        android:title="@string/send_face_data" />
+
+
+    <item
+        android:id="@+id/menuDelete"
+        android:icon="@drawable/ic_delete"
+        android:title="@string/delete" />
+</menu>

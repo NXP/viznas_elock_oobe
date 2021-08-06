@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <variable
+            name="register"
+            type="com.nxp.facemanager.viewModels.RegistrationViewModel" />
+    </data>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/toolbar_color">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            tools:context=".activity.RegistrationActivity">
+
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardLogo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="36dp"
+                android:layout_marginBottom="24dp"
+                app:cardCornerRadius="15dp">
+
+                <ImageView
+                    android:id="@+id/logo"
+                    android:layout_width="150dp"
+                    android:layout_height="110dp"
+                    android:gravity="center"
+                    android:scaleType="fitXY"
+                    android:src="@drawable/ic_nxp_splash"
+                    android:textColor="@color/white"
+                    tools:ignore="ContentDescription" />
+            </androidx.cardview.widget.CardView>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/email"
+                style="@style/text_layout_edit_text"
+                android:layout_below="@id/cardLogo"
+                app:hintTextAppearance="@style/TextLabel">
+
+                <EditText
+                    android:id="@+id/edtEmail"
+                    style="@style/reg_edit_text"
+                    android:drawableStart="@drawable/ic_mail"
+                    android:hint="@string/email_label"
+
+                    android:inputType="textEmailAddress"
+                    android:onTextChanged="@{register::onTextChanged}"
+                    android:text="@={register.strEmail}"
+                    tools:ignore="Autofill" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/password"
+                style="@style/text_layout_edit_text"
+                android:layout_below="@id/email"
+                app:hintTextAppearance="@style/TextLabel"
+                app:passwordToggleDrawable="@drawable/password_toggle"
+                app:passwordToggleEnabled="true"
+                app:passwordToggleTint="@color/white">
+
+                <EditText
+                    android:id="@+id/edtPassword"
+                    style="@style/reg_edit_text"
+                    android:drawableStart="@drawable/ic_lock"
+                    android:hint="@string/password"
+                    android:inputType="textPassword"
+                    android:onTextChanged="@{register::onPasswordChanged}"
+                    android:text="@={register.strPassword}"
+                    tools:ignore="Autofill" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/confirmPassword"
+                style="@style/text_layout_edit_text"
+                android:layout_below="@id/password"
+                app:hintTextAppearance="@style/TextLabel"
+                app:passwordToggleDrawable="@drawable/password_toggle"
+                app:passwordToggleEnabled="true"
+                app:passwordToggleTint="@color/white">
+
+                <EditText
+                    android:id="@+id/edtConfirmPassword"
+                    style="@style/reg_edit_text"
+                    android:drawableStart="@drawable/ic_check_circle_blue"
+                    android:hint="@string/confirm_password_label"
+                    android:inputType="textPassword"
+                    android:onTextChanged="@{register::onConfirmPasswordChanged}"
+                    android:text="@={register.strConfirmPassword}"
+                    tools:ignore="Autofill" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/phone"
+                style="@style/text_layout_edit_text"
+                android:layout_below="@id/confirmPassword"
+                app:hintTextAppearance="@style/TextLabel">
+
+                <EditText
+                    android:id="@+id/edtPhone"
+                    style="@style/reg_edit_text"
+                    android:drawableStart="@drawable/ic_smartphone"
+                    android:hint="@string/phone_optional"
+                    android:inputType="phone"
+                    android:imeOptions="actionGo"
+                    android:text="@={register.strPhoneNumber}"
+                    tools:ignore="Autofill" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <Button
+                android:id="@+id/btnSignIn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/phone"
+                android:layout_centerHorizontal="true"
+                android:layout_marginStart="32dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginEnd="32dp"
+                android:background="@color/icon_color"
+                android:elevation="5dp"
+                android:onClick="@{(view) -> register.performRegister()}"
+                android:text="@string/register"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:textStyle="normal"
+                android:translationZ="2dp" />
+
+            <TextView
+                android:id="@+id/txtAccountRegister"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/btnSignIn"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="20dp"
+                android:text="@string/sign_in_already_account"
+                android:textColor="@color/white"
+                android:textSize="16sp" />
+        </RelativeLayout>
+    </ScrollView>
+</layout>

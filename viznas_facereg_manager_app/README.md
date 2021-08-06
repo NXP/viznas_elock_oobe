@@ -1,0 +1,1 @@
+Application used for remote registration for the SLN_VIZNAS_IOT project

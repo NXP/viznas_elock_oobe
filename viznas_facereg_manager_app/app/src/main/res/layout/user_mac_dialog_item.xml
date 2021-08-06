@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+
+        <variable
+            name="deviceInfo"
+            type="com.nxp.facemanager.database.entity.DeviceInfo" />
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="10dp">
+
+        <TextView
+            android:id="@+id/tv_dialog_mac_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/name_of_mac_add"
+            android:textAppearance="?android:textAppearanceMedium"
+            android:textSize="16sp"
+            android:textStyle="bold"
+
+            tools:ignore="HardcodedText" />
+
+
+        <TextView
+            android:id="@+id/tv_dialog_mac_add"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@{deviceInfo.mac_address}"
+            android:textAppearance="?android:textAppearanceSmall"
+            android:textSize="14sp" />
+
+
+    </LinearLayout>
+</layout>

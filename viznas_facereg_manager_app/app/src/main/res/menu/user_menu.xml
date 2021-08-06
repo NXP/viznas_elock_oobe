@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/menuConnect"
+        android:title="@string/connect" />
+
+    <item
+        android:id="@+id/menuTraining"
+        android:title="@string/start_training" />
+
+    <item
+        android:id="@+id/menuFace"
+        android:title="@string/send_face_data" />
+
+
+    <item
+        android:id="@+id/menuSnapshot"
+        android:title="@string/request_snapshot_data" />
+
+    <item
+        android:id="@+id/menuDelete"
+        android:title="@string/delete_entry" />
+</menu>
