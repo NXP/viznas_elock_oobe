@@ -281,7 +281,7 @@ static void jumpToMainAppTask(void)
 
     configPRINTF(("Launching into application at 0x%X...\r\n", appaddr));
 
-    vTaskDelay(portTICK_PERIOD_MS * 100);
+    //vTaskDelay(portTICK_PERIOD_MS * 100);
 
     DbgConsole_Flush();
 
