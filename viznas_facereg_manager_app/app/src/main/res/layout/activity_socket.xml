@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/tv_chat_content"
+        android:layout_width="match_parent"
+        android:layout_height="172dp"
+        android:background="#667755"
+        android:text="TextView"
+        android:typeface="normal"
+        android:visibility="visible" />
+
+    <EditText
+        android:id="@+id/et_send_content"
+        android:layout_width="match_parent"
+        android:layout_height="291dp"
+        android:background="#556699"
+        android:inputType="text"
+        android:lineSpacingExtra="24sp"
+        android:textColor="@color/red"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/but_send"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="send"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_editor_absoluteY="291dp" />
+</androidx.constraintlayout.widget.ConstraintLayout>

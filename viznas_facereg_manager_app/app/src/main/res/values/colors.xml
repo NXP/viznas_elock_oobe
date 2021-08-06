@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#333333</color>
+    <color name="colorPrimaryDark">#222222</color>
+    <color name="colorAccent">@android:color/white</color>
+    <color name="white">@android:color/white</color>
+    <color name="bg_user">#F0EFEF</color>
+    <color name="red">@android:color/holo_red_dark</color>
+    <color name="yellow">@android:color/holo_orange_light</color>
+    <color name="bg_color_splash">#06645C</color>
+    <color name="text_color_primary">@android:color/white</color>
+    <color name="list_text_color">#7F7F7F</color>
+    <color name="color_link">#0645AD</color>
+    <color name="nxp_color_clickable">#2192ed</color>
+
+    <color name="nxp_dark_green">#292902</color>
+    <color name="nxp_base_gray">#B5B2B1</color>
+    <color name="nxp_background_gray">#7E7C7B</color>
+    <color name="nxp_second_clickable">#00A3A7</color>
+
+    <!--new design-->
+    <color name="icon_color">#517B97</color>
+    <color name="icon_color_transparent">#75B2DA</color>
+    <color name="icon_color_unselected">#6C6A6A</color>
+    <color name="statusbar_color">#689FC3</color>
+    <color name="window_bg">#F0EEEF</color>
+    <color name="toolbar_color">#75B2DA</color>
+    <color name="dialog_message_color">#7E7C7B</color>
+    <color name="dialog_title_color">#5A5858</color>
+    <color name="recycle_title">#7F7F7F</color>
+    <color name="recycle_subtitle">#7E7C7B</color>
+    <color name="color_text_grey">#7F7F7F</color>
+    
+    <color name="control_background">#cc4285f4</color>
+
+</resources>

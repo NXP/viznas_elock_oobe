@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_ManageLocks"
+            android:icon="@drawable/ic_lock_selected"
+            android:title="@string/manage_smart_locks" />
+        <item
+            android:id="@+id/nav_ManageUser"
+            android:icon="@drawable/ic_person_selected"
+            android:title="@string/manage_users" />
+        <item
+            android:id="@+id/nav_ChangePassword"
+            android:icon="@drawable/ic_vpn_key_selected"
+            android:title="@string/change_password" />
+        <item
+            android:id="@+id/nav_Help"
+            android:icon="@drawable/ic_help_selected"
+            android:title="@string/help" />
+        <item
+            android:id="@+id/nav_SignOut"
+            android:icon="@drawable/ic_signout_selected"
+            android:title="@string/sign_out" />
+<!--        <item-->
+<!--            android:id="@+id/nav_Registration"-->
+<!--            android:icon="@drawable/ic_face_recognition"-->
+<!--            android:title="@string/face_registration" />-->
+        <item
+            android:id="@+id/nav_RemoteControl"
+            android:icon="@drawable/ic_face_recognition"
+            android:title="@string/remote_control" />
+    </group>
+
+
+</menu>

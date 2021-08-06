@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/ll_dialog"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="10dp"
+    android:orientation="vertical">
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/inputDeviceName"
+        style="@style/text_layout_edit_text_dialog"
+        app:errorEnabled="true">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/edtDeviceName"
+            style="@style/reg_edit_text_dialog"
+            android:drawableStart="@drawable/ic_device_name"
+            android:hint="@string/device_name"
+            android:inputType="textPersonName"
+            android:textAppearance="@style/TextLabel" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/inputIP"
+        style="@style/text_layout_edit_text_dialog"
+        app:errorEnabled="true">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/edtIP"
+            style="@style/reg_edit_text_dialog"
+            android:drawableStart="@drawable/ic_device_name"
+            android:hint="@string/please_enter_ip"
+            android:inputType="number|textPersonName"
+            android:textAppearance="@style/TextLabel" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <Button
+        android:id="@+id/btnOK"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/inputIP"
+        android:layout_centerHorizontal="true"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="5dp"
+        android:background="@color/icon_color"
+        android:elevation="5dp"
+        android:text="@string/ok"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:textSize="20sp"
+        android:textStyle="normal"
+        android:translationZ="2dp" />
+</LinearLayout>

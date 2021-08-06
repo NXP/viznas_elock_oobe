@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorPrimary"
+            android:paddingStart="5dip"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            tools:ignore="RtlSymmetry">
+
+            <!--  ListRow Left sied Thumbnail image -->
+            <LinearLayout
+                android:id="@+id/thumbnail"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_marginEnd="5dip"
+                android:padding="3dip">
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/img_dialog_user"
+                    android:layout_width="30dip"
+                    android:layout_height="30dip"
+                    android:src="@drawable/ic_person_black_48dp" />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_dialog_user_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="5dp"
+                android:layout_toEndOf="@+id/thumbnail"
+                android:text="@string/name"
+                android:textAppearance="?android:textAppearanceLarge"
+                android:textColor="@color/white" />
+
+        </RelativeLayout>
+        <!--<View-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="3dp"-->
+        <!--android:background="?android:attr/listDivider"/>-->
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/dialog_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            tools:listitem="@layout/user_mac_dialog_item" />
+
+        <Button
+            android:id="@+id/dialog_btn_cancel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:text="@android:string/cancel"
+            android:textAllCaps="false" />
+
+    </LinearLayout>
+</layout>

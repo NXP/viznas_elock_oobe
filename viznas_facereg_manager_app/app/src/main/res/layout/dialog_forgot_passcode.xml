@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:background="@android:color/transparent"
+    android:orientation="vertical">
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center"
+            android:padding="10dp"
+            android:text="@string/forgot_password"
+            android:textColor="@color/dialog_title_color"
+            android:textSize="20sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:padding="10dp"
+            android:text="@string/we_just_need_your_register_email_id_to_sent_you_password_reset_instruction"
+            android:textColor="@color/dialog_message_color"
+            android:textSize="15sp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/inputEmail"
+            style="@style/text_layout_edit_text_dialog"
+            app:errorEnabled="true"
+            app:hintTextAppearance="@style/TextLabel">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtEmail"
+                style="@style/reg_edit_text_dialog"
+                android:drawableStart="@drawable/ic_vpn_key_selected"
+                android:hint="@string/email_text"
+                android:inputType="textEmailAddress" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="15dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="15dp"
+            android:background="@color/white"
+            android:layout_marginBottom="10dp"
+            android:orientation="horizontal"
+            android:weightSum="2"
+            android:visibility="visible">
+
+            <Button
+                android:id="@+id/btnCancel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@color/white"
+                android:text="@string/cancel"
+                android:textAllCaps="false"
+                style="?android:attr/borderlessButtonStyle"
+                android:textColor="@color/icon_color"
+                android:textSize="20sp"
+                android:textStyle="normal"
+
+                 />
+
+            <Button
+                android:id="@+id/btnResetPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="15dp"
+                android:layout_weight="1"
+                android:background="@color/white"
+                android:text="@string/reset_password"
+                style="?android:attr/borderlessButtonStyle"
+                android:textAllCaps="false"
+                android:textColor="@color/icon_color"
+                android:textSize="20sp"
+                android:textStyle="normal"
+
+               />
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

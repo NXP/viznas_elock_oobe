@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/menu_disconnect"
+        android:title="@string/disconnect"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/empty"
+        android:icon="@drawable/ic_more_vert"
+        android:orderInCategory="101"
+        android:title=""
+        android:visible="false"
+        app:showAsAction="always">
+
+        <menu>
+
+            <item
+                android:id="@+id/theme_blue_black"
+                android:title="@string/theme_blue_black"
+                app:showAsAction="ifRoom" />
+
+            <item
+                android:id="@+id/theme_gray_white"
+                android:title="@string/theme_gray_white"
+                app:showAsAction="ifRoom" />
+
+        </menu>
+
+    </item>
+
+</menu>

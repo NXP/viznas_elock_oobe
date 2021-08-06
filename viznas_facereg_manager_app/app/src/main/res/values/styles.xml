@@ -1,0 +1,255 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorPrimaryDark</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="colorControlNormal">@android:color/white</item>
+        <item name="android:actionMenuTextColor">@android:color/white</item>
+    </style>
+
+    <style name="AppTheme.Launcher" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowBackground">@color/colorPrimary</item>
+    </style>
+
+
+    <style name="Toolbar.TitleText" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
+        <item name="android:textSize">20sp</item>
+    </style>
+
+
+    <style name="blueBlackTheme" parent="AppTheme">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="color_clickable">@color/nxp_color_clickable</item>
+        <item name="cardStyle">@color/white</item>
+        <item name="progress_color">@color/white</item>
+        <item name="android:textColor">@color/list_text_color</item>
+        <item name="android:windowBackground">@color/nxp_background_gray</item>
+        <item name="actionMenuTextColor">?attr/colorAccent</item>
+        <item name="colorControlActivated">@color/nxp_color_clickable</item>
+        <item name="colorControlNormal">@color/colorPrimaryDark</item>
+    </style>
+
+    <style name="graywhiteTheme" parent="AppTheme">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/white</item>
+        <item name="colorAccent">@color/nxp_dark_green</item>
+        <item name="colorPrimaryDark">@color/nxp_base_gray</item>
+        <item name="color_clickable">@color/nxp_second_clickable</item>
+        <item name="cardStyle">@color/white</item>
+        <item name="progress_color">@color/nxp_background_gray</item>
+        <item name="android:textColor">@color/list_text_color</item>
+        <item name="android:windowBackground">@color/nxp_background_gray</item>
+        <item name="actionMenuTextColor">?attr/colorAccent</item>
+        <item name="colorControlActivated">@color/nxp_second_clickable</item>
+        <item name="colorControlNormal">@color/nxp_base_gray</item>
+    </style>
+
+    <style name="titleText">
+        <item name="android:textSize">16sp</item>
+        <!--<item name="android:textStyle">bold</item>-->
+    </style>
+
+    <style name="subTitleText">
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="smallText">
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <style name="blueBlackTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="blueBlackTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+
+    <style name="AppTheme1" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">@color/toolbar_color</item>
+        <item name="colorPrimaryDark">@color/statusbar_color</item>
+        <item name="colorAccent">@android:color/white</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="windowActionBar">false</item>
+        <item name="android:windowBackground">@color/window_bg</item>
+        <item name="windowActionModeOverlay">true</item>
+        <item name="actionModeStyle">@style/ActionMode</item>
+        <item name="android:statusBarColor">@color/icon_color</item>
+    </style>
+
+    <style name="TextInputLayoutAppearance" parent="Widget.Design.TextInputLayout">
+        <!-- reference our hint & error styles -->
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textColorHint">@color/white</item>
+        <item name="colorControlNormal">@color/white</item>
+        <item name="colorControlActivated">@color/white</item>
+        <item name="colorControlHighlight">@color/white</item>
+    </style>
+
+
+    <style name="TextInputLayoutNewAppearance" parent="Widget.Design.TextInputLayout">
+        <!-- reference our hint & error styles -->
+        <item name="android:textColor">@color/icon_color</item>
+        <item name="android:textColorHint">@color/icon_color</item>
+        <item name="colorControlNormal">@color/icon_color</item>
+        <item name="colorControlActivated">@color/icon_color</item>
+        <item name="colorControlHighlight">@color/icon_color</item>
+    </style>
+
+    <style name="TextLabel" parent="TextAppearance.Design.Hint">
+        <item name="android:textSize">14sp</item>
+    </style>
+
+
+    <style name="reg_edit_text">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:drawablePadding">8dp</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingBottom">16dp</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textColorHint">@color/white</item>
+        <item name="android:textColorLink">@color/white</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+
+
+    <style name="create_user_edit_text">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:drawablePadding">8dp</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingBottom">16dp</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textColorHint">@color/icon_color</item>
+        <item name="android:textColorLink">@color/icon_color</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+
+    <style name="text_layout_edit_text">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">32dp</item>
+        <item name="android:layout_marginTop">1dp</item>
+        <item name="android:layout_marginEnd">32dp</item>
+        <item name="android:padding">2dp</item>
+        <item name="android:theme">@style/TextInputLayoutAppearance</item>
+    </style>
+
+
+    <style name="text_layout_edit_text_user">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">32dp</item>
+        <item name="android:layout_marginTop">8dp</item>
+        <item name="android:layout_marginEnd">32dp</item>
+        <item name="android:padding">2dp</item>
+        <item name="android:theme">@style/TextInputLayoutNewAppearance</item>
+    </style>
+
+    <style name="reg_edit_text_dialog">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:drawablePadding">8dp</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingBottom">16dp</item>
+        <item name="android:textColor">@color/toolbar_color</item>
+        <item name="android:textColorHint">@color/toolbar_color</item>
+        <item name="android:textColorLink">@color/toolbar_color</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+
+    <style name="text_layout_edit_text_dialog">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">10dp</item>
+        <item name="android:layout_marginEnd">10dp</item>
+        <item name="android:padding">2dp</item>
+        <item name="android:theme">@style/TextInputLayoutAppearanceDialog</item>
+    </style>
+
+    <style name="TextInputLayoutAppearanceDialog" parent="Widget.Design.TextInputLayout">
+        <!-- reference our hint & error styles -->
+        <item name="android:textColor">@color/toolbar_color</item>
+        <item name="android:textColorHint">@color/statusbar_color</item>
+        <item name="colorControlNormal">@color/toolbar_color</item>
+        <item name="colorControlActivated">@color/statusbar_color</item>
+        <item name="colorControlHighlight">@color/statusbar_color</item>
+    </style>
+
+
+    <style name="NavDrawerTextStyle">
+        <item name="android:textSize">18sp</item>
+        <item name="listPreferredItemHeightSmall">60dp</item>
+    </style>
+
+    <style name="SearchViewStyle" parent="Widget.AppCompat.SearchView">
+        <!-- Gets rid of the search icon -->
+        <item name="searchIcon">@drawable/ic_search_toolbar</item>
+        <item name="closeIcon">@drawable/ic_close_search</item>
+        <!-- Gets rid of the "underline" in the text -->
+        <item name="queryBackground">@color/toolbar_color</item>
+        <!-- Gets rid of the search icon when the SearchView is expanded -->
+        <item name="searchHintIcon">@drawable/ic_search_toolbar</item>
+        <!-- The hint text that appears when the user has not typed anything -->
+        <item name="queryHint">"Search Text"</item>
+        <item name="android:paddingLeft">-30dip</item>
+    </style>
+
+    <style name="spinnerTheme">
+        <item name="android:textColor">@color/icon_color</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+
+    <style name="ToolbarTheme" parent="@style/ThemeOverlay.AppCompat.ActionBar">
+        <!-- Customize color of navigation drawer icon and back arrow -->
+        <item name="colorControlNormal">@color/white</item>
+    </style>
+
+
+    <style name="AlertDialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="colorAccent">@color/icon_color</item>
+        <item name="android:textColorPrimary">@color/dialog_title_color</item>
+        <item name="android:textColorSecondary">@color/dialog_message_color</item>
+    </style>
+
+    <style name="ActionMode" parent="@style/Widget.AppCompat.ActionMode">
+        <item name="background">@color/toolbar_color</item>
+    </style>
+
+    <style name="ProgressDialogStyle" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="colorAccent">@color/icon_color</item>
+        <item name="android:textColor">@color/dialog_title_color</item>
+    </style>
+
+
+    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    <style name="AppTheme1.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="AppTheme1.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="AppTheme1.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    <style name="MySwitch" parent="Theme.AppCompat.Light">
+        <item name="colorPrimary">@color/nxp_color_clickable</item>
+        <!-- colorPrimaryDark is used for the status bar -->
+        <item name="colorPrimaryDark">#FFB6C1</item>
+        <!-- colorAccent is used as the default value for colorControlActivated,
+             which is used to tint widgets -->
+        <item name="colorAccent">#FFB6C1</item>
+
+    </style>
+
+</resources>
