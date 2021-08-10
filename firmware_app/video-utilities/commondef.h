@@ -335,7 +335,7 @@ typedef union
 #if FLASH_TYPE == HYPER_FLASH
     unsigned char raw[FEATUREDATA_FLASH_PAGE_SIZE * 2];
 #else
-    unsigned char raw[FEATUREDATA_FLASH_PAGE_SIZE * 4];
+    unsigned char raw[FEATUREDATA_FLASH_PAGE_SIZE * 8];
 #endif
 } FeatureItem; // 1kB
 

@@ -21,6 +21,7 @@
 #include "oasis.h"
 #include "sln_api_internal.h"
 #include "sln_shell.h"
+#include "toojpeg.h"
 
 /*******************************************************************************
  * Definitions
@@ -96,6 +97,24 @@ DTC_BSS static StackType_t s_OasisTaskStack[OASISDETTASK_STACKSIZE];
 DTC_BSS static StaticTask_t s_OasisTaskTCB;
 OCRAM_CACHED_BSS RAM_ADDRESS_ALIGNMENT(4) static uint8_t s_OasisMemPool[760 * 1024];
 #endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+int util_resize(const unsigned char* src, int srcw, int srch, unsigned char* dst, int w, int h, int c);
+void util_crop(unsigned char* src, int srcw, int srch, unsigned char* dst, int dstw, int dsth, int top, int left, int elemsize);
+#ifdef __cplusplus
+}
+#endif
+#define OASIS_JPEG_IMG_WIDTH (50)		//50
+#define OASIS_JPEG_IMG_HEIGHT (50)		//50
+static uint8_t s_tmpBuffer4Jpeg[OASIS_JPEG_IMG_WIDTH*OASIS_JPEG_IMG_HEIGHT*3];
+static uint32_t s_dataSizeInJpeg = 0;
+
+static void Oasis_WriteJpegBuffer(uint8_t byte)
+{
+	s_tmpBuffer4Jpeg[s_dataSizeInJpeg++] = byte;
+}
 
 /*******************************************************************************
  * Code
@@ -347,6 +366,49 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
                 face_info.recognize = false;
             }
 
+
+            //save face into jpeg
+			//void util_crop(unsigned char* src, int srcw, int srch, unsigned char* dst, int dstw, int dsth, int top, int left, int elemsize);
+			if (para->faceBoxRGB != NULL && recResult == OASIS_REC_RESULT_KNOWN_FACE)
+			{
+				int w = para->faceBoxRGB->rect[2] - para->faceBoxRGB->rect[0] + 1;
+				int h = para->faceBoxRGB->rect[3] - para->faceBoxRGB->rect[1] + 1;
+				uint8_t* croped = (uint8_t*)pvPortMalloc(w*h*3);
+				assert(croped != NULL);
+				util_crop(frames[OASISLT_INT_FRAME_IDX_RGB]->data,
+						frames[OASISLT_INT_FRAME_IDX_RGB]->width,
+						frames[OASISLT_INT_FRAME_IDX_RGB]->height,
+						croped,
+						w,
+						h,
+						para->faceBoxRGB->rect[1],
+						para->faceBoxRGB->rect[0],
+						3);
+
+
+				//int util_resize(const unsigned char* src, int srcw, int srch, unsigned char* dst, int w, int h, int c);
+				//resize to special size, for example, 50*50
+				uint8_t* resized = (uint8_t*)pvPortMalloc(OASIS_JPEG_IMG_WIDTH*OASIS_JPEG_IMG_HEIGHT*3);
+				util_resize(croped,w,h,resized,OASIS_JPEG_IMG_WIDTH,OASIS_JPEG_IMG_HEIGHT,3);
+				vPortFree(croped);
+
+				//pay attention: our image format is BGR888, need convert to RGB888
+				for (int ii = 0;ii<OASIS_JPEG_IMG_WIDTH*OASIS_JPEG_IMG_HEIGHT;ii++)
+				{
+					uint8_t tmp = resized[3*ii];
+					resized[3*ii] = resized[3*ii + 2];
+					resized[3*ii + 2] = tmp;
+
+				}
+
+
+				s_dataSizeInJpeg = 0;
+				auto ok = TooJpeg::writeJpeg(Oasis_WriteJpegBuffer, resized, OASIS_JPEG_IMG_WIDTH, OASIS_JPEG_IMG_HEIGHT);
+				UsbShell_Printf("[OASIS]:TooJpeg ret:%d file size:%d\r\n", ok,s_dataSizeInJpeg);
+				vPortFree(resized);
+
+			}
+
             VIZN_RecognizeEvent(gApiHandle, face_info);
         }
         break;
@@ -575,8 +637,8 @@ static void Oasis_Task(void *param)
     BaseType_t ret;
     QMsg *rxQMsg              = NULL;
     OASISLTInitPara_t *init_p = (OASISLTInitPara_t *)param;
-    ImageFrame_t frameRGB     = {(short)init_p->height, (short)init_p->width, 0, NULL};
-    ImageFrame_t frameIR      = {(short)init_p->height, (short)init_p->width, 0, NULL};
+    ImageFrame_t frameRGB     = {(short)init_p->height, (short)init_p->width, OASIS_IMG_FORMAT_BGR888, NULL};
+    ImageFrame_t frameIR      = {(short)init_p->height, (short)init_p->width, OASIS_IMG_FORMAT_BGR888, NULL};
     ImageFrame_t *frames[]    = {&frameRGB, &frameIR, NULL};
 //    uint8_t reg_mode          = 0;
     uint8_t run_flag          = OASIS_DET_REC;
@@ -787,7 +849,7 @@ int Oasis_Start()
 
     memset(&s_InitPara, 0, sizeof(s_InitPara));
 
-    s_InitPara.img_format = OASIS_IMG_FORMAT_BGR888;
+    //s_InitPara.img_format = OASIS_IMG_FORMAT_BGR888;
 
     Oasis_SetImgType(&s_InitPara.img_type);
     Oasis_SetModelClass(&s_InitPara.mod_class);

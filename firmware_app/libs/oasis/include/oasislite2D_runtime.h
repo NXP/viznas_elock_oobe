@@ -1,5 +1,5 @@
 /*
-* Copyright 2021 NXP.
+* Copyright 2020 NXP.
 * This software is owned or controlled by NXP and may only be used strictly in accordance with the
 * license terms that accompany it. By expressly accepting such terms or by downloading, installing,
 * activating and/or otherwise using the software, you are agreeing that you have read, and that you
@@ -15,7 +15,7 @@
 
 
 #define VERSION_MAJOR 4
-#define VERSION_MINOR 41
+#define VERSION_MINOR 50
 /*this version number only used for hot fix on frozen release or branch*/
 #define VERSION_HOTFIX 0
 
@@ -73,6 +73,7 @@ typedef enum {
     OASIS_DET_REC,
     OASIS_DET_REC_REG,    //face registration
     OASIS_DET_REC_DEREG,  //face deregistration
+    OASIS_DET_REC_REG_REMOTE, //registration with pictures
     OASIS_RUN_FLAG_NUM
 } OASISRunFlag_t;
 
@@ -110,7 +111,7 @@ typedef enum {
     OASIS_QUALITY_RESULT_FACE_SIDE_FACE,
     OASIS_QUALITY_RESULT_FACE_BLUR,
     OASIS_QUALITY_RESULT_FAIL_LIVENESS_IR,
-    OASIS_QUALITY_RESULT_FAIL_LIVENESS_RGB,
+    OASIS_QUALITY_RESULT_FAIL_LIVENESS_RGB,  //5
     OASIS_QUALITY_RESULT_FAIL_LIVENESS_3D,
     OASIS_QUALITY_RESULT_FAIL_BRIGHTNESS_DARK,
     OASIS_QUALITY_RESULT_FAIL_BRIGHTNESS_OVEREXPOSURE,
@@ -154,7 +155,7 @@ typedef enum {
 
     //theses formats are used internal only
     OASIS_IMG_FORMAT_GREY888,//3 channels
-    OASIS_IMG_FORMAT_GREY,   // 1 channel
+    OASIS_IMG_FORMAT_GREY8,   // 1 channel
     OASIS_IMG_FORMAT_NUM,
     OASIS_IMG_FORMAT_INVALID = 0xFF
 } OASISLTImageFormat_t;
@@ -202,8 +203,7 @@ typedef struct FBox_ {
 typedef struct {
     short height;
     short width;
-    //this int is used for internal purpose, must be set as 0 on initialization
-    int reserved0;
+    OASISLTImageFormat_t fmt; // indicate the format of this frame
     unsigned char* data;
 } ImageFrame_t;
 
@@ -339,6 +339,19 @@ typedef void (*FaceBrightnessAdjust)(uint8_t frame_idx, uint8_t direction, void*
 
 
 typedef struct {
+    const uint8_t* model;
+    const uint8_t* model_data;
+    uint32_t outputID;
+    //scale value for output layer
+    float output_scale;
+    //input HWC
+    int input_h, input_w, input_c;
+    //how many features is output?
+    int output_c;
+} OASISLTCustFaceRec_t;
+
+
+typedef struct {
     /*This callback function is called when any event start/complete inside library.
      * It can be NULL if caller does not care about any event.*/
     OASISLTEvtCb EvtCb;
@@ -371,8 +384,6 @@ typedef struct {
     int height;
     int width;
 
-    //only valid for RGB images; for IR image, always GREY888 format
-    OASISLTImageFormat_t img_format;
     OASISLTImageType_t img_type;
 
     //min_face should not smaller than 40
@@ -464,7 +475,10 @@ int OASISLT_run_identification(ImageFrame_t* input,
  * callback.
  * face_data: [input] face feature is trying to be added to face database.
  * user_data:[input] this user data is going to be transfered to getFace/addFace/updateFace directly.
- * id:[output] if registration successful, it is a unique ID allocated for the input feature
+ * id:[input/output] if *id equal to INVALID_FACE_ID, it means registration by given feature, when registration
+ * successfully, corresponding id will be returned; if *id is not INVALID_FACE_ID, it means a feature update,
+ * face data of corresponding "id" will be updated with given face data
+ * if registration successful, it is a unique ID allocated for the input feature
  * snapshot/snapshot_len:[input] if there is snapshot, it can be also saved.
  * */
 OASISLTRegisterRes_t OASISLT_registration_by_feature(void* face_data,
@@ -479,11 +493,11 @@ OASISLTRegisterRes_t OASISLT_registration_by_feature(void* face_data,
 OASISLTRegisterRes_t OASISLT_MT_registration_by_feature(OASISLTHandler_t handler, void* face_data,
         void* snapshot, int snapshot_len, uint16_t* id, void* user_data);
 int OASISLT_MT_run_identification(OASISLTHandler_t handler,
-                               ImageFrame_t* input,
-                               ImageFrame_t* target,
-                               float* sim);
+                                  ImageFrame_t* input,
+                                  ImageFrame_t* target,
+                                  float* sim);
 int OASISLT_MT_run_extend(OASISLTHandler_t handler, ImageFrame_t* frames[OASISLT_INT_FRAME_IDX_LAST],
-                       uint8_t flag, int minFace, void* userData);
+                          uint8_t flag, int minFace, void* userData);
 /*These 2 callback functions are used for multi-thread support. can be set to NULL for non-multi-thread environment*/
 OASISLTResult_t OASISLT_CreateInstance(OASISLTHandler_t* pHandler);
 OASISLTResult_t OASISLT_DeleteInstance(OASISLTHandler_t handler);
