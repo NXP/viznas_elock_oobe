@@ -17,23 +17,10 @@
 #if CUSTOMIZE_FACE_REC_ALGO
 
 /*Light face recognition model*/
-#include "xxxxxx.h"
+#include "face_rec_model.h"
 #define FACE_REC_NANOAI_MODEL_INSTANCE xxx_int8_binary_model
 #define FACE_REC_NANOAI_MODEL_DATA_INSTANCE xxx_int8_binary_model_data
 #define FACE_REC_NANOAI_MODEL_OUTPUT_ID XXX_INT8_B_PRE_FC1_ID
-
-#if 0
-/*Heavy face recognition model, it is optional, if no heavy model, use same value with Light model*/
-#include "yyyyyy.h"
-#define FACE_REC_NANOAI_MODEL_INSTANCE_HEAVY yyy_int8_binary_model
-#define FACE_REC_NANOAI_MODEL_DATA_INSTANCE_HEAVY yyy_int8_binary_model_data
-#define FACE_REC_NANOAI_MODEL_OUTPUT_ID_HEAVY YYY_INT8_B_PRE_FC1_ID
-#else
-#define FACE_REC_NANOAI_MODEL_INSTANCE_HEAVY NANOAI_MODEL_INSTANCE
-#define FACE_REC_NANOAI_MODEL_DATA_INSTANCE_HEAVY NANOAI_MODEL_DATA_INSTANCE
-#define FACE_REC_NANOAI_MODEL_OUTPUT_ID_HEAVY NANOAI_MODEL_OUTPUT_ID
-
-#endif
 
 /*Model input and output size*/
 #define FACE_REC_FACE_RECOGNIZE_INPUT_C 3
@@ -44,17 +31,9 @@
 
 void face_recognize_get_parameters(OASISLTModelClass_t cls, OASISLTCustFaceRec_t* para)
 {
-    if (cls == OASISLT_MODEL_CLASS_LIGHT) {
-        para->model = FACE_REC_NANOAI_MODEL_INSTANCE;
-        para->model_data = FACE_REC_NANOAI_MODEL_DATA_INSTANCE;
-        para->outputID = FACE_REC_NANOAI_MODEL_OUTPUT_ID;
-
-    } else {
-        para->model = FACE_REC_NANOAI_MODEL_INSTANCE_HEAVY;
-        para->model_data = FACE_REC_NANOAI_MODEL_DATA_INSTANCE_HEAVY;
-        para->outputID = FACE_REC_NANOAI_MODEL_OUTPUT_ID_HEAVY;
-
-    }
+    para->model = FACE_REC_NANOAI_MODEL_INSTANCE;
+    para->model_data = FACE_REC_NANOAI_MODEL_DATA_INSTANCE;
+    para->outputID = FACE_REC_NANOAI_MODEL_OUTPUT_ID;
 
     para->input_h = FACE_REC_FACE_RECOGNIZE_INPUT_H;
     para->input_w = FACE_REC_FACE_RECOGNIZE_INPUT_W;
