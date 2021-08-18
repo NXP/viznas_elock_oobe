@@ -15,7 +15,7 @@
 
 
 #define VERSION_MAJOR 4
-#define VERSION_MINOR 53
+#define VERSION_MINOR 54
 /*this version number only used for hot fix on frozen release or branch*/
 #define VERSION_HOTFIX 0
 
@@ -345,9 +345,24 @@ typedef struct {
 
     //input HWC
     int input_h, input_w, input_c;
+
+    //face recognition threshold
+    float th;
     //how many features is output?
     int output_c;
 } OASISLTCustFaceRec_t;
+
+
+typedef struct {
+    const uint8_t* model;
+    const uint8_t* model_data;
+    uint32_t outputID;
+
+    //input HWC
+    int input_h, input_w, input_c;
+    //liveness threshold
+    float th;
+} OASISLTCustLiveness_t;
 
 
 typedef struct {
