@@ -163,6 +163,7 @@ typedef struct
     int rt;
     int registeredFaces;
     //unsigned char emotion;
+    OASISLTFaceOrientation_t OriExpected;
     float fps;
     float detect_fps;
     float recognize_fps;

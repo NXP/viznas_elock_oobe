@@ -143,6 +143,7 @@ static void clearFaceInfoMsg(QUIInfoMsg *info)
     info->irPwm = 0xFF;
     info->rgbBrightness = 0xFF;
     info->rgbPwm = 0xFF;
+    info->OriExpected = OASISLT_FACE_ORIENTATION_NUM;
 }
 
 static void clearFaceInfo(face_info_t *face_info)
@@ -271,9 +272,9 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
             {
                 UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[EVT]:ok!\r\n");
             }
-            else if (OASIS_QUALITY_RESULT_FACE_SIDE_FACE == para->qualityResult)
+            else if (OASIS_QUALITY_RESULT_FACE_ORIENTATION_UNMATCH == para->qualityResult)
             {
-                UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[EVT]:side face!\r\n");
+                UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[EVT]:face orientation unmatch!\r\n");
             }
             else if (para->qualityResult == OASIS_QUALITY_RESULT_FACE_TOO_SMALL)
             {
@@ -283,11 +284,11 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
             {
                 UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[EVT]: Blurry Face!\r\n");
             }
-            else if (para->qualityResult == OASIS_QUALITY_RESULT_FAIL_LIVENESS_IR)
+            else if (para->qualityResult == OASIS_QUALITY_RESULT_IR_FAKE)
             {
                 UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[EVT]: IR Fake Face!\r\n");
             }
-            else if (para->qualityResult == OASIS_QUALITY_RESULT_FAIL_LIVENESS_RGB)
+            else if (para->qualityResult == OASIS_QUALITY_RESULT_RGB_FAKE)
             {
                 UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[EVT]: RGB Fake Face!\r\n");
             }else if (para->qualityResult == OASIS_QUALITY_RESULT_FAIL_BRIGHTNESS_DARK
@@ -423,6 +424,7 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
         break;
 
         case OASISLT_EVT_REG_IN_PROGRESS:
+        	gui_info.OriExpected = para->faceOrientation;
             break;
         case OASISLT_EVT_REG_COMPLETE:
         {
@@ -458,7 +460,8 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
     }
 
     if (evt == OASISLT_EVT_DET_COMPLETE || evt == OASISLT_EVT_REC_COMPLETE ||
-        evt == OASISLT_EVT_QUALITY_CHK_COMPLETE || evt == OASISLT_EVT_REG_COMPLETE)
+        evt == OASISLT_EVT_QUALITY_CHK_COMPLETE || evt == OASISLT_EVT_REG_COMPLETE
+		|| evt == OASISLT_EVT_REG_IN_PROGRESS)
     {
         gui_info.similar = para->reserved[0];
         Oasis_SendFaceInfoMsg(gui_info);
@@ -873,7 +876,7 @@ int Oasis_Start()
     s_InitPara.enableFlags = 0;
     if (s_appType != APP_TYPE_USERID)
     {
-        //s_InitPara.enable_flags |= OASIS_ENABLE_MULTI_VIEW;
+        s_InitPara.enableFlags |= 0;//OASIS_ENABLE_MULTI_VIEW;
     }
     s_InitPara.falseAcceptRate = OASIS_FAR_1_1000000;
     s_InitPara.enableFlags |= (Cfg_AppDataGetLivenessMode() == LIVENESS_MODE_ON) ? OASIS_ENABLE_LIVENESS : 0;

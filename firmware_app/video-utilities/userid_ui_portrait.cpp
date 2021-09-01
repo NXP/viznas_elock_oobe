@@ -234,6 +234,22 @@ static void UIInfo_UpdateQualityInfo(uint16_t *pAsBufferAddr, QUIInfoMsg* infoMs
 
     draw_text(tstring, POS_QUALITY_INFO_X + CAMERA_SURFACE_SHIFT, POS_QUALITY_INFO_Y + 80, color, -1, type,
               pAsBufferAddr);
+
+    //give hint for face orientation
+    char* hint[OASISLT_FACE_ORIENTATION_NUM + 1] =
+    {
+    		"front",
+			"left",
+			"right",
+			"up",
+			"down",
+			"invalid"
+    };
+    memset(tstring, 0x0, 64);
+    sprintf(tstring, "Face ORI:%s", hint[infoMsg->OriExpected]);
+    color = RGB565_GREEN;
+    draw_text(tstring, POS_QUALITY_INFO_X + CAMERA_SURFACE_SHIFT, POS_QUALITY_INFO_Y + 100, color, -1, type,
+              pAsBufferAddr);
 }
 
 static void UIInfo_UpdateBottomInfoBar(uint16_t *pBufferAddr, QUIInfoMsg* infoMsg, uint8_t appType)

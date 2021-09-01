@@ -13,13 +13,15 @@
 #include "stdint.h"
 
 #define VERSION_MAJOR 4
-#define VERSION_MINOR 59
+#define VERSION_MINOR 63
+
 /*this version number only used for hot fix on frozen release or branch*/
 #define VERSION_HOTFIX 0
 
+/* Face ID is a UINT16, 0xFFFFUL indicates a invalid face ID */
 #define INVALID_FACE_ID (0xFFFFUL)
 
-/*these macros are used in OASISLT_init, they can be combined to indicate
+/* These macros are used in OASISLT_init, they can be combined to indicate
  * what functions should be enabled in OASIS LIB.*/
 enum
 {
@@ -68,9 +70,9 @@ typedef enum
     OASIS_DET_ONLY = 0,
     OASIS_DET_WITH_QUALITY_CHECK,
     OASIS_DET_REC,
-    OASIS_DET_REC_REG,        // face registration
-    OASIS_DET_REC_DEREG,      // face deregistration
-    OASIS_DET_REC_REG_REMOTE, // registration with pictures
+    OASIS_DET_REC_REG,        /* Face registration */
+    OASIS_DET_REC_DEREG,      /* Face deregistration */
+    OASIS_DET_REC_REG_REMOTE, /* Registration with pictures */
     OASIS_RUN_FLAG_NUM
 } OASISRunFlag_t;
 
@@ -83,7 +85,7 @@ typedef enum
 
 typedef enum
 {
-    /*these results are used by event OASISLT_EVT_REG_COMPLETE*/
+    /* These results are used by event OASISLT_EVT_REG_COMPLETE */
     OASIS_REG_RESULT_OK,
     OASIS_REG_RESULT_DUP,
     OASIS_REG_RESULT_CANCELED,
@@ -93,23 +95,36 @@ typedef enum
 
 typedef enum
 {
-    /*these results are used by event OASISLT_EVT_DEREG_COMPLETE*/
+    /* These results are used by event OASISLT_EVT_DEREG_COMPLETE */
     OASIS_DEREG_RESULT_OK,
     OASIS_DEREG_RESULT_CANCELED,
     OASIS_DEREG_RESULT_DB_OP_FAILED,
     OASIS_DEREG_RESULT_INVALID = 0xFF
 } OASISLTDeregisterRes_t;
 
+typedef enum{
+	OASISLT_FACE_ORIENTATION_FRONT,
+	OASISLT_FACE_ORIENTATION_LEFT,
+	OASISLT_FACE_ORIENTATION_RIGHT,
+	OASISLT_FACE_ORIENTATION_UP,
+	OASISLT_FACE_ORIENTATION_DOWN,
+	OASISLT_FACE_ORIENTATION_NUM
+}OASISLTFaceOrientation_t;
+
 typedef enum
 {
-    /*these results are used by event OASISLT_EVT_QUALITY_CHK_COMPLETE*/
+    /* These results are used by event OASISLT_EVT_QUALITY_CHK_COMPLETE */
     OASIS_QUALITY_RESULT_FACE_OK,
     OASIS_QUALITY_RESULT_FACE_TOO_SMALL,
-    OASIS_QUALITY_RESULT_FACE_SIDE_FACE,
+    OASIS_QUALITY_RESULT_FACE_ORIENTATION_UNMATCH,
     OASIS_QUALITY_RESULT_FACE_BLUR,
-    OASIS_QUALITY_RESULT_FAIL_LIVENESS_IR,
-    OASIS_QUALITY_RESULT_FAIL_LIVENESS_RGB, // 5
-    OASIS_QUALITY_RESULT_FAIL_LIVENESS_3D,
+    /* Following 2 values are only valid for RGB+IR dual camera module case */
+    OASIS_QUALITY_RESULT_IR_FAKE,
+    OASIS_QUALITY_RESULT_RGB_FAKE, // 5
+    /* Following 3 values are only valid for 3D camera module case */
+    OASIS_QUALITY_RESULT_2D_FAKE,
+    OASIS_QUALITY_RESULT_3D_FAKE,
+    OASIS_QUALITY_RESULT_DEPTH_INVALID,
     OASIS_QUALITY_RESULT_FAIL_BRIGHTNESS_DARK,
     OASIS_QUALITY_RESULT_FAIL_BRIGHTNESS_OVEREXPOSURE,
     OASIS_QUALITY_RESULT_INVALID = 0xFF
@@ -138,7 +153,7 @@ typedef enum
     OASIS_FAR_INVALID = 0xFF
 } OASISLTFar_t;
 
-/*Face recognition Model class:
+/* Face recognition Model classes, have been discarded.
  * light model means a light calculation,fast speed and a lower accuracy.
  * heavy model means a heavy calculation,lower speed and a higher accuracy.
  * */
@@ -154,7 +169,7 @@ typedef enum
     OASIS_IMG_FORMAT_RGB888, // 3 channels
     OASIS_IMG_FORMAT_BGR888, // 3 channels
 
-    // theses formats are used internal only
+    /* theses formats are used internal only */
     OASIS_IMG_FORMAT_GREY888, // 3 channels
     OASIS_IMG_FORMAT_GREY8,   // 1 channel
     OASIS_IMG_FORMAT_NUM,
@@ -218,6 +233,7 @@ typedef struct
     FaceBox_t *faceBoxRGB;                           // face rect and landmark on RGB image
     uint16_t faceID;                            // only valid when a face recognized or registered
     OASISLTRegisterRes_t regResult;             // only valid for registration
+    OASISLTFaceOrientation_t faceOrientation;    //valid for face registration in progress event
     OASISLTDeregisterRes_t deregResult;         // only valid for deregistration
     OASISLTRecognizeRes_t recResult;            // only valid for face recognition
     OASISLTFaceQualityRes_t qualityResult;      // only valid for face quality check event.
