@@ -98,14 +98,7 @@ DTC_BSS static StaticTask_t s_OasisTaskTCB;
 OCRAM_CACHED_BSS RAM_ADDRESS_ALIGNMENT(4) static uint8_t s_OasisMemPool[760 * 1024];
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-int util_resize(const unsigned char* src, int srcw, int srch, unsigned char* dst, int w, int h, int c);
-void util_crop(unsigned char* src, int srcw, int srch, unsigned char* dst, int dstw, int dsth, int top, int left, int elemsize);
-#ifdef __cplusplus
-}
-#endif
+
 #define OASIS_JPEG_IMG_WIDTH (50)		//50
 #define OASIS_JPEG_IMG_HEIGHT (50)		//50
 static uint8_t s_tmpBuffer4Jpeg[OASIS_JPEG_IMG_WIDTH*OASIS_JPEG_IMG_HEIGHT*3];
@@ -375,7 +368,7 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
 				int h = para->faceBoxRGB->rect[3] - para->faceBoxRGB->rect[1] + 1;
 				uint8_t* croped = (uint8_t*)pvPortMalloc(w*h*3);
 				assert(croped != NULL);
-				util_crop(frames[OASISLT_INT_FRAME_IDX_RGB]->data,
+				OASISLT_util_crop(frames[OASISLT_INT_FRAME_IDX_RGB]->data,
 						frames[OASISLT_INT_FRAME_IDX_RGB]->width,
 						frames[OASISLT_INT_FRAME_IDX_RGB]->height,
 						croped,
@@ -383,13 +376,17 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
 						h,
 						para->faceBoxRGB->rect[1],
 						para->faceBoxRGB->rect[0],
-						3);
+						OASIS_IMG_FORMAT_BGR888);
 
 
-				//int util_resize(const unsigned char* src, int srcw, int srch, unsigned char* dst, int w, int h, int c);
+
 				//resize to special size, for example, 50*50
 				uint8_t* resized = (uint8_t*)pvPortMalloc(OASIS_JPEG_IMG_WIDTH*OASIS_JPEG_IMG_HEIGHT*3);
-				util_resize(croped,w,h,resized,OASIS_JPEG_IMG_WIDTH,OASIS_JPEG_IMG_HEIGHT,3);
+				int tmp_buf_size = OASISLT_util_resize(croped,w,h,
+										resized,OASIS_JPEG_IMG_WIDTH,OASIS_JPEG_IMG_HEIGHT,OASIS_IMG_FORMAT_BGR888,NULL);
+				uint8_t* tmp_resized = (uint8_t*)pvPortMalloc(tmp_buf_size);
+				OASISLT_util_resize(croped,w,h,resized,OASIS_JPEG_IMG_WIDTH,OASIS_JPEG_IMG_HEIGHT,OASIS_IMG_FORMAT_BGR888,tmp_resized);
+				vPortFree(tmp_resized);
 				vPortFree(croped);
 
 				//pay attention: our image format is BGR888, need convert to RGB888
@@ -670,7 +667,7 @@ static void Oasis_Task(void *param)
                         frameIR.data         = s_FaceRecBuf.dataIR;
                         // if user request to add new user, enable reg mode, it not, use default mode (get enrolment
                         // mode)
-                        int ret = OASISLT_run_extend(frames, run_flag, init_p->min_face, &gTimeStat);
+                        int ret = OASISLT_run_extend(frames, run_flag, init_p->minFace, &gTimeStat);
                         if (ret)
                         {
                             UsbShell_Printf("N:%d %d\r\n", ret, g_OASISLT_heap_debug);
@@ -851,10 +848,10 @@ int Oasis_Start()
 
     //s_InitPara.img_format = OASIS_IMG_FORMAT_BGR888;
 
-    Oasis_SetImgType(&s_InitPara.img_type);
-    Oasis_SetModelClass(&s_InitPara.mod_class);
+    Oasis_SetImgType(&s_InitPara.imgType);
+    Oasis_SetModelClass(&s_InitPara.modClass);
 
-    s_InitPara.min_face = OASIS_DETECT_MIN_FACE;
+    s_InitPara.minFace = OASIS_DETECT_MIN_FACE;
     s_InitPara.cbs.EvtCb = EvtHandler;
 	s_InitPara.cbs.GetFaces = GetRegisteredFacesHandler;
 	s_InitPara.cbs.AddFace = AddNewFaceHandler;
@@ -866,13 +863,13 @@ int Oasis_Start()
     }
     s_InitPara.cbs.lock = s_InitPara.cbs.unlock = NULL;
 
-    s_InitPara.enable_flags = 0;
+    s_InitPara.enableFlags = 0;
     if (s_appType != APP_TYPE_USERID)
     {
-        s_InitPara.enable_flags |= OASIS_ENABLE_MULTI_VIEW;
+        //s_InitPara.enable_flags |= OASIS_ENABLE_MULTI_VIEW;
     }
-    s_InitPara.false_accept_rate = OASIS_FAR_1_1000000;
-    s_InitPara.enable_flags |= (Cfg_AppDataGetLivenessMode() == LIVENESS_MODE_ON) ? OASIS_ENABLE_LIVENESS : 0;
+    s_InitPara.falseAcceptRate = OASIS_FAR_1_1000000;
+    s_InitPara.enableFlags |= (Cfg_AppDataGetLivenessMode() == LIVENESS_MODE_ON) ? OASIS_ENABLE_LIVENESS : 0;
 
 
     s_InitPara.height = REC_RECT_HEIGHT;
@@ -885,19 +882,19 @@ int Oasis_Start()
 #if configSUPPORT_STATIC_ALLOCATION
         if (s_InitPara.size <= (int)sizeof(s_OasisMemPool))
         {
-            s_InitPara.mem_pool = (char *)s_OasisMemPool;
+            s_InitPara.memPool = (char *)s_OasisMemPool;
             s_InitPara.size = sizeof(s_OasisMemPool);
         }
         else
         {
         	//allocate from heap
-        	s_InitPara.mem_pool = (char *)pvPortMalloc(s_InitPara.size);
+        	s_InitPara.memPool = (char *)pvPortMalloc(s_InitPara.size);
         }
 #else
         s_InitPara.mem_pool = (char *)pvPortMalloc(s_InitPara.size);
 #endif
 
-        if (s_InitPara.mem_pool == NULL)
+        if (s_InitPara.memPool == NULL)
         {
             UsbShell_Printf("[ERROR]: Unable to allocate memory for oasis mem pool\r\n");
             ret = -3;
@@ -962,17 +959,17 @@ static int Oasis_Exit()
     		s_FaceRecBuf.dataIR = NULL;
     	}
     }
-    if (s_InitPara.mem_pool)
+    if (s_InitPara.memPool)
     {
 #if configSUPPORT_STATIC_ALLOCATION
 		if (s_InitPara.size > (int)sizeof(s_OasisMemPool))
 		{
-			vPortFree(s_InitPara.mem_pool);
+			vPortFree(s_InitPara.memPool);
 		}
 #else
     	vPortFree(s_InitPara.mem_pool);
 #endif
-    	s_InitPara.mem_pool = NULL;
+    	s_InitPara.memPool = NULL;
     }
 
     if (s_FaceRecBuf.dataRGB != NULL)
