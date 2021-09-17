@@ -282,24 +282,15 @@ static void GC0308_SensorInitialSetting(camera_device_handle_t *handle, const ca
 	GC0308_Write(handle, 0xe9, 1U, 0x08);
 	GC0308_Write(handle, 0xea, 1U, 0x0a);	/* exp level 3, 2700*/
 	GC0308_Write(handle, 0xeb, 1U, 0x8c);
-
-    //GC0308_Write(handle, 0xe4, 1U, 0x01);	/* exp level 0*/
-    //GC0308_Write(handle, 0xe5, 1U, 0xF4);
-    //GC0308_Write(handle, 0xe6, 1U, 0x01);	/* exp level 1*/
-    //GC0308_Write(handle, 0xe7, 1U, 0xF4);
-    //GC0308_Write(handle, 0xe8, 1U, 0x01);	/* exp level 2 */
-    //GC0308_Write(handle, 0xe9, 1U, 0xF4);
-    //GC0308_Write(handle, 0xea, 1U, 0x01);	/* exp level 3 */
-    //GC0308_Write(handle, 0xeb, 1U, 0xF4);
 #else
-    GC0308_Write(handle, 0xe4, 1U, 0x02); /* exp level 0 */
+    GC0308_Write(handle, 0xe4, 1U, 0x02);  /* exp level 0 */
     GC0308_Write(handle, 0xe5, 1U, 0x58);
-    GC0308_Write(handle, 0xe6, 1U, 0x02); /* exp level 1 */
-    GC0308_Write(handle, 0xe7, 1U, 0x58);
-    GC0308_Write(handle, 0xe8, 1U, 0x02); /* exp level 2 */
-    GC0308_Write(handle, 0xe9, 1U, 0x58);
-    GC0308_Write(handle, 0xea, 1U, 0x02); /* exp level 3 */
-    GC0308_Write(handle, 0xeb, 1U, 0x58);
+	GC0308_Write(handle, 0xe6, 1U, 0x03);	/* exp level 1, 900*/
+	GC0308_Write(handle, 0xe7, 1U, 0x84);
+	GC0308_Write(handle, 0xe8, 1U, 0x07);	/* exp level 2, 1800*/
+	GC0308_Write(handle, 0xe9, 1U, 0x08);
+	GC0308_Write(handle, 0xea, 1U, 0x0a);	/* exp level 3, 2700*/
+	GC0308_Write(handle, 0xeb, 1U, 0x8c);
 #endif
     GC0308_Write(handle, 0x05, 1U, 0x00);
     GC0308_Write(handle, 0x06, 1U, 0x00);
@@ -391,13 +382,13 @@ static void GC0308_SensorInitialSetting(camera_device_handle_t *handle, const ca
     GC0308_Write(handle, 0x3e, 1U, 0x00);
     GC0308_Write(handle, 0x3f, 1U, 0x00);
     GC0308_Write(handle, 0x50, 1U, 0x10);
-    GC0308_Write(handle, 0x53, 1U, 0x82);
+    GC0308_Write(handle, 0x53, 1U, 0x80); //0x82
     GC0308_Write(handle, 0x54, 1U, 0x80);
     GC0308_Write(handle, 0x55, 1U, 0x80);
-    GC0308_Write(handle, 0x56, 1U, 0x82);
-    GC0308_Write(handle, 0x57, 1U, 0x78);
-    GC0308_Write(handle, 0x58, 1U, 0x78);
-    GC0308_Write(handle, 0x59, 1U, 0x86);
+    GC0308_Write(handle, 0x56, 1U, 0x80); //0x82
+    GC0308_Write(handle, 0x57, 1U, 0x80); //0x78
+    GC0308_Write(handle, 0x58, 1U, 0x80); //0x78
+    GC0308_Write(handle, 0x59, 1U, 0x80); //0x86
 
     GC0308_Write(handle, 0x8b, 1U, 0x40);
     GC0308_Write(handle, 0x8c, 1U, 0x40);
@@ -465,7 +456,7 @@ static void GC0308_SensorInitialSetting(camera_device_handle_t *handle, const ca
 	//GC0308_Write(handle, 0xec, 1U, 0x20);
 	GC0308_Write(handle, 0xec, 1U, 0x00);
     GC0308_Write(handle, 0xed, 1U, 0x04);
-    GC0308_Write(handle, 0xee, 1U, 0xa0);
+    GC0308_Write(handle, 0xee, 1U, 0x80);
     GC0308_Write(handle, 0xef, 1U, 0x40);
     GC0308_Write(handle, 0x80, 1U, 0x03);
     GC0308_Write(handle, 0x80, 1U, 0x03);
@@ -630,9 +621,9 @@ static void GC0308_WriteMoreRegisters(camera_device_handle_t *handle)
     GC0308_Write(handle, 0x14, 1U, 0x44);
     GC0308_Write(handle, 0x15, 1U, 0x44);
 
-    GC0308_Write(handle, 0x1c, 1U, 0x70);
-    GC0308_Write(handle, 0x1d, 1U, 0x58);
-    GC0308_Write(handle, 0x1e, 1U, 0x50);
+    GC0308_Write(handle, 0x1c, 1U, 0x80); // 0x70
+    GC0308_Write(handle, 0x1d, 1U, 0x80); // 0x58
+    GC0308_Write(handle, 0x1e, 1U, 0x80); // 0x50
 
     GC0308_Write(handle, 0x19, 1U, 0x50);
     GC0308_Write(handle, 0x1a, 1U, 0xd8);

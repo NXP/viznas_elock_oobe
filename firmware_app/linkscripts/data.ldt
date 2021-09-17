@@ -3,4 +3,5 @@
         *flexspi_qspi_flash_ops.o(.text*)
         *fsl_flexspi.o(.text*)
         *sln_flash.o(.text*)
+        *liboasis_lite2D_DEFAULT_106f_ae.a:(.text*)
 </#if>

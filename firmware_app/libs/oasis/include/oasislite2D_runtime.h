@@ -13,7 +13,7 @@
 #include "stdint.h"
 
 #define VERSION_MAJOR 4
-#define VERSION_MINOR 56
+#define VERSION_MINOR 59
 /*this version number only used for hot fix on frozen release or branch*/
 #define VERSION_HOTFIX 0
 
@@ -59,6 +59,7 @@ typedef enum
     OASISLT_SNAPSHOT_INVALID_FRAME_NUM,
     OASISLT_SNAPSHOT_IMG_TYPE_NOT_SUPPORT,
     OASISLT_SNAPSHOT_RESIZE_FAILED, // 20
+    OASIS_INIT_INVALID_FASTMEMORYBUFFER,
 
 } OASISLTResult_t;
 
@@ -415,6 +416,13 @@ typedef struct
 
     /*memory pool size*/
     int size;
+
+    /*Fast memory buffer pointer, this buffer should only be used by inference engine inside OASIS LIB
+     * set NULL as disable */
+    char* fastMemBuf;
+
+    /*Fast memory buffer size, set 0 as disable, suggest (32*1024) or (64*1024) or (128*1024) */
+    int fastMemSize;
 
     /*callback functions provided by caller*/
     InfCallbacks_t cbs;

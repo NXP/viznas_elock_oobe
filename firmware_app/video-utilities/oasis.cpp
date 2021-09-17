@@ -92,6 +92,13 @@ static uint8_t s_appType;
 
 volatile int g_OASISLT_heap_debug;
 
+/*dtc buffer for inference engine optimization*/
+#define DTC_OPTIMIZE_BUFFER_SIZE (64*1024)
+
+//dtc buffer for inference engine optimization
+__attribute__((section(".bss.$SRAM_DTC"))) static char s_DTCOPBuf[DTC_OPTIMIZE_BUFFER_SIZE];
+
+
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
 DTC_BSS static StackType_t s_OasisTaskStack[OASISDETTASK_STACKSIZE];
 DTC_BSS static StaticTask_t s_OasisTaskTCB;
@@ -874,7 +881,8 @@ int Oasis_Start()
 
     s_InitPara.height = REC_RECT_HEIGHT;
     s_InitPara.width  = REC_RECT_WIDTH;
-
+    s_InitPara.fastMemSize = DTC_OPTIMIZE_BUFFER_SIZE;
+    s_InitPara.fastMemBuf  = s_DTCOPBuf;
     ret = OASISLT_init(&s_InitPara);
 
     if (ret == OASIS_INIT_INVALID_MEMORYPOOL)
