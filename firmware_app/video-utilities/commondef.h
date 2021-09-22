@@ -282,7 +282,7 @@ typedef struct
 
 #define FACEREC_FS_ITEM_ADDR  (FACEREC_FS_MAP_ADDR + FLASH_SECTOR_SIZE)
 #define FACEREC_FS_FIRST_SECTOR ((FACEREC_FS_MAP_ADDR) / (FLASH_SECTOR_SIZE))
-#define FACEREC_FS_SECTORS (((FEATUREDATA_MAX_COUNT * 1024)+ (FLASH_SECTOR_SIZE -1)) / (FLASH_SECTOR_SIZE))
+
 #define FEATUREDATA_FLASH_PAGE_SIZE FACEREC_FS_FLASH_PAGE_SIZE
 
 #define FEATUREDATA_MAGIC_UNUSE 0xFF
@@ -300,7 +300,8 @@ typedef struct
 /********************************************************
  * item        |  address   |  size/sector | for RT106F_ELOCK_BOARD
  * FeatureMap  | 0x60B20000 |      1      |
- * FeatureItem | 0x60B21000~0x60B3A000 |       25      |
+ * FeatureItem | 0x60B21000~0x60B3A000 |      25*(4096)    |   for 1kB feature size
+ * FeatureItem | 0x60B21000~0x60B53000 |       50*(4096)    |   for 2kB feature size
  */
 typedef struct
 {
@@ -315,7 +316,6 @@ typedef struct
      * (FEATUREDATA_FLASH_PAGE_SIZE * 2 - 1 - FEATUREDATA_NAME_MAX_LEN - 4 - 4)/4*/
     float feature[0];
 } FeatureItemHeader;
-
 
 typedef union
 {
@@ -333,11 +333,13 @@ typedef union
         float feature[0];
     };
 #if FLASH_TYPE == HYPER_FLASH
-    unsigned char raw[FEATUREDATA_FLASH_PAGE_SIZE * 2];
+    unsigned char raw[FEATUREDATA_FLASH_PAGE_SIZE * 4]; // 2-->4
 #else
-    unsigned char raw[FEATUREDATA_FLASH_PAGE_SIZE * 8];
+    unsigned char raw[FEATUREDATA_FLASH_PAGE_SIZE * 8]; // 4-->8
 #endif
-} FeatureItem; // 1kB
+} FeatureItem; // 1kB->2kB
+
+#define FACEREC_FS_SECTORS (((FEATUREDATA_MAX_COUNT * sizeof(FeatureItem))+ (FLASH_SECTOR_SIZE -1)) / (FLASH_SECTOR_SIZE))
 
 typedef union
 {
