@@ -306,7 +306,7 @@ static void Camera_LedTimer_Init()
     pwm_config_t pwmConfig;
     pwm_signal_param_t pwmSignal;
     //uint32_t pwmSourceClockInHz;
-    uint32_t pwmFrequencyInHz = 1000;
+    uint32_t pwmFrequencyInHz = 2000;
 
     /* Set the PWM Fault inputs to a low value */
     XBARA_Init(XBARA1);
@@ -320,7 +320,8 @@ static void Camera_LedTimer_Init()
     pwmConfig.pairOperation   = kPWM_Independent;//kPWM_ComplementaryPwmA;
     pwmConfig.enableDebugMode = true;
     pwmConfig.clockSource = kPWM_BusClock;//kPWM_Submodule0Clock;
-    pwmConfig.initializationControl = kPWM_Initialize_MasterSync;
+    pwmConfig.prescale = kPWM_Prescale_Divide_8;
+    pwmConfig.initializationControl = kPWM_Initialize_LocalSync;
     PWM_Init(LED_PWM, LED_PWM_MOD_IR, &pwmConfig);
     PWM_Init(LED_PWM, LED_PWM_MOD_RGB, &pwmConfig);
 
@@ -328,7 +329,7 @@ static void Camera_LedTimer_Init()
     deadTimeVal = ((uint64_t)pwmSourceClockInHz * 650) / 1000000000;
     pwmSignal.pwmChannel       = kPWM_PwmA;
     pwmSignal.level            = kPWM_HighTrue;
-    pwmSignal.dutyCyclePercent = 50;
+    pwmSignal.dutyCyclePercent = 0;
     pwmSignal.deadtimeValue    = deadTimeVal;
     PWM_SetupPwm(LED_PWM, LED_PWM_MOD_IR, &pwmSignal, 1, kPWM_SignedCenterAligned, pwmFrequencyInHz, pwmSourceClockInHz);
     pwmSignal.dutyCyclePercent = 0;

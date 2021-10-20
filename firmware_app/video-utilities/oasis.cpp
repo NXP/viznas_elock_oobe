@@ -13,7 +13,6 @@
 #include "queue.h"
 #include "camera.h"
 #include "fsl_camera_device.h"
-#include "oasis.h"
 #include "stdio.h"
 #include <vector>
 #include <string>
@@ -31,6 +30,15 @@
  * To obtain good face brightness in different light conditions.
  * Also balance power consumption and recognition distance.
  */
+#if BOARD_SUPPORT_PARALLEL_LCD
+#define IR_PWM_MIN      10
+#define IR_PWM_MAX      50
+#define IR_PWM_INTERVAL 10
+
+#define WHITE_PWM_MIN      0
+#define WHITE_PWM_MAX      6
+#define WHITE_PWM_INTERVAL 2
+#else
 #define IR_PWM_MIN      20
 #define IR_PWM_MAX      100
 #define IR_PWM_INTERVAL 10
@@ -38,6 +46,7 @@
 #define WHITE_PWM_MIN      0
 #define WHITE_PWM_MAX      30
 #define WHITE_PWM_INTERVAL 5
+#endif
 
 struct TimeStat
 {
