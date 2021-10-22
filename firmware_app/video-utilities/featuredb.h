@@ -34,7 +34,7 @@ class FeatureDB
     int del_feature(uint16_t id, std::string name);
     int del_feature(const std::string name);
     int del_feature_all();
-    std::vector<std::string> get_names();
+    std::vector<std::string> get_names(int count);
     int get_name(uint16_t id, std::string &name);
     std::vector<uint16_t> get_ids();
     int ren_name(const std::string oldname, const std::string newname);

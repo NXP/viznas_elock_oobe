@@ -13,9 +13,9 @@
 #include "stdint.h"
 
 #define VERSION_MAJOR 4
-#define VERSION_MINOR 63
+#define VERSION_MINOR 68
 
-/*this version number only used for hot fix on frozen release or branch*/
+/* This version number only used for hot fix on frozen release or branch */
 #define VERSION_HOTFIX 0
 
 /* Face ID is a UINT16, 0xFFFFUL indicates a invalid face ID */
@@ -125,6 +125,7 @@ typedef enum
     OASIS_QUALITY_RESULT_2D_FAKE,
     OASIS_QUALITY_RESULT_3D_FAKE,
     OASIS_QUALITY_RESULT_DEPTH_INVALID,
+	OASIS_QUALITY_RESULT_FACE_WITH_MASK,
     OASIS_QUALITY_RESULT_FAIL_BRIGHTNESS_DARK,
     OASIS_QUALITY_RESULT_FAIL_BRIGHTNESS_OVEREXPOSURE,
     OASIS_QUALITY_RESULT_INVALID = 0xFF
@@ -237,9 +238,9 @@ typedef struct
     OASISLTDeregisterRes_t deregResult;         // only valid for deregistration
     OASISLTRecognizeRes_t recResult;            // only valid for face recognition
     OASISLTFaceQualityRes_t qualityResult;      // only valid for face quality check event.
-    OASISLTFaceMaskCheckRes_t maskResult;       // only valid for face mask check event.
+    //OASISLTFaceMaskCheckRes_t maskResult;       // only valid for face mask check event.
     OASISLTFaceGlassesCheckRes_t glassesResult; // only valid for face glasses check event.
-#define OASISLT_CB_PARA_RESERVED_INT 16
+#define OASISLT_CB_PARA_RESERVED_INT 32
     int reserved[OASISLT_CB_PARA_RESERVED_INT]; // this field is reserved for debugging purpose
 } OASISLTCbPara_t;
 
@@ -382,6 +383,11 @@ typedef struct {
 
     //input HWC
     int inputHeight, inputWidth, inputChn;
+
+    /* face rect extend ratio, it is [max(inputHeight,inputWidth)-max(faceWidth,faceHeight)]/max(faceWidth,faceHeight)
+     * unit:0.0001 */
+    int faceExtendRatio;
+
     //liveness threshold
     float th;
 } OASISLTCustLiveness_t;
@@ -418,38 +424,38 @@ typedef struct {
 
 typedef struct
 {
-    // max input image height, width and channel, minFace: minimum face can be detected
+    /* Max input image height, width and channel, minFace: minimum face can be detected */
     int height;
     int width;
 
     OASISLTImageType_t imgType;
 
-    //min_face should not smaller than 40
+    /* minFace should not smaller than 40 */
     int minFace;
 
-    /*memory pool pointer, this memory pool should only be used by OASIS LIB*/
+    /* Memory pool pointer, this memory pool should only be used by OASIS LIB */
     char* memPool;
 
-    /*memory pool size*/
+    /* Memory pool size*/
     int size;
 
     /*Fast memory buffer pointer, this buffer should only be used by inference engine inside OASIS LIB
      * set NULL as disable */
     char* fastMemBuf;
 
-    /*Fast memory buffer size, set 0 as disable, suggest (32*1024) or (64*1024) or (128*1024) */
+    /* Fast memory buffer size, set 0 as disable, suggest (32*1024) or (64*1024) or (128*1024) */
     int fastMemSize;
 
-    /*callback functions provided by caller*/
+    /* Callback functions provided by caller */
     InfCallbacks_t cbs;
 
-    /*what functions should be enabled in OASIS LIB*/
+    /* What functions should be enabled in OASIS LIB */
     uint8_t enableFlags;
 
-    /*false accept rate*/
+    /* False accept rate */
     OASISLTFar_t falseAcceptRate;
 
-    /*model class */
+    /* Model class, has been discarded */
     OASISLTModelClass_t modClass;
 
 } OASISLTInitPara_t;

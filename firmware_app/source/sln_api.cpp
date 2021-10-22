@@ -217,9 +217,9 @@ vizn_api_status_t VIZN_UnregisterClient(VIZN_api_handle_t apiHandle, VIZN_api_cl
         return kStatus_API_Layer_Success;
 }
 
-vizn_api_status_t VIZN_GetRegisteredUsers(VIZN_api_client_t *clientHandle, std::vector<std::string> *nameList)
+vizn_api_status_t VIZN_GetRegisteredUsers(VIZN_api_client_t *clientHandle, std::vector<std::string> *nameList, int count)
 {
-    uint8_t status = DB_GetNames(nameList);
+    uint8_t status = DB_GetNames(nameList,count);
     if (status < 0)
         return kStatus_API_Layer_Error;
     else

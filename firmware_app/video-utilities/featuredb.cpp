@@ -653,7 +653,7 @@ int FeatureDB::ren_name(const std::string oldname, const std::string newname)
     return ret;
 }
 
-std::vector<std::string> FeatureDB::get_names()
+std::vector<std::string> FeatureDB::get_names(int count)
 {
     FeatureItem item_t;
     std::vector<std::string> names;
@@ -668,6 +668,11 @@ std::vector<std::string> FeatureDB::get_names()
             Flash_FacerecFsReadItemHeader(i,&item_t);
 #endif
             names.push_back(std::string(item_t.name));
+
+            if (names.size() >= count)
+            {
+            	break;
+            }
         }
     }
     return names;

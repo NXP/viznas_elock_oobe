@@ -169,14 +169,14 @@ int DB_GetFree(int &index)
     return ret;
 }
 
-int DB_GetNames(std::vector<std::string> *names)
+int DB_GetNames(std::vector<std::string> *names, int count)
 {
     int ret = DB_MGMT_FAILED;
 
     ret = DB_Lock();
     if (DB_MGMT_OK == ret)
     {
-        *names = s_DB->get_names();
+        *names = s_DB->get_names(count);
         DB_UnLock();
     }
 

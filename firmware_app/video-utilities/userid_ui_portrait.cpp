@@ -265,7 +265,7 @@ static void UIInfo_UpdateBottomInfoBar(uint16_t *pBufferAddr, QUIInfoMsg* infoMs
 
     DB_Count(&db_count);
     memset(tstring, 0x0, 64);
-    sprintf(tstring, "Registered Users:%d", db_count);
+    sprintf(tstring, "Registered :%d", db_count);
     draw_text(tstring, POS_NXPGREEN_RECT_X + REGISTRATION_RELATIVE_X, POS_RECT_Y + REGISTRATION_RELATIVE_Y, RGB565_BLUE,
               RGB565_NXPGREEN, OPENSANS8, pBufferAddr);
 

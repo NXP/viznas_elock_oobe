@@ -119,7 +119,8 @@ uint32_t BOARD_DebugConsoleSrcFreq(void)
 void BOARD_InitDebugConsole(void)
 {
     uint32_t uartClkSrcFreq = BOARD_DebugConsoleSrcFreq();
-
+    //added by Raymond to solve UART crash issue because of priority is not set (0 by default)
+    NVIC_SetPriority(BOARD_UART_IRQ, configMAX_SYSCALL_INTERRUPT_PRIORITY - 1);
     DbgConsole_Init(BOARD_DEBUG_UART_INSTANCE, BOARD_DEBUG_UART_BAUDRATE, BOARD_DEBUG_UART_TYPE, uartClkSrcFreq);
 }
 

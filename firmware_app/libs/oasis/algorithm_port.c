@@ -61,6 +61,8 @@ void face_recognize_get_parameters(OASISLTModelClass_t cls, OASISLTCustFaceRec_t
 #define LIVENESS_INPUT_H 112
 #define LIVENESS_INPUT_W 112
 #define LIVENESS_THRESHOLD (0.5f)
+//unit: 0.0001
+#define LIVENESS_FACE_RECT_EXT_RATIO (1428.5*2)
 
 
 void liveness_get_parameters(OASISLTCustLiveness_t* para)
@@ -73,5 +75,6 @@ void liveness_get_parameters(OASISLTCustLiveness_t* para)
     para->inputWidth = LIVENESS_INPUT_W;
     para->inputChn = LIVENESS_INPUT_C;
     para->th = LIVENESS_THRESHOLD;
+    para->faceExtendRatio = LIVENESS_FACE_RECT_EXT_RATIO;
 }
 #endif

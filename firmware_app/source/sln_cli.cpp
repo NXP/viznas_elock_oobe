@@ -474,7 +474,8 @@ void UsbShell_CmdProcess_Task(void *arg)
             std::vector<std::string> names;
             uint32_t namescount;
 
-            VIZN_GetRegisteredUsers(&VIZN_API_CLIENT(Shell), &names);
+            //get user name, maximum is 100
+            VIZN_GetRegisteredUsers(&VIZN_API_CLIENT(Shell), &names, 100);
             namescount = names.size();
 
             SHELL_Printf(shellContextHandle, "Registered users count:%d\r\n", namescount);

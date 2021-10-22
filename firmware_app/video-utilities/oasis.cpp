@@ -131,18 +131,19 @@ static void Oasis_WriteJpegBuffer(uint8_t byte)
 
 static void clearFaceInfoMsg(QUIInfoMsg *info)
 {
-    std::vector<std::string> featurenames;
+//    std::vector<std::string> featurenames;
+	int count;
     for (int i = 0; i < 4; i++)
     {
         info->rect[i] = -1;
     }
-    DB_GetNames(&featurenames);
+    DB_Count(&count);
 
     memset(info->name, 0x0, 64);
     info->similar         = 1.0f;
     info->dt              = 0;
     info->rt              = 0;
-    info->registeredFaces = featurenames.size();
+    info->registeredFaces = count;
 //    info->emotion         = 0;
     info->blur            = 0xFF;
     info->rgbLive         = 0xFF;
@@ -885,7 +886,7 @@ int Oasis_Start()
     s_InitPara.enableFlags = 0;
     if (s_appType != APP_TYPE_USERID)
     {
-        s_InitPara.enableFlags |= 0;//OASIS_ENABLE_MULTI_VIEW;
+        s_InitPara.enableFlags |= 0;//OASIS_ENABLE_MASK_FACE_REC;//OASIS_ENABLE_MULTI_VIEW;
     }
     s_InitPara.falseAcceptRate = OASIS_FAR_1_1000000;
     s_InitPara.enableFlags |= (Cfg_AppDataGetLivenessMode() == LIVENESS_MODE_ON) ? OASIS_ENABLE_LIVENESS : 0;
