@@ -274,14 +274,23 @@ typedef struct
 #define FLASH_SECTOR_SIZE          BOARD_FLASH_SECTOR_SIZE
 #define FLASH_NPAGE_PER_SECTOR     (FLASH_SECTOR_SIZE / FACEREC_FS_FLASH_PAGE_SIZE)
 
-#if FLASH_TYPE == HYPER_FLASH
-#define FACEREC_FS_MAP_ADDR  (0xB00000U)
-#else
-//0xB00000 to 0xB20000 are used by configuration file
-#define FACEREC_FS_MAP_ADDR  (0xB20000U)
-#endif
+//To make the Map file and Item file compatible with HYPER flash,
+//we define hyper flash size here,they should same with definition in board_rtvizion.h
+#define BOARD_HYPER_FLASH_PAGE_SIZE (512)
+#define BOARD_HYPER_FLASH_SECTOR_SIZE (0x40000)
 
-#define FACEREC_FS_ITEM_ADDR  (FACEREC_FS_MAP_ADDR + FLASH_SECTOR_SIZE)
+//Waste space between 0xb00000 and 0xb40000 for hyper flash
+//Waste space between 0xb20000 and 0xb40000 for QSPI flash
+#define FACEREC_FS_MAP_ADDR (0xB40000U)
+//#if FLASH_TYPE == HYPER_FLASH
+//#define FACEREC_FS_MAP_ADDR  (0xB00000U)
+//#else
+////0xB00000 to 0xB20000 are used by configuration file
+//#define FACEREC_FS_MAP_ADDR  (0xB20000U)
+//#endif
+
+//For both Hyper and Qspi flash, FS ITEM and FS MAP distance is the (0x40000)
+#define FACEREC_FS_ITEM_ADDR  (FACEREC_FS_MAP_ADDR + MAX(FLASH_SECTOR_SIZE,BOARD_HYPER_FLASH_SECTOR_SIZE))
 #define FACEREC_FS_FIRST_SECTOR ((FACEREC_FS_MAP_ADDR) / (FLASH_SECTOR_SIZE))
 
 #define FEATUREDATA_FLASH_PAGE_SIZE FACEREC_FS_FLASH_PAGE_SIZE
@@ -333,12 +342,13 @@ typedef union
          * (FEATUREDATA_FLASH_PAGE_SIZE * 2 - 1 - FEATUREDATA_NAME_MAX_LEN - 4 - 4)/4*/
         float feature[0];
     };
-#if FLASH_TYPE == HYPER_FLASH
-    unsigned char raw[FEATUREDATA_FLASH_PAGE_SIZE * 4]; // 2-->4
-#else
-    unsigned char raw[FEATUREDATA_FLASH_PAGE_SIZE * 4]; // 4-->8
-#endif
-} FeatureItem; // 1kB->2kB
+//#if FLASH_TYPE == HYPER_FLASH
+//    unsigned char raw[FEATUREDATA_FLASH_PAGE_SIZE * 4]; // 2-->4
+//#else
+//    unsigned char raw[FEATUREDATA_FLASH_PAGE_SIZE * 4]; // 4-->8
+//#endif
+    unsigned char raw[1024];
+} FeatureItem; // 1kB
 
 #define FACEREC_FS_SECTORS (((FEATUREDATA_MAX_COUNT * sizeof(FeatureItem))+ (FLASH_SECTOR_SIZE -1)) / (FLASH_SECTOR_SIZE))
 
