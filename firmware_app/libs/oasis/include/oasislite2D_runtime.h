@@ -13,7 +13,7 @@
 #include "stdint.h"
 
 #define VERSION_MAJOR 4
-#define VERSION_MINOR 69
+#define VERSION_MINOR 71
 
 /* This version number only used for hot fix on frozen release or branch */
 #define VERSION_HOTFIX 0
@@ -369,8 +369,6 @@ typedef struct {
     //input HWC
     int inputHeight, inputWidth, inputChn;
 
-    //face recognition threshold
-    float th;
     //how many features is output?
     int outputChn;
 } OASISLTCustFaceRec_t;
@@ -457,6 +455,10 @@ typedef struct
 
     /* Model class, has been discarded */
     OASISLTModelClass_t modClass;
+
+    /* Customized threshold for face recognition. unit: 0.001, range: (0-1000)
+     * if it is 0, default internal threshold is used*/
+    int Threshold;
 
 } OASISLTInitPara_t;
 
