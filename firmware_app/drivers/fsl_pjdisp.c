@@ -40,10 +40,6 @@ static void Delay(uint32_t ticks)
 {
     while(ticks--)
     {
-        if(ticks&0x01)
-            GPIO3->DR |= (1U<<3);
-        else
-            GPIO3->DR &= ~(1U<<3);
     }
 }
 static void ILI9341V_Write_Cmd(uint8_t cmd)

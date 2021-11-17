@@ -14,6 +14,7 @@
 /*******************************************************************************
  * Definitions
  *******************************************************************************/
+#define SUPPORT_CHINESE_FONT  1
 
 typedef enum
 {
@@ -31,5 +32,6 @@ typedef enum
 int get_stringwidth(char *s, font_vizn type);
 int get_fontheight(font_vizn type);
 void put_string(int x, int y, char *s, int font_color16b, int bg_color16b, font_vizn type, uint16_t *buf, int pitch);
-
+void put_string_chinese(int x, int y, uint16_t *s, int font_color16b, int bg_color16b, font_vizn type, uint16_t *buf, int pitch);
+void put_string_utf8(int x, int y, char *s, int font_color16b, int bg_color16b, font_vizn typeAscII, uint16_t *buf, int pitch);
 #endif /* _VIDEO_FONT_H */

@@ -119,7 +119,7 @@ static void UIInfo_Elock(uint16_t *pBufferAddr, QUIInfoMsg* infoMsg, uint8_t p_D
 
 static void draw_text(char *pText, int x, int y, int text_color, int bg_color, font_vizn type, uint16_t *pCanvasBuffer)
 {
-    put_string(x, y, pText, text_color, bg_color, type, pCanvasBuffer, APP_AS_WIDTH);
+    put_string_utf8(x, y, pText, text_color, bg_color, type, pCanvasBuffer, APP_AS_WIDTH);
 }
 
 static void draw_icon(uint16_t *pIcon, int x, int y, int w, int h, int alpha, uint16_t *pCanvasBuffer)
@@ -265,7 +265,11 @@ static void UIInfo_UpdateBottomInfoBar(uint16_t *pBufferAddr, QUIInfoMsg* infoMs
 
     DB_Count(&db_count);
     memset(tstring, 0x0, 64);
+#if SUPPORT_CHINESE_FONT
+    sprintf(tstring, "已录入用户:%d", db_count);
+#else
     sprintf(tstring, "Registered :%d", db_count);
+#endif
     draw_text(tstring, POS_NXPGREEN_RECT_X + REGISTRATION_RELATIVE_X, POS_RECT_Y + REGISTRATION_RELATIVE_Y, RGB565_BLUE,
               RGB565_NXPGREEN, OPENSANS8, pBufferAddr);
 
@@ -276,11 +280,19 @@ static void UIInfo_UpdateBottomInfoBar(uint16_t *pBufferAddr, QUIInfoMsg* infoMs
     }
     else if (APP_TYPE_ELOCK_LIGHT == appType || APP_TYPE_ELOCK_HEAVY == appType)
     {
+#if SUPPORT_CHINESE_FONT
+        sprintf(tstring, "类型: %s", "锁");
+#else
         sprintf(tstring, "APP: %s", "elock");
+#endif
     }
     else
     {
+#if SUPPORT_CHINESE_FONT
+        sprintf(tstring, "类型: %s", "门禁");
+#else
         sprintf(tstring, "APP: %s", "access");
+#endif
     }
     draw_text(tstring, POS_NXPRED_RECT_X + APP_RELATIVE_X, POS_RECT_Y + APP_RELATIVE_Y, RGB565_BLUE, RGB565_NXPRED,
               OPENSANS8, pBufferAddr);
@@ -327,15 +339,23 @@ static void UIInfo_UpdateOasisState(uint16_t *pBufferAddr)
     if (g_AddNewFace)
     {
         memset(tstring, 0x0, 64);
+#if SUPPORT_CHINESE_FONT
+        sprintf(tstring, "正在录入");
+#else
         sprintf(tstring, "Registering");
-        draw_text(tstring, CAMERA_SURFACE_SHIFT + POS_REGISTRATION_X, POS_REGISTRATION_Y + 6, 0, RGB565_GREEN,
+#endif
+        draw_text(tstring, CAMERA_SURFACE_SHIFT + POS_REGISTRATION_X, POS_REGISTRATION_Y + 4, 0, RGB565_GREEN,
                   OPENSANS16, pBufferAddr);
     }
     else if (g_RemoveExistingFace)
     {
         memset(tstring, 0x0, 64);
+#if SUPPORT_CHINESE_FONT
+        sprintf(tstring, "正在注销");
+#else
         sprintf(tstring, "Deregistering");
-        draw_text(tstring, CAMERA_SURFACE_SHIFT + POS_REGISTRATION_X, POS_REGISTRATION_Y + 6, 0, RGB565_RED, OPENSANS16,
+#endif
+        draw_text(tstring, CAMERA_SURFACE_SHIFT + POS_REGISTRATION_X, POS_REGISTRATION_Y + 4, 0, RGB565_RED, OPENSANS16,
                   pBufferAddr);
     }
 }
@@ -386,39 +406,66 @@ static void UIInfo_UpdateFaceInfo(uint16_t *pBufferAddr, QUIInfoMsg* infoMsg)
             break;
         case 1 << kEvents_API_Layer_FaceExist:
         {
+#if SUPPORT_CHINESE_FONT
+            sprintf(tstring, "已注册");
+#else
             sprintf(tstring, "Already Registered");
-            draw_text(tstring, CAMERA_SURFACE_SHIFT +10, 10, 0x0, RGB565_RED, OPENSANS16, pBufferAddr);
+#endif
+            draw_text(tstring, CAMERA_SURFACE_SHIFT +10, 10, RGB565_RED, 0, OPENSANS16, pBufferAddr);
         }
         break;
         case 1 << kEvents_API_Layer_DeregFailed:
         {
+#if SUPPORT_CHINESE_FONT
+            sprintf(tstring, "删除失败");
+#else
             sprintf(tstring, "Remove Failed");
-            draw_text(tstring, CAMERA_SURFACE_SHIFT + 10, 10, 0x0, RGB565_RED, OPENSANS16, pBufferAddr);
+#endif
+            draw_text(tstring, CAMERA_SURFACE_SHIFT + 10, 10, RGB565_RED, 0, OPENSANS16, pBufferAddr);
         }
         break;
         case 1 << kEvents_API_Layer_DeregSuccess:
         {
+#if SUPPORT_CHINESE_FONT
+            sprintf(tstring, "%s 删除成功", name.c_str());
+            draw_text(tstring, CAMERA_SURFACE_SHIFT + 30, 10, RGB565_GREEN, 0, OPENSANS8, pBufferAddr);
+#else
             sprintf(tstring, "%s removed", name.c_str());
-            draw_text(tstring, CAMERA_SURFACE_SHIFT + 30, 10, 0x0, RGB565_GREEN, OPENSANS16, pBufferAddr);
+            draw_text(tstring, CAMERA_SURFACE_SHIFT + 30, 10, RGB565_GREEN, 0, OPENSANS16, pBufferAddr);
+#endif
         }
         break;
         case 1 << kEvents_API_Layer_RegSuccess:
         {
+#if SUPPORT_CHINESE_FONT
+            sprintf(tstring, "%s:录入成功", name.c_str());
+            draw_text(tstring, CAMERA_SURFACE_SHIFT + 30, 10, RGB565_GREEN, 0, OPENSANS8, pBufferAddr);
+#else
             sprintf(tstring, "%s Added", name.c_str());
-            draw_text(tstring, CAMERA_SURFACE_SHIFT + 30, 10, 0x0, RGB565_GREEN, OPENSANS16, pBufferAddr);
+            draw_text(tstring, CAMERA_SURFACE_SHIFT + 30, 10, RGB565_GREEN, 0, OPENSANS16, pBufferAddr);
+#endif
         }
         break;
         case 1 << kEvents_API_Layer_RegFailed:
         {
+#if SUPPORT_CHINESE_FONT
+            sprintf(tstring, "注册失败");
+#else
             sprintf(tstring, "Registration Failed");
-            draw_text(tstring, CAMERA_SURFACE_SHIFT + 10, 10, 0x0, RGB565_RED, OPENSANS16, pBufferAddr);
+#endif
+            draw_text(tstring, CAMERA_SURFACE_SHIFT + 10, 10, RGB565_RED, 0x0, OPENSANS16, pBufferAddr);
         }
         break;
         case 1 << kEvents_API_Layer_RecSuccess:
         {
             uint16_t *pIcon;
+#if SUPPORT_CHINESE_FONT
+            sprintf(tstring, "%s:解锁成功", name.c_str());
+            draw_text(tstring, CAMERA_SURFACE_SHIFT+15, 10, RGB565_GREEN, 0, OPENSANS8, pBufferAddr);
+#else
             sprintf(tstring, "%s:Unlocked", name.c_str());
-            draw_text(tstring, CAMERA_SURFACE_SHIFT+10, 10, 0, RGB565_GREEN, OPENSANS16, pBufferAddr);
+            draw_text(tstring, CAMERA_SURFACE_SHIFT+10, 10, RGB565_GREEN, 0, OPENSANS16, pBufferAddr);
+#endif
 
             pIcon = (uint16_t *)welcomehome_240x131;
             draw_icon(pIcon, CAMERA_SURFACE_SHIFT, 60, welcomehome_W, welcomehome_H, 0xffff, pBufferAddr);
@@ -427,8 +474,12 @@ static void UIInfo_UpdateFaceInfo(uint16_t *pBufferAddr, QUIInfoMsg* infoMsg)
 
         case 1 << kEvents_API_Layer_RecFailed:
         {
+#if SUPPORT_CHINESE_FONT
+            sprintf(tstring, "识别超时");
+#else
             sprintf(tstring, "Recognition Timeout");
-            draw_text(tstring, CAMERA_SURFACE_SHIFT + 10, 10, 0x0, RGB565_RED, OPENSANS16, pBufferAddr);
+#endif
+            draw_text(tstring, CAMERA_SURFACE_SHIFT + 10, 10, RGB565_RED, 0x0, OPENSANS16, pBufferAddr);
         }
         break;
         default:

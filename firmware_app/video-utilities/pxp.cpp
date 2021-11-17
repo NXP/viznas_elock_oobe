@@ -53,7 +53,7 @@ DTC_BSS static StackType_t s_PXPTaskStack[PXPTASK_STACKSIZE];
 DTC_BSS static StaticTask_t s_PXPTaskTCB;
 #endif
 
-static uint16_t s_asBufferPxp[APP_AS_HEIGHT * APP_AS_WIDTH];
+SDK_ALIGN(static uint16_t s_asBufferPxp[APP_AS_HEIGHT * APP_AS_WIDTH], 64);
 extern uint16_t *g_pRotateBuff;
 
 /*******************************************************************************
