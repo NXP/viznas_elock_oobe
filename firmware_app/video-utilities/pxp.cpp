@@ -353,8 +353,8 @@ void APP_PXPStartCamera2Display(uint32_t cameraBuffer,
         UIInfo_Update((uint16_t*)cameraBuffer, infoMsg, displayInterfaceMode);
         if (Cfg_AppDataGetOutputMode() == DISPLAY_USB)
         {
-            PXP_EnableCsc1(APP_PXP, false);
-            output_format = kPXP_OutputPixelFormatUYVY1P422;
+            PXP_EnableCsc1(APP_PXP, true);
+            output_format = kPXP_OutputPixelFormatRGB888P;//kPXP_OutputPixelFormatUYVY1P422;
         }
         else
         {
@@ -367,18 +367,25 @@ void APP_PXPStartCamera2Display(uint32_t cameraBuffer,
         APP_PXPAlpha(1, 0, 0, LCD_WIDTH - 1, LCD_HEIGHT - 1, 0xF0U, 1);
         UIInfo_Update(s_asBufferPxp, infoMsg, displayInterfaceMode);
         PXP_EnableCsc1(APP_PXP, true);
-        output_format = kPXP_OutputPixelFormatRGB565;
+        if (Cfg_AppDataGetOutputMode() == DISPLAY_USB)
+        {
+
+            output_format = kPXP_OutputPixelFormatRGB888P;//kPXP_OutputPixelFormatUYVY1P422;
+        }
+        else
+        {
+            output_format = kPXP_OutputPixelFormatRGB565;
+        }
     }
 
     APP_PXPOut(LCD_WIDTH, LCD_HEIGHT,
-                0, 0,
-                LCD_WIDTH - 1, LCD_HEIGHT - 1,
+                0, 0, LCD_WIDTH - 1, LCD_HEIGHT - 1,
 #if CAMERA_ROTATE_FLAG
                 APP_CAMERA_HEIGHT, APP_CAMERA_WIDTH, APP_PS_WIDTH, APP_PS_HEIGHT,
 #else
                 APP_CAMERA_WIDTH, APP_CAMERA_HEIGHT, APP_PS_WIDTH, APP_PS_HEIGHT,
 #endif
-                output_format, DISPLAY_PITCH_BYTES);
+                output_format, kPXP_OutputPixelFormatRGB888P ==output_format? LCD_WIDTH*3:LCD_WIDTH*2);
     APP_PXPStart((uint32_t)cameraBuffer, outBuffer, DISPLAY_ROTATION);
 }
 
@@ -399,6 +406,7 @@ void APP_PXPStartCamera2DetBuf(uint32_t cameraBuffer, uint32_t detBuffer)
                 kPXP_OutputPixelFormatRGB888P, REC_RECT_WIDTH * 3);
     APP_PXPStart(cameraBuffer, detBuffer, 0);
 }
+
 
 /* send msg to Camera Task by PXP task to signal that frame for face rec is done */
 static int PXP_SendFResMsg(QMsg* msg)
@@ -459,6 +467,7 @@ static void PXP_Task(void *param)
                     APP_SetPxpRotate(pQMsg->msg.pxp.in_buffer, (uint32_t)g_pRotateBuff);
                     APP_PXPStartCamera2Display((uint32_t)g_pRotateBuff, (QUIInfoMsg*)pQMsg->msg.pxp.user_data, s_DisplayInterfaceMode,
                                                pQMsg->msg.pxp.out_buffer);
+//                    APP_PXPStartCamera2DetBuf2((uint32_t)g_pRotateBuff, pQMsg->msg.pxp.out_buffer);
 #else
                     APP_PXPStartCamera2Display(pQMsg->msg.pxp.in_buffer, (QUIInfoMsg*)pQMsg->msg.pxp.user_data, s_DisplayInterfaceMode,
                                                pQMsg->msg.pxp.out_buffer);

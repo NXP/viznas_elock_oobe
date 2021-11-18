@@ -197,10 +197,24 @@ Number clamp(Number value, Limit minValue, Limit maxValue)
   return value;                           // value was inside interval, keep it
 }
 
+//added by Raymond for speed up
+//#define CLIP(X) ((X) > 255 ? 255 : (X) < 0 ? 0 : X)
+#define CLIP(X) ((float)(X))
+// RGB -> YUV
+#define rgb2y(R, G, B) CLIP(((19595 * (R) + 38470 * (G) + 7471 * (B)) >> 16))
+#define rgb2cb(R, G, B) CLIP(((-11059 * (R) - 21709 * (G) +  ((int)B << 15)) >> 16))
+#define rgb2cr(R, G, B) CLIP(((((int)R << 15) - 27439 * (G) - 5329 * (B)) >> 16))
+
+
 // convert from RGB to YCbCr, constants are similar to ITU-R, see https://en.wikipedia.org/wiki/YCbCr#JPEG_conversion
-float rgb2y (float r, float g, float b) { return +0.299f   * r +0.587f   * g +0.114f   * b; }
-float rgb2cb(float r, float g, float b) { return -0.16874f * r -0.33126f * g +0.5f     * b; }
-float rgb2cr(float r, float g, float b) { return +0.5f     * r -0.41869f * g -0.08131f * b; }
+//float rgb2y (float r, float g, float b) { return +0.299f   * r +0.587f   * g +0.114f   * b; }
+//float rgb2cb(float r, float g, float b) { return -0.16874f * r -0.33126f * g +0.5f     * b; }
+//float rgb2cr(float r, float g, float b) { return +0.5f     * r -0.41869f * g -0.08131f * b; }
+//#define rgb2y RGB2Y
+//#define rgb2cb RGB2U
+//#define rgb2cr RGB2V
+
+
 
 // forward DCT computation "in one dimension" (fast AAN algorithm by Arai, Agui and Nakajima: "A fast DCT-SQ scheme for images")
 void DCT(float block[8*8], uint8_t stride) // stride must be 1 (=horizontal) or 8 (=vertical)
@@ -584,9 +598,10 @@ bool writeJpeg(WRITE_ONE_BYTE output, const void* pixels_, unsigned short width,
               }
 
               // RGB: 3 bytes per pixel (whereas grayscale images have only 1 byte per pixel)
-              auto r = pixels[3 * pixelPos    ];
+              // Modified by Raymond for BGR fromat
+              auto b = pixels[3 * pixelPos    ];
               auto g = pixels[3 * pixelPos + 1];
-              auto b = pixels[3 * pixelPos + 2];
+              auto r = pixels[3 * pixelPos + 2];
 
               Y   [deltaY][deltaX] = rgb2y (r, g, b) - 128; // again, the JPEG standard requires Y to be shifted by 128
               // YCbCr444 is easy - the more complex YCbCr420 has to be computed about 20 lines below in a second pass
@@ -629,9 +644,10 @@ bool writeJpeg(WRITE_ONE_BYTE output, const void* pixels_, unsigned short width,
             auto downRight = pixelPos + columnStep + rowStep;
 
             // note: cast from 8 bits to >8 bits to avoid overflows when adding
-            auto r = short(pixels[pixelPos    ]) + pixels[right    ] + pixels[down    ] + pixels[downRight    ];
+            // Modified by Raymond for BGR fromat
+            auto b = short(pixels[pixelPos    ]) + pixels[right    ] + pixels[down    ] + pixels[downRight    ];
             auto g = short(pixels[pixelPos + 1]) + pixels[right + 1] + pixels[down + 1] + pixels[downRight + 1];
-            auto b = short(pixels[pixelPos + 2]) + pixels[right + 2] + pixels[down + 2] + pixels[downRight + 2];
+            auto r = short(pixels[pixelPos + 2]) + pixels[right + 2] + pixels[down + 2] + pixels[downRight + 2];
 
             // convert to Cb and Cr
             Cb[deltaY][deltaX] = rgb2cb(r, g, b) / 4; // I still have to divide r,g,b by 4 to get their average values

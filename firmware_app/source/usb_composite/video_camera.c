@@ -72,6 +72,8 @@ USB_DMA_NONINIT_DATA_ALIGN(USB_DATA_ALIGN_SIZE)
 static uint8_t s_ImageBuffer[HS_STREAM_IN_PACKET_SIZE * (1 + HS_STREAM_IN_PACKET_ADDITIONAL_TRANSACTION)];
 
 uint8_t *g_FrameBufferUSB = NULL;
+uint32_t g_FrameBufferUSBLength = 0;
+
 USB_LINK_NONCACHE_NONINIT_DATA static uint8_t imageBuffer[4096];
 
 /*******************************************************************************
@@ -101,8 +103,8 @@ static usb_status_t USB_DeviceVideoRequest(class_handle_t handle, uint32_t event
                 return kStatus_USB_InvalidRequest;
             }
             temp32 = USB_LONG_FROM_LITTLE_ENDIAN_DATA(probe->dwFrameInterval);
-            if ((temp32 >= USB_VIDEO_CAMERA_UNCOMPRESSED_FRAME_MIN_INTERVAL) &&
-                (temp32 <= USB_VIDEO_CAMERA_UNCOMPRESSED_FRAME_MAX_INTERVAL))
+            if ((temp32 >= USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_MIN_INTERVAL) &&
+                (temp32 <= USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_MAX_INTERVAL))
             {
                 USB_LONG_TO_LITTLE_ENDIAN_DATA(temp32, g_composite.g_UsbDeviceVideoCamera.probeStruct->dwFrameInterval);
             }
@@ -134,8 +136,8 @@ static usb_status_t USB_DeviceVideoRequest(class_handle_t handle, uint32_t event
                 return kStatus_USB_InvalidRequest;
             }
             temp32 = USB_LONG_FROM_LITTLE_ENDIAN_DATA(commit->dwFrameInterval);
-            if ((temp32 >= USB_VIDEO_CAMERA_UNCOMPRESSED_FRAME_MIN_INTERVAL) &&
-                (temp32 <= USB_VIDEO_CAMERA_UNCOMPRESSED_FRAME_MAX_INTERVAL))
+            if ((temp32 >= USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_MIN_INTERVAL) &&
+                (temp32 <= USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_MAX_INTERVAL))
             {
                 USB_LONG_TO_LITTLE_ENDIAN_DATA(temp32,
                                                g_composite.g_UsbDeviceVideoCamera.commitStruct->dwFrameInterval);
@@ -294,9 +296,9 @@ void USB_DeviceVideoPrepareVideoData(void)
         }
     };
 
-    if (g_composite.g_UsbDeviceVideoCamera.imagePosition < CAMERA_FRAME_BYTES)
+    if (g_composite.g_UsbDeviceVideoCamera.imagePosition < g_FrameBufferUSBLength)
     {
-        sendLength = CAMERA_FRAME_BYTES - g_composite.g_UsbDeviceVideoCamera.imagePosition;
+        sendLength = g_FrameBufferUSBLength - g_composite.g_UsbDeviceVideoCamera.imagePosition;
         if (sendLength > maxPacketSize)
         {
             sendLength = maxPacketSize;
@@ -309,9 +311,10 @@ void USB_DeviceVideoPrepareVideoData(void)
         }
         g_composite.g_UsbDeviceVideoCamera.imagePosition += sendLength;
 
-        if (g_composite.g_UsbDeviceVideoCamera.imagePosition >= CAMERA_FRAME_BYTES)
+        if (g_composite.g_UsbDeviceVideoCamera.imagePosition >= g_FrameBufferUSBLength)
         {
             g_FrameBufferUSB = NULL;
+            g_FrameBufferUSBLength = 0;
             xSemaphoreGiveFromISR(g_DisplayEmpty, NULL);
             g_composite.g_UsbDeviceVideoCamera.waitForNewInterval = 1U;
         }
@@ -334,7 +337,7 @@ usb_status_t USB_DeviceVideoCallback(class_handle_t handle, uint32_t event, void
                 /* Prepare the next stream data */
                 USB_DeviceVideoPrepareVideoData();
                 error = USB_DeviceVideoSend(g_composite.g_UsbDeviceVideoCamera.videoHandle,
-                                            USB_VIDEO_CAMERA_STREAM_ENDPOINT_IN,
+                                            USB_VIDEO_VIRTUAL_CAMERA_STREAM_ENDPOINT_IN,
                                             g_composite.g_UsbDeviceVideoCamera.imageBuffer,
                                             g_composite.g_UsbDeviceVideoCamera.imageBufferLength);
             }
@@ -377,22 +380,22 @@ void USB_DeviceVideoApplicationSetDefault(void)
     g_composite.g_UsbDeviceVideoCamera.stillCommitStruct    = &s_StillCommitStruct;
     g_composite.g_UsbDeviceVideoCamera.classRequestBuffer   = &s_ClassRequestBuffer[0];
 
-    g_composite.g_UsbDeviceVideoCamera.probeStruct->bFormatIndex = USB_VIDEO_CAMERA_UNCOMPRESSED_FORMAT_INDEX;
-    g_composite.g_UsbDeviceVideoCamera.probeStruct->bFrameIndex  = USB_VIDEO_CAMERA_UNCOMPRESSED_FRAME_INDEX;
-    USB_LONG_TO_LITTLE_ENDIAN_DATA(USB_VIDEO_CAMERA_UNCOMPRESSED_FRAME_DEFAULT_INTERVAL,
+    g_composite.g_UsbDeviceVideoCamera.probeStruct->bFormatIndex = USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FORMAT_INDEX;
+    g_composite.g_UsbDeviceVideoCamera.probeStruct->bFrameIndex  = USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_INDEX;
+    USB_LONG_TO_LITTLE_ENDIAN_DATA(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_DEFAULT_INTERVAL,
                                    g_composite.g_UsbDeviceVideoCamera.probeStruct->dwFrameInterval);
     USB_LONG_TO_LITTLE_ENDIAN_DATA(g_composite.g_UsbDeviceVideoCamera.currentMaxPacketSize,
                                    g_composite.g_UsbDeviceVideoCamera.probeStruct->dwMaxPayloadTransferSize);
-    USB_LONG_TO_LITTLE_ENDIAN_DATA(USB_VIDEO_CAMERA_UNCOMPRESSED_FRAME_MAX_FRAME_SIZE,
+    USB_LONG_TO_LITTLE_ENDIAN_DATA(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_MAX_FRAME_SIZE,
                                    g_composite.g_UsbDeviceVideoCamera.probeStruct->dwMaxVideoFrameSize);
 
-    g_composite.g_UsbDeviceVideoCamera.commitStruct->bFormatIndex = USB_VIDEO_CAMERA_UNCOMPRESSED_FORMAT_INDEX;
-    g_composite.g_UsbDeviceVideoCamera.commitStruct->bFrameIndex  = USB_VIDEO_CAMERA_UNCOMPRESSED_FRAME_INDEX;
-    USB_LONG_TO_LITTLE_ENDIAN_DATA(USB_VIDEO_CAMERA_UNCOMPRESSED_FRAME_DEFAULT_INTERVAL,
+    g_composite.g_UsbDeviceVideoCamera.commitStruct->bFormatIndex = USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FORMAT_INDEX;
+    g_composite.g_UsbDeviceVideoCamera.commitStruct->bFrameIndex  = USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_INDEX;
+    USB_LONG_TO_LITTLE_ENDIAN_DATA(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_DEFAULT_INTERVAL,
                                    g_composite.g_UsbDeviceVideoCamera.commitStruct->dwFrameInterval);
     USB_LONG_TO_LITTLE_ENDIAN_DATA(g_composite.g_UsbDeviceVideoCamera.currentMaxPacketSize,
                                    g_composite.g_UsbDeviceVideoCamera.commitStruct->dwMaxPayloadTransferSize);
-    USB_LONG_TO_LITTLE_ENDIAN_DATA(USB_VIDEO_CAMERA_UNCOMPRESSED_FRAME_MAX_FRAME_SIZE,
+    USB_LONG_TO_LITTLE_ENDIAN_DATA(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_MAX_FRAME_SIZE,
                                    g_composite.g_UsbDeviceVideoCamera.commitStruct->dwMaxVideoFrameSize);
 
     g_composite.g_UsbDeviceVideoCamera.probeInfo    = 0x03U;
@@ -400,20 +403,20 @@ void USB_DeviceVideoApplicationSetDefault(void)
     g_composite.g_UsbDeviceVideoCamera.commitInfo   = 0x03U;
     g_composite.g_UsbDeviceVideoCamera.commitLength = 26U;
 
-    g_composite.g_UsbDeviceVideoCamera.stillProbeStruct->bFormatIndex      = USB_VIDEO_CAMERA_UNCOMPRESSED_FORMAT_INDEX;
-    g_composite.g_UsbDeviceVideoCamera.stillProbeStruct->bFrameIndex       = USB_VIDEO_CAMERA_UNCOMPRESSED_FRAME_INDEX;
+    g_composite.g_UsbDeviceVideoCamera.stillProbeStruct->bFormatIndex      = USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FORMAT_INDEX;
+    g_composite.g_UsbDeviceVideoCamera.stillProbeStruct->bFrameIndex       = USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_INDEX;
     g_composite.g_UsbDeviceVideoCamera.stillProbeStruct->bCompressionIndex = 0x01U;
     USB_LONG_TO_LITTLE_ENDIAN_DATA(g_composite.g_UsbDeviceVideoCamera.currentMaxPacketSize,
                                    g_composite.g_UsbDeviceVideoCamera.stillProbeStruct->dwMaxPayloadTransferSize);
-    USB_LONG_TO_LITTLE_ENDIAN_DATA(USB_VIDEO_CAMERA_UNCOMPRESSED_FRAME_MAX_FRAME_SIZE,
+    USB_LONG_TO_LITTLE_ENDIAN_DATA(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_MAX_FRAME_SIZE,
                                    g_composite.g_UsbDeviceVideoCamera.stillProbeStruct->dwMaxVideoFrameSize);
 
-    g_composite.g_UsbDeviceVideoCamera.stillCommitStruct->bFormatIndex = USB_VIDEO_CAMERA_UNCOMPRESSED_FORMAT_INDEX;
-    g_composite.g_UsbDeviceVideoCamera.stillCommitStruct->bFrameIndex  = USB_VIDEO_CAMERA_UNCOMPRESSED_FRAME_INDEX;
+    g_composite.g_UsbDeviceVideoCamera.stillCommitStruct->bFormatIndex = USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FORMAT_INDEX;
+    g_composite.g_UsbDeviceVideoCamera.stillCommitStruct->bFrameIndex  = USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_INDEX;
     g_composite.g_UsbDeviceVideoCamera.stillCommitStruct->bCompressionIndex = 0x01U;
     USB_LONG_TO_LITTLE_ENDIAN_DATA(g_composite.g_UsbDeviceVideoCamera.currentMaxPacketSize,
                                    g_composite.g_UsbDeviceVideoCamera.stillCommitStruct->dwMaxPayloadTransferSize);
-    USB_LONG_TO_LITTLE_ENDIAN_DATA(USB_VIDEO_CAMERA_UNCOMPRESSED_FRAME_MAX_FRAME_SIZE,
+    USB_LONG_TO_LITTLE_ENDIAN_DATA(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_MAX_FRAME_SIZE,
                                    g_composite.g_UsbDeviceVideoCamera.stillCommitStruct->dwMaxVideoFrameSize);
 
     g_composite.g_UsbDeviceVideoCamera.stillProbeInfo    = 0x03U;

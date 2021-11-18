@@ -18,6 +18,7 @@
 #include "camera.h"
 #include "pxp.h"
 #include "fsl_log.h"
+#include "sln_shell.h"
 
 #if LCD_TYPE == LCD_SPI_RIVERDI
 #include "sln_rvdisp.h"
@@ -38,6 +39,11 @@
 #define APP_LCDIF_DATA_BUS kELCDIF_DataBus16Bit
 #endif
 
+SDK_ALIGN(static uint8_t s_tmpBuffer4Jpeg[LCD_WIDTH*LCD_HEIGHT*3], FRAME_BUFFER_ALIGN);
+static uint32_t s_dataSizeInJpeg = 0;
+#include "toojpeg.h"
+
+
 /*******************************************************************************
  * Variables
  *******************************************************************************/
@@ -50,7 +56,7 @@ static uint8_t s_ActiveFrameIndex = 0;
 /*!< Init the interface with an invalid value and let camera task send a proper value */
 static uint8_t s_DisplayInterfaceMode = DISPLAY_LAST_INTERFACE;
 
-SDK_ALIGN(static uint16_t s_BufferLcd[2][LCD_WIDTH * LCD_HEIGHT], FRAME_BUFFER_ALIGN);
+SDK_ALIGN(static uint8_t s_BufferLcd[2][LCD_WIDTH * LCD_HEIGHT*3], FRAME_BUFFER_ALIGN);
 
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
 DTC_BSS static StackType_t s_DisplayTaskStack[DISPLAYTASK_STACKSIZE];
@@ -58,6 +64,7 @@ DTC_BSS static StaticTask_t s_DisplayTaskTCB;
 #endif
 
 extern uint8_t *g_FrameBufferUSB;
+extern uint32_t g_FrameBufferUSBLength;
 extern EventGroupHandle_t g_SyncVideoEvents;
 
 /*******************************************************************************
@@ -272,9 +279,9 @@ void Display_Init_Task(void *param)
 #endif
     }
 #if SCREEN_PORTRAIT_MODE
-    Display_Update((uint32_t)nxp_vertical_logo);
+    //Display_Update((uint32_t)nxp_vertical_logo);
 #else
-    Display_Update((uint32_t)nxp_facemanager);
+    //Display_Update((uint32_t)nxp_facemanager);
 #endif
     vTaskDelay(1200);
 
@@ -283,6 +290,13 @@ void Display_Init_Task(void *param)
     vTaskDelete(NULL);
 }
 
+
+static void Oasis_WriteJpegBuffer(uint8_t byte)
+{
+	s_tmpBuffer4Jpeg[s_dataSizeInJpeg++] = byte;
+}
+
+
 int Display_Update(uint32_t backBuffer)
 {
     if (s_DisplayInterfaceMode == DISPLAY_LAST_INTERFACE)
@@ -290,12 +304,24 @@ int Display_Update(uint32_t backBuffer)
 
     if (Cfg_AppDataGetOutputMode() == DISPLAY_USB)
     {
-        if (s_DisplayInterfaceMode == DISPLAY_INTERFACE_INFOBAR)
-            ConvertRGB2YUV((uint16_t *)backBuffer, (uint16_t *)backBuffer);
 
-        xSemaphoreGive(g_DisplayFull);
-        g_FrameBufferUSB = (uint8_t *)backBuffer;
-        xSemaphoreTake(g_DisplayEmpty, portMAX_DELAY);
+        //compress the buffer into JPEG, support RGB565 format
+    	xSemaphoreTake(g_DisplayEmpty, portMAX_DELAY);
+		s_dataSizeInJpeg = 0;
+
+		uint32_t jpeg_us_start = Time_Now();
+		//Be careful, in this function, at least 20KB+ stack should be left!!!!!!
+		TooJpeg::writeJpeg(Oasis_WriteJpegBuffer,
+				(void*)backBuffer,
+				LCD_WIDTH,
+				LCD_HEIGHT,
+				1,90,1);
+
+        g_FrameBufferUSB = s_tmpBuffer4Jpeg;
+        g_FrameBufferUSBLength = s_dataSizeInJpeg;
+        //UsbShell_Printf("TooJpeg size:%d, cost:%d\r\n",s_dataSizeInJpeg,jpeg_us_start-Time_Now());
+		xSemaphoreGive(g_DisplayFull);
+
     }
     else if (Cfg_AppDataGetOutputMode() == DISPLAY_LCD)
     {

@@ -115,15 +115,15 @@ OCRAM_CACHED_BSS RAM_ADDRESS_ALIGNMENT(4) static uint8_t s_OasisMemPool[760 * 10
 #endif
 
 
-#define OASIS_JPEG_IMG_WIDTH (50)		//50
-#define OASIS_JPEG_IMG_HEIGHT (50)		//50
-static uint8_t s_tmpBuffer4Jpeg[OASIS_JPEG_IMG_WIDTH*OASIS_JPEG_IMG_HEIGHT*3];
-static uint32_t s_dataSizeInJpeg = 0;
-
-static void Oasis_WriteJpegBuffer(uint8_t byte)
-{
-	s_tmpBuffer4Jpeg[s_dataSizeInJpeg++] = byte;
-}
+//#define OASIS_JPEG_IMG_WIDTH (100)		//50
+//#define OASIS_JPEG_IMG_HEIGHT (100)		//50
+//static uint8_t s_tmpBuffer4Jpeg[OASIS_JPEG_IMG_WIDTH*OASIS_JPEG_IMG_HEIGHT*3];
+//static uint32_t s_dataSizeInJpeg = 0;
+//
+//static void Oasis_WriteJpegBuffer(uint8_t byte)
+//{
+//	s_tmpBuffer4Jpeg[s_dataSizeInJpeg++] = byte;
+//}
 
 /*******************************************************************************
  * Code
@@ -382,6 +382,7 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
 			//void util_crop(unsigned char* src, int srcw, int srch, unsigned char* dst, int dstw, int dsth, int top, int left, int elemsize);
 			if (para->faceBoxRGB != NULL && recResult == OASIS_REC_RESULT_KNOWN_FACE)
 			{
+#if 0
 				int w = para->faceBoxRGB->rect[2] - para->faceBoxRGB->rect[0] + 1;
 				int h = para->faceBoxRGB->rect[3] - para->faceBoxRGB->rect[1] + 1;
 				uint8_t* croped = (uint8_t*)pvPortMalloc(w*h*3);
@@ -417,10 +418,18 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
 				}
 
 
+				uint32_t jpeg_us_start = Time_Now();
 				s_dataSizeInJpeg = 0;
-				auto ok = TooJpeg::writeJpeg(Oasis_WriteJpegBuffer, resized, OASIS_JPEG_IMG_WIDTH, OASIS_JPEG_IMG_HEIGHT);
-				UsbShell_Printf("[OASIS]:TooJpeg ret:%d file size:%d\r\n", ok,s_dataSizeInJpeg);
+				auto ok = TooJpeg::writeJpeg(Oasis_WriteJpegBuffer,
+						frames[OASISLT_INT_FRAME_IDX_RGB]->data,
+						OASIS_JPEG_IMG_WIDTH,
+						OASIS_JPEG_IMG_HEIGHT,
+						1,80,1);
+				UsbShell_Printf("[OASIS]:TooJpeg ret:%d file size:%d time cost:%d ms\r\n",
+						ok,s_dataSizeInJpeg,
+						jpeg_us_start-Time_Now());
 				vPortFree(resized);
+#endif
 
 			}
 

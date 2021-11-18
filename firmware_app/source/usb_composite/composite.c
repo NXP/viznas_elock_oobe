@@ -206,10 +206,10 @@ static usb_status_t USB_DeviceCallback(usb_device_handle handle, uint32_t event,
                 {
                     if (!g_composite.currentInterfaceAlternateSetting[interface])
                     {
-                        if (USB_VIDEO_CAMERA_STREAM_INTERFACE_INDEX == interface)
+                        if (USB_VIDEO_VIRTUAL_CAMERA_STREAM_INTERFACE_INDEX == interface)
                         {
                             USB_DeviceVideoPrepareVideoData();
-                            error = USB_DeviceSendRequest(g_composite.deviceHandle, USB_VIDEO_CAMERA_STREAM_ENDPOINT_IN,
+                            error = USB_DeviceSendRequest(g_composite.deviceHandle, USB_VIDEO_VIRTUAL_CAMERA_STREAM_ENDPOINT_IN,
                                                           g_composite.g_UsbDeviceVideoCamera.imageBuffer,
                                                           g_composite.g_UsbDeviceVideoCamera.imageBufferLength);
                         }

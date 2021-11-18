@@ -96,7 +96,7 @@ typedef struct _usb_video_camera_struct
     volatile uint8_t stillImageTriggerControl;
     uint8_t fullBufferIndex;
     uint8_t currentConfiguration;
-    uint8_t currentInterfaceAlternateSetting[USB_VIDEO_CAMERA_INTERFACE_COUNT];
+    uint8_t currentInterfaceAlternateSetting[USB_VIDEO_VIRTUAL_CAMERA_INTERFACE_COUNT];
     uint8_t speed;
     uint8_t attach;
 } usb_video_camera_struct_t;

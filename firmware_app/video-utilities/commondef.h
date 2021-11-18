@@ -46,7 +46,7 @@
 // #define DISPLAY_ROTATION     (Cfg_AppDataGetOutputMode() == DISPLAY_USB ? 0 : 90)
 
 // Rotation done on Riverdi side
-#define DISPLAY_PITCH_BYTES (LCD_WIDTH * 2)
+//#define DISPLAY_PITCH_BYTES (LCD_WIDTH * 3)
 #define DISPLAY_ROTATION    (0)
 
 // AX surface
@@ -215,8 +215,9 @@ typedef struct
 #define DISPLAYINITTASK_PRIORITY  (configMAX_PRIORITIES - 1UL)
 #define DISPLAYINITTASK_STACKSIZE 256
 
+//Be careful, TooJpeg::writeJpeg need at least 20KB stack space
 #define DISPLAYTASK_PRIORITY  (configMAX_PRIORITIES - 2UL)
-#define DISPLAYTASK_STACKSIZE 1024
+#define DISPLAYTASK_STACKSIZE 1024*8
 
 #define CAMERATASK_PRIORITY  (configMAX_PRIORITIES - 1UL)
 #define CAMERATASK_STACKSIZE 2 * 1024
