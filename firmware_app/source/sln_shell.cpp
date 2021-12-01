@@ -60,10 +60,11 @@ extern serial_handle_t usb_serialHandle[USB_DEVICE_CONFIG_CDC_ACM];
 QueueHandle_t g_UsbShellQueue;
 
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
-DTC_BSS static StackType_t s_UartTaskStack[UARTTASK_STACKSIZE];
-DTC_BSS static StaticTask_t s_UartTaskTCB;
-DTC_BSS static StackType_t s_USBTaskStack[USBTASK_STACKSIZE];
-DTC_BSS static StaticTask_t s_USBTaskTCB;
+//Put these in SDRAM instead of DTC because no more free space in DTC
+static StackType_t s_UartTaskStack[UARTTASK_STACKSIZE];
+static StaticTask_t s_UartTaskTCB;
+static StackType_t s_USBTaskStack[USBTASK_STACKSIZE];
+static StaticTask_t s_USBTaskTCB;
 #endif
 
 /*******************************************************************************
