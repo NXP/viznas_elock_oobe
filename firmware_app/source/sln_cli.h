@@ -40,6 +40,7 @@ typedef enum __shell_event
     SHELL_EV_FFI_CLI_WIFI,
     SHELL_EV_FFI_CLI_APP,
     SHELL_EV_FFI_CLI_LOW_POWER,
+    SHELL_EV_FFI_CLI_ALGO_START,
     SHELL_EV_FFI_CLI_LAST_EVENT // All future commands to be placed before this.
 
 } shell_event_t;

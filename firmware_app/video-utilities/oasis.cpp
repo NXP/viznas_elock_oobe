@@ -36,7 +36,7 @@
 #define IR_PWM_INTERVAL 10
 
 #define WHITE_PWM_MIN      0
-#define WHITE_PWM_MAX      6
+#define WHITE_PWM_MAX      2
 #define WHITE_PWM_INTERVAL 2
 #else
 #define IR_PWM_MIN      20
@@ -98,7 +98,6 @@ static OASISLTInitPara_t s_InitPara;
 static uint8_t s_lockstatus       = 1;
 static OasisState s_CurOasisState = OASIS_STATE_FACE_REC_START;
 static uint8_t s_appType;
-
 volatile int g_OASISLT_heap_debug;
 
 /*dtc buffer for inference engine optimization*/
@@ -673,11 +672,17 @@ static void Oasis_Task(void *param)
     // ask for the first frame
     clearFaceInfoMsg(&gui_info);
     Oasis_SendFaceInfoMsg(gui_info);
-    Oasis_SendFaceDetReqMsg(s_FaceRecBuf.dataIR, s_FaceRecBuf.dataRGB);
-
     memset(&gTimeStat, 0, sizeof(gTimeStat));
 
-    VIZN_StartRecognition(NULL);
+    if (Cfg_AppDataGetAlgoStartMode() == ALGO_START_MODE_AUTO)
+    {
+        s_lockstatus = 1;
+        uint8_t pwm  = 0;
+        VIZN_GetPulseWidth(NULL, LED_IR, &pwm);
+        Camera_QMsgSetPWM(LED_IR, pwm);
+        Oasis_SendFaceDetReqMsg(s_FaceRecBuf.dataIR, s_FaceRecBuf.dataRGB);
+        VIZN_StartRecognition(NULL);
+    }
     while (1)
     {
         // pick up one response message.
@@ -778,23 +783,32 @@ static void Oasis_Task(void *param)
 
                 case QMSG_FACEREC_STOP:
                 {
+                    UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[OASIS]:QMSG_FACEREC_STOP!!!\r\n");
                     s_lockstatus = 0;
-                    //Camera_QMsgSetPWM(LED_IR, 0);
-                    Camera_QMsgSetPWM(LED_WHITE, 0);
-                    Camera_SetRGBExposureMode(CAMERA_EXPOSURE_MODE_AUTO_LEVEL0);
+                    if (Cfg_AppDataGetAlgoStartMode() == ALGO_START_MODE_MANUAL)
+                    {
+                        Camera_QMsgSetPWM(LED_IR, 0);
+                        Camera_QMsgSetPWM(LED_WHITE, 0);
+                        Camera_SetRGBExposureMode(CAMERA_EXPOSURE_MODE_AUTO_LEVEL0);
+                    }
                 }
                 break;
 
                 case QMSG_FACEREC_START:
                 {
-                    uint8_t pwm  = 0;
-                    s_lockstatus = 1;
                     UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[OASIS]:QMSG_FACEREC_START!\r\n");
-                    VIZN_GetPulseWidth(NULL, LED_IR, &pwm);
-                    Camera_QMsgSetPWM(LED_IR, pwm);
-
-                    clearFaceInfoMsg(&gui_info);
-                    Oasis_SendFaceInfoMsg(gui_info);
+                    if (s_lockstatus == 0)
+                    {
+                        if (Cfg_AppDataGetAlgoStartMode() == ALGO_START_MODE_MANUAL)
+                        {
+                            uint8_t pwm  = 0;
+                            VIZN_GetPulseWidth(NULL, LED_IR, &pwm);
+                            Camera_QMsgSetPWM(LED_IR, pwm);
+                        }
+                        s_lockstatus = 1;
+                        clearFaceInfoMsg(&gui_info);
+                        Oasis_SendFaceInfoMsg(gui_info);
+                    }
                     Oasis_SendFaceDetReqMsg(s_FaceRecBuf.dataIR, s_FaceRecBuf.dataRGB);                    
                 }
                 break;

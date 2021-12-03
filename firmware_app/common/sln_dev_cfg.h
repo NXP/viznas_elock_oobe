@@ -40,6 +40,7 @@ typedef struct _sln_cfg_data
     uint8_t app_type;                    /* ELOCK or DOOR_ACCESS application type*/
     uint8_t audio_amp_calibration_state; /* State of audio amplifier calibration */
     uint8_t low_power_mode;              /* Low power mode configuration; ON or OFF */
+    uint8_t algo_start_mode;             /* Start algo automatically or manually */
 } sln_cfg_data_t;
 
 typedef enum _cfg_enrolment
@@ -115,6 +116,12 @@ typedef enum _cfg_fwupdate_method
 	FWUPDATE_OTW	= 0,
 	FWUPDATE_OTA	= 1,
 } cfg_fwupdate_method_t;
+
+typedef enum _cfg_algo_start_mode
+{
+    ALGO_START_MODE_AUTO   = 0,
+    ALGO_START_MODE_MANUAL = 1,
+} cfg_algo_start_mode_t;
 
 /**
  * @brief Reads config data from flash memory
@@ -243,6 +250,14 @@ uint8_t Cfg_AppDataGetApplicationType();
  * @return             Current low power mode config
  */
 uint8_t Cfg_AppDataGetLowPowerMode();
+
+/**
+ * @brief Reads application config_t  algo_start_mode
+ *
+ * @return             config value
+ */
+uint8_t Cfg_AppDataGetAlgoStartMode();
+
 
 #ifdef __cplusplus
 }

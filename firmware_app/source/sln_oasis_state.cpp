@@ -34,6 +34,7 @@ extern volatile uint8_t g_AddNewFace;
 extern volatile uint8_t g_RemoveExistingFace;
 extern volatile uint8_t g_RecFace;
 extern volatile uint8_t g_FaceSystemLocked;
+
 volatile static uint32_t s_API_Events = 0;
 //extern std::string g_AddNewFaceName;
 
@@ -353,7 +354,10 @@ void Oasis_TimerCallback(uint8_t id_timer)
         break;
         case TIMER_SYSTEM_LOCKED:
         {
-            StartRecognitionProcess();
+            if (Cfg_AppDataGetAlgoStartMode() == ALGO_START_MODE_AUTO)
+            {
+                StartRecognitionProcess();
+            }
         }
         break;
         case TIMER_DET_NO_FACE:

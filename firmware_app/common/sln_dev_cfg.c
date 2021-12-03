@@ -115,6 +115,7 @@ void CfgData_GetDefault(sln_cfg_data_t *cfg)
             .app_type                   = APP_TYPE_ELOCK_LIGHT,
             .audio_amp_calibration_state= 0,
             .low_power_mode             = LOW_POWER_MODE_OFF,
+            .algo_start_mode            = ALGO_START_MODE_AUTO,
     };
 
     default_app_data.camera_ir_pulse_width = 30;
@@ -220,3 +221,9 @@ uint8_t Cfg_AppDataGetLowPowerMode()
 {
     return app_data.low_power_mode;
 }
+
+uint8_t Cfg_AppDataGetAlgoStartMode()
+{
+    return app_data.algo_start_mode;
+}
+

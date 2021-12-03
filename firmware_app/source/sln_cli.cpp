@@ -88,7 +88,11 @@ static shell_status_t FFI_CLI_AppCommand(shell_handle_t shellContextHandle,
 
 static shell_status_t FFI_CLI_LowPowerCommand(shell_handle_t shellContextHandle,
                                               int32_t argc,
-                                              char **argv); /*!< App command */
+                                              char **argv); /*!< Low Power command */
+
+static shell_status_t FFI_CLI_AlgoStartCommand(shell_handle_t shellContextHandle,
+                                              int32_t argc,
+                                              char **argv); /*!< Algo Start command */
 
 extern "C" {
 
@@ -168,6 +172,7 @@ SHELL_COMMAND_DEFINE(app_type, (char *)"\r\n\"app_type <0|1|2|3|4>\":\r\n "
                                         "3 - Door access(heavy)\r\n"
                                         "4 - Userid \r\n", FFI_CLI_AppCommand, SHELL_IGNORE_PARAMETER_COUNT);
 SHELL_COMMAND_DEFINE(low_power, (char *)"\r\n\"low_power <on|off>\":  Turn low power mode on|off\r\n", FFI_CLI_LowPowerCommand, SHELL_IGNORE_PARAMETER_COUNT);
+SHELL_COMMAND_DEFINE(algo_start, (char *)"\r\n\"algo_start <auto|manual>\":  Set algo start mode auto|manual\r\n", FFI_CLI_AlgoStartCommand, SHELL_IGNORE_PARAMETER_COUNT);
 
 extern QueueHandle_t g_UsbShellQueue;
 extern VIZN_api_handle_t gApiHandle;
@@ -197,6 +202,7 @@ shell_status_t RegisterFFICmds(shell_handle_t shellContextHandle)
     SHELL_RegisterCommand(shellContextHandle, SHELL_COMMAND(wifi));
     SHELL_RegisterCommand(shellContextHandle, SHELL_COMMAND(app_type));
     SHELL_RegisterCommand(shellContextHandle, SHELL_COMMAND(low_power));
+    SHELL_RegisterCommand(shellContextHandle, SHELL_COMMAND(algo_start));
     return kStatus_SHELL_Success;
 }
 
@@ -455,6 +461,14 @@ static shell_status_t FFI_CLI_LowPowerCommand(shell_handle_t shellContextHandle,
 {
     return UsbShell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_LOW_POWER);
 }
+
+static shell_status_t FFI_CLI_AlgoStartCommand(shell_handle_t shellContextHandle,
+                                        int32_t argc,
+                                        char **argv)
+{
+    return UsbShell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_ALGO_START);
+}
+
 
 void UsbShell_CmdProcess_Task(void *arg)
 {
@@ -1193,6 +1207,68 @@ void UsbShell_CmdProcess_Task(void *arg)
                     else
                     {
                         SHELL_Printf(shellContextHandle, "Cannot save low power mode\r\n");
+                    }
+                }
+                else
+                {
+                    SHELL_Printf(shellContextHandle, "Undefined mode\r\n");
+                }
+            }
+        }
+        else if (queueMsg.shellCommand == SHELL_EV_FFI_CLI_ALGO_START)
+        {
+            if (queueMsg.argc == 1)
+            {
+                cfg_algo_start_mode_t cur_mode;
+                uint32_t status = VIZN_GetAlgoStartMode(&VIZN_API_CLIENT(Shell), &cur_mode);
+                if (status == kStatus_API_Layer_Success)
+                {
+                    SHELL_Printf(shellContextHandle, "Algo start mode is %s\r\n",
+                                 (cur_mode == ALGO_START_MODE_AUTO) ? "auto" : "manual");
+                    if (cur_mode == ALGO_START_MODE_MANUAL)
+                    {
+                        VIZN_StartRecognition(&VIZN_API_CLIENT(Shell));
+                        SHELL_Printf(shellContextHandle, "And start Recognition in manual");
+                    }
+                }
+                else
+                {
+                    SHELL_Printf(shellContextHandle, "Algo start mode not supported\r\r");
+                }
+            }
+            else if (queueMsg.argc == 2)
+            {
+                if (!strcmp((char *)queueMsg.argv[1], "auto"))
+                {
+                    status = VIZN_SetAlgoStartMode(&VIZN_API_CLIENT(Shell), ALGO_START_MODE_AUTO);
+                    if (status == kStatus_API_Layer_Success)
+                    {
+                        VIZN_StartRecognition(&VIZN_API_CLIENT(Shell));
+                        SHELL_Printf(shellContextHandle, "Set algo start mode to auto.\r\n");
+                    }
+                    else if (status == kStatus_API_Layer_SetLowPowerMode_Same)
+                    {
+                        SHELL_Printf(shellContextHandle, "Algo start mode is already auto.\r\n");
+                    }
+                    else
+                    {
+                        SHELL_Printf(shellContextHandle, "Cannot save algo start mode\r\n");
+                    }
+                }
+                else if (!strcmp((char *)queueMsg.argv[1], "manual"))
+                {
+                    status = VIZN_SetAlgoStartMode(&VIZN_API_CLIENT(Shell), ALGO_START_MODE_MANUAL);
+                    if (status == kStatus_API_Layer_Success)
+                    {
+                        SHELL_Printf(shellContextHandle, "Set algo start mode to manual.\r\n");
+                    }
+                    else if (status == kStatus_API_Layer_SetLowPowerMode_Same)
+                    {
+                        SHELL_Printf(shellContextHandle, "Algo start mode is already manual.\r\n");
+                    }
+                    else
+                    {
+                        SHELL_Printf(shellContextHandle, "Cannot save algo start mode\r\n");
                     }
                 }
                 else
