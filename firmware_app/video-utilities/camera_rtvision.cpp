@@ -121,9 +121,8 @@ static uint8_t sCurrentLedPwmValue[LED_NUM];
 static int8_t s_CurrentCameraID = COLOR_CAMERA;
 static bool  isOddFrame = false;
 #endif
-static uint8_t s_CurRGBExposureMode = CAMERA_EXPOSURE_MODE_AUTO_LEVEL0;
-
-static uint8_t gPendingRGBExposureModeSet = 0;
+//static uint8_t s_CurRGBExposureMode = CAMERA_EXPOSURE_MODE_AUTO_LEVEL0;
+//static uint8_t gPendingRGBExposureModeSet = 0;
 
 static csi_resource_t csiResource = {
     .csiBase = CSI,
@@ -482,27 +481,45 @@ int Camera_SetDispMode(uint8_t displayMode)
 }
 
 
-uint8_t Camera_GetRGBExposureMode(void)
-{
-    return s_CurRGBExposureMode;
-}
+//uint8_t Camera_GetRGBExposureMode(void)
+//{
+//    return s_CurRGBExposureMode;
+//}
+//
+//int Camera_SetRGBExposureMode(uint8_t mode)
+//{
+//#if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
+//	if (s_CurRGBExposureMode == mode)
+//	{
+//		return 0;
+//	}else
+//	{
+//		s_CurRGBExposureMode = mode;
+//#if (CAMERA_DIFF_I2C_BUS)
+//		CAMERA_DEVICE_Control(&cameraDevice[0],  kCAMERA_DeviceExposureMode, mode);
+//#else
+//		//delay to do so in Camera_RgbIrSwitch
+//		gPendingRGBExposureModeSet = 1;
+//#endif
+//	}
+//#endif
+//	return 0;
+//}
 
-int Camera_SetRGBExposureMode(uint8_t mode)
+//whichCamera, 0 indicate RGB, 1 indicate IR.
+//upOrDown, 0 indicate down, 1 indicate up, 0xFF indicate to default value
+int Camera_SetTargetY(uint8_t whichCamera,uint8_t upOrDown)
 {
 #if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
-	if (s_CurRGBExposureMode == mode)
-	{
-		return 0;
-	}else
-	{
-		s_CurRGBExposureMode = mode;
+
 #if (CAMERA_DIFF_I2C_BUS)
-		CAMERA_DEVICE_Control(&cameraDevice[0],  kCAMERA_DeviceExposureMode, mode);
+		CAMERA_DEVICE_Control(&cameraDevice[whichCamera],  kCAMERA_DeviceBrightnessAdjust, upOrDown);
 #else
 		//delay to do so in Camera_RgbIrSwitch
-		gPendingRGBExposureModeSet = 1;
+		gPendingTargetYSet[whichCamera] = 1;
+		gPendingTargetYValue[whichCamera] = upOrDown;
 #endif
-	}
+#else
 #endif
 	return 0;
 }
@@ -1043,7 +1060,7 @@ static void Camera_Task(void *param)
                     }
                     else if(pQMsg->msg.cmd.id == QCMD_CHANGE_RGB_EXPOSURE_MODE)
                     {
-                    	s_CurRGBExposureMode = pQMsg->msg.cmd.data.exposure_mode;
+//                    	s_CurRGBExposureMode = pQMsg->msg.cmd.data.exposure_mode;
                     }
 					else if (pQMsg->msg.cmd.id == QCMD_CHANGE_INFO_DISP_MODE)
                     {

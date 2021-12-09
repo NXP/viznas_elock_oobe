@@ -269,7 +269,7 @@ typedef struct
 #define FEATURE_BORDER_ROUTER 0
 
 /* Flash Database related */
-#define FEATUREDATA_MAX_COUNT 4096
+#define FEATUREDATA_MAX_COUNT 1024
 
 #define FLASH_OK  0
 #define FLASH_ERR 1

@@ -14,6 +14,8 @@
 #include "fsl_camera.h"
 #include "fsl_camera_device.h"
 
+#include "sln_shell.h"
+
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -1234,6 +1236,56 @@ status_t GC0308_Control(camera_device_handle_t *handle, camera_device_cmd_t cmd,
                 break;
        }
        return kStatus_Success;
+    }else if (cmd == kCAMERA_DeviceBrightnessAdjust)
+    {
+//This steps can be tuned for different configuration: 
+// Sharing a common IIC for dual camera
+// Seperate IIC for each camera
+// Camera FPS
+#define GC0308_BRIGHTNESS_ADJUST_STEP 0x3
+#define GC0308_BRIGHTNESS_MAX 0xFF
+#define GC0308_BRIGHTNESS_TARGET_DEFAULT 0x50
+
+        GC0308_Write(handle, 0xfe, 1U, 0x00);/* set page0 */
+
+        //read target birghtness
+        uint8_t reg_value;
+        status_t status = GC0308_Read(handle, 0xD3, 1u, &reg_value);
+        if (kStatus_Success != status)
+        {
+            return status;
+        }
+        //UsbShell_Printf("[GC0308]:targetY:%d dir:%d\r\n", reg_value,arg);
+
+        switch(arg) {
+			case CAMERA_BRIGHTNESS_DECREASE:
+				if (reg_value >= GC0308_BRIGHTNESS_ADJUST_STEP)
+				{
+					GC0308_Write(handle, 0xd3, 1U, reg_value - GC0308_BRIGHTNESS_ADJUST_STEP);
+				}else
+				{
+					GC0308_Write(handle, 0xd3, 1U, 0);
+				}
+			break;
+			case CAMERA_BRIGHTNESS_INCREASE:
+				if (reg_value + GC0308_BRIGHTNESS_ADJUST_STEP <= GC0308_BRIGHTNESS_MAX)
+				{
+					GC0308_Write(handle, 0xd3, 1U, reg_value + GC0308_BRIGHTNESS_ADJUST_STEP);
+				}else
+				{
+					GC0308_Write(handle, 0xd3, 1U, GC0308_BRIGHTNESS_MAX);
+				}
+			break;
+			case CAMERA_BRIGHTNESS_DEFAULT:
+				GC0308_Write(handle, 0xd3, 1U, GC0308_BRIGHTNESS_TARGET_DEFAULT);
+			break;
+
+			default:
+				break;
+        }
+        //uint8_t updated_reg_value;
+        //GC0308_Read(handle, 0xD3, 1u, &updated_reg_value);
+        //UsbShell_Printf("[GC0308]:targetY:%d-->%d dir:%d\r\n", reg_value,updated_reg_value,arg);
     }
     else
         return kStatus_InvalidArgument;

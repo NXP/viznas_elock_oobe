@@ -124,15 +124,37 @@ OCRAM_CACHED_BSS RAM_ADDRESS_ALIGNMENT(4) static uint8_t s_OasisMemPool[760 * 10
 #endif
 
 
+#define FACEREC_FS_RESERVED_AREA_START_ADDRESS  (FACEREC_FS_ITEM_ADDR + sizeof(FeatureItem)*FEATUREDATA_MAX_COUNT)
+
+//please remain this structure sector size aligned
+typedef struct
+{
+	char name[32]; //name of the user
+    uint32_t size;
+    uint8_t data[FLASH_SECTOR_SIZE - sizeof(size) - sizeof(name)];
+
+}ReservedItem_t;
+
+int reservedItemNum = 0;
+//please ensure image saved in flash will not exceed the total flash size and overwrite FICA data on the end of the flash area.
+#define GET_ADDRESS_BY_IDX_RESERVED_AREA(idx) (FACEREC_FS_RESERVED_AREA_START_ADDRESS + idx * sizeof(ReservedItem_t))
+#define RESERVED_ITEM_SECTORS (sizeof(ReservedItem_t)/FLASH_SECTOR_SIZE)
+
+
 //#define OASIS_JPEG_IMG_WIDTH (100)		//50
 //#define OASIS_JPEG_IMG_HEIGHT (100)		//50
-//static uint8_t s_tmpBuffer4Jpeg[OASIS_JPEG_IMG_WIDTH*OASIS_JPEG_IMG_HEIGHT*3];
-//static uint32_t s_dataSizeInJpeg = 0;
-//
-//static void Oasis_WriteJpegBuffer(uint8_t byte)
-//{
-//	s_tmpBuffer4Jpeg[s_dataSizeInJpeg++] = byte;
-//}
+static ReservedItem_t s_tmpBuffer4Jpeg;
+static uint32_t s_dataSizeInJpeg = 0;
+
+static void Oasis_WriteJpegBuffer(uint8_t byte)
+{
+	if (s_dataSizeInJpeg < sizeof(s_tmpBuffer4Jpeg.data))
+	{
+		s_tmpBuffer4Jpeg.data[s_dataSizeInJpeg++] = byte;
+	}
+}
+
+
 
 /*******************************************************************************
  * Code
@@ -523,7 +545,9 @@ static int GetRegisteredFacesHandler(uint16_t *face_ids, void **faces, uint32_t 
     return 0;
 }
 
-static int AddNewFaceHandler(uint16_t *face_id, void *face,void* snapshot, int snapshot_len, void* user_data)
+
+
+static int AddNewFaceHandler(uint16_t *face_id, void *face,SnapshotItem_t* snapshot, int snapshotNum, void* user_data)
 {
     vizn_api_status_t status;
     int ret = 0;
@@ -538,11 +562,89 @@ static int AddNewFaceHandler(uint16_t *face_id, void *face,void* snapshot, int s
             UsbShell_Printf("Maximum number of users reached\r\n");
         }
         ret = -1;
+    }else
+    {
+
+
+#if 0
+    	//Sample code on how to encode and save a jpeg image to flash
+    	for(uint8_t ii = 0;ii<snapshotNum;ii++)
+    	{
+
+			s_dataSizeInJpeg = 0;
+			memset(&s_tmpBuffer4Jpeg,0,sizeof(s_tmpBuffer4Jpeg));
+			auto ok = TooJpeg::writeJpeg(Oasis_WriteJpegBuffer,
+					snapshot[ii].data,
+					snapshot[ii].w,
+					snapshot[ii].h,
+					1,90,1);
+
+			sprintf(s_tmpBuffer4Jpeg.name,"%d_%d.jpg",*face_id,ii);
+
+			UsbShell_Printf("[OASIS]:TooJpeg %s ret:%d file size:%d\r\n",
+					s_tmpBuffer4Jpeg.name,
+					ok,s_dataSizeInJpeg);
+			if (s_dataSizeInJpeg == sizeof(s_tmpBuffer4Jpeg.data))
+			{
+				UsbShell_Printf("[OASIS]:TooJpeg warning: jpeg buffer may overflow!!!\r\n");
+				int new_w = snapshot[ii].w*0.9f;
+				int new_h = snapshot[ii].h*0.9f;
+				int element_size = (snapshot[ii].fmt == OASIS_IMG_FORMAT_GREY8)?1:3;
+
+				uint8_t* resized = (uint8_t*)pvPortMalloc(new_w*new_h*element_size);
+				int tmp_buf_size = OASISLT_util_resize((const uint8_t*)snapshot[ii].data,
+						snapshot[ii].w,snapshot[ii].h,
+										resized,
+										new_w,
+										new_h,
+										OASIS_IMG_FORMAT_BGR888,
+										NULL);
+				uint8_t* tmp_resized = (uint8_t*)pvPortMalloc(tmp_buf_size);
+				OASISLT_util_resize((const uint8_t*)snapshot[ii].data,
+						snapshot[ii].w,snapshot[ii].h,
+						resized,
+						new_w,new_h,
+						snapshot[ii].fmt,
+						tmp_resized);
+				s_dataSizeInJpeg = 0;
+				ok = TooJpeg::writeJpeg(Oasis_WriteJpegBuffer,
+						resized,
+						new_w,
+						new_h,
+						1,90,1);
+
+				s_tmpBuffer4Jpeg.size = s_dataSizeInJpeg;
+
+				UsbShell_Printf("[OASIS]:TooJpeg %s ret:%d file size:%d\r\n",
+						s_tmpBuffer4Jpeg.name,
+						ok,s_dataSizeInJpeg);
+
+				vPortFree(tmp_resized);
+
+			}else
+			{
+				s_tmpBuffer4Jpeg.size = s_dataSizeInJpeg;
+			}
+
+			UsbShell_Printf("[OASIS]:TooJpeg write to:0x%x \r\n",GET_ADDRESS_BY_IDX_RESERVED_AREA(reservedItemNum));
+
+//			if (s_dataSizeInJpeg > sizeof(s_tmpBuffer4Jpeg.data))
+            for(uint32_t jj = 0;jj< RESERVED_ITEM_SECTORS;jj++)
+            {
+			    SLN_Write_Sector(GET_ADDRESS_BY_IDX_RESERVED_AREA(reservedItemNum) + jj*FLASH_SECTOR_SIZE,
+			    		(uint8_t*)&s_tmpBuffer4Jpeg + jj*FLASH_SECTOR_SIZE,
+						FLASH_SECTOR_SIZE);
+
+
+            }
+            reservedItemNum++;
+    	}
+#endif
     }
     return ret;
 }
 
-static int UpdateFaceHandler(uint16_t face_id, void *face,void* snapshot_data, int length, int offset, void* user_data)
+static int UpdateFaceHandler(uint16_t face_id, void *face,SnapshotItem_t* snapshot_data, int num, void* user_data)
 {
     int ret;
     float *feature_data = (float *)face;
@@ -615,7 +717,7 @@ static void Oasis_PWMControl(uint8_t led, uint8_t curPWM, uint8_t direction)
 
 //For GC0308, we can combine maunal exposure and pwm to adjust rgb face brightness.
 //For MT9M114, only use pwm to adjust rgb face brightness.
-static void Oasis_LedControl(cfg_led_t ledID,uint8_t direction, uint8_t enableRGBModeCtrl)
+static void Oasis_LedControl(cfg_led_t ledID,uint8_t direction)
 {
 
     uint8_t pwm;
@@ -623,22 +725,6 @@ static void Oasis_LedControl(cfg_led_t ledID,uint8_t direction, uint8_t enableRG
     UsbShell_DbgPrintf(VERBOSE_MODE_L2,"Oasis_LedControl,led:%d dir:%d pwm:%d\r\n",ledID, direction, pwm);
     Oasis_PWMControl(ledID, pwm, direction);
 
-    if (LED_WHITE == ledID && enableRGBModeCtrl)
-    {
-        uint8_t mode = Camera_GetRGBExposureMode();
-        UsbShell_Printf("[OASIS]:Oasis_LedControl mode %d",mode);
-		if (direction)
-		{
-			//Camera_QMsgSetPWM(LED_WHITE, pwm);
-			mode = (mode < CAMERA_EXPOSURE_MODE_AUTO_LEVEL3)? (mode + 1):CAMERA_EXPOSURE_MODE_AUTO_LEVEL3;
-		}else
-		{
-			//Camera_QMsgSetPWM(LED_WHITE,0);
-			mode = (mode > CAMERA_EXPOSURE_MODE_AUTO_LEVEL0)? (mode-1):CAMERA_EXPOSURE_MODE_AUTO_LEVEL0;
-		}
-        UsbShell_Printf("----> %d\r\n",mode);
-		Camera_SetRGBExposureMode(mode);
-    }
 }
 
 /* Used to dynamically adjust face brightness, user can adjust brightness by modifing LED's light intensity or using manual exposure.
@@ -647,16 +733,18 @@ static void Oasis_LedControl(cfg_led_t ledID,uint8_t direction, uint8_t enableRG
  */
 static void AdjustBrightnessHandler(uint8_t frame_idx, uint8_t direction, void* user_data)
 {
-
+	UsbShell_DbgPrintf(VERBOSE_MODE_L2, "Adjust brightness, idx:%d dir:%d\r\n",frame_idx,direction);
     if (frame_idx == OASISLT_INT_FRAME_IDX_IR)
     {
-        Oasis_LedControl(LED_IR,direction,0);
+//        Oasis_LedControl(LED_IR,direction);
+        Camera_SetTargetY(IR_CAMERA,direction);
     }
     else
     {
         //There is a HW limitation to control LED_WHITE and LED_IR at the same time, so diable RGB part.
 #if RT106F_ELOCK_BOARD
-    	Oasis_LedControl(LED_WHITE,direction,1);
+//    	Oasis_LedControl(LED_WHITE,direction);
+    	Camera_SetTargetY(COLOR_CAMERA,direction);
 #endif
     }
 }
@@ -770,6 +858,7 @@ static void Oasis_Task(void *param)
 
                 case QMSG_FACEREC_ADDNEWFACE:
                 {
+
                     if (rxQMsg->msg.cmd.data.add_face.add_newface)
                     {
                         run_flag = OASIS_DET_REC_REG;
@@ -802,6 +891,7 @@ static void Oasis_Task(void *param)
 //                    {
 //                        Oasis_SetState(OASIS_STATE_FACE_REG_STOP);
 //                    }
+
                 }
                 break;
 
@@ -809,11 +899,12 @@ static void Oasis_Task(void *param)
                 {
                     UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[OASIS]:QMSG_FACEREC_STOP!!!\r\n");
                     s_lockstatus = 0;
+
                     if (Cfg_AppDataGetAlgoStartMode() == ALGO_START_MODE_MANUAL)
                     {
                         Camera_QMsgSetPWM(LED_IR, 0);
                         Camera_QMsgSetPWM(LED_WHITE, 0);
-                        Camera_SetRGBExposureMode(CAMERA_EXPOSURE_MODE_AUTO_LEVEL0);
+//                        Camera_SetRGBExposureMode(CAMERA_EXPOSURE_MODE_AUTO_LEVEL0);
                     }
                 }
                 break;
@@ -828,11 +919,14 @@ static void Oasis_Task(void *param)
                             uint8_t pwm  = 0;
                             VIZN_GetPulseWidth(NULL, LED_IR, &pwm);
                             Camera_QMsgSetPWM(LED_IR, pwm);
+
                         }
+                        Camera_SetTargetY(IR_CAMERA,0xFF);
                         s_lockstatus = 1;
                         clearFaceInfoMsg(&gui_info);
                         Oasis_SendFaceInfoMsg(gui_info);
                     }
+
                     Oasis_SendFaceDetReqMsg(s_FaceRecBuf.dataIR, s_FaceRecBuf.dataRGB);                    
                 }
                 break;
@@ -943,7 +1037,7 @@ int Oasis_Start()
     s_InitPara.enableFlags = 0;
     if (s_appType != APP_TYPE_USERID)
     {
-        s_InitPara.enableFlags |= 0;//OASIS_ENABLE_MASK_FACE_REC;//OASIS_ENABLE_MULTI_VIEW;
+        s_InitPara.enableFlags |= OASIS_ENABLE_DUP_FACE_REGISTRATION;//OASIS_ENABLE_FACE_REC_BRIGHTNESS_CHECK;
     }
     s_InitPara.falseAcceptRate = OASIS_FAR_1_1000000;
     s_InitPara.enableFlags |= (Cfg_AppDataGetLivenessMode() == LIVENESS_MODE_ON) ? OASIS_ENABLE_LIVENESS : 0;
@@ -953,6 +1047,7 @@ int Oasis_Start()
     s_InitPara.width  = REC_RECT_WIDTH;
     s_InitPara.fastMemSize = DTC_OPTIMIZE_BUFFER_SIZE;
     s_InitPara.fastMemBuf  = s_DTCOPBuf;
+
     ret = OASISLT_init(&s_InitPara);
 
     if (ret == OASIS_INIT_INVALID_MEMORYPOOL)

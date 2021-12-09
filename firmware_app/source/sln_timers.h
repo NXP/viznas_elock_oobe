@@ -11,8 +11,8 @@
 
 #include <timers.h>
 #define MS_SYSTEM_LOCKED       2000  // MS in which the board is in a locked state after a reg/rec.
-#define MS_MANUAL_REG_NO_FACE  5000  // THE TIMEOUT OF MANUAL REGISTRATION WHILE NO FACE HAS BEEN DETECTED
-#define MS_MANUAL_REG_HAS_FACE 30000 // THE TIMEOUT OF MANUAL REGISTRATION WHILE A FACE HAS BEEN DETECTED
+#define MS_MANUAL_REG_NO_FACE  15000  // THE TIMEOUT OF MANUAL REGISTRATION WHILE NO FACE HAS BEEN DETECTED
+#define MS_MANUAL_REG_HAS_FACE 50000//30000 // THE TIMEOUT OF MANUAL REGISTRATION WHILE A FACE HAS BEEN DETECTED
 #define MS_DET_NO_FACE         15000 // MS in which device will enter sleep if no face is detected while running normally
 #define MS_REC_NO_FACE         25000 // MS in which device will enter sleep if a face is detected while running normally
 

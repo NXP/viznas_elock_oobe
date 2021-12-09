@@ -74,6 +74,13 @@ typedef enum _camera_device_cmd
 #define CAMERA_EXPOSURE_MODE_AUTO_LEVEL2 2
 #define CAMERA_EXPOSURE_MODE_AUTO_LEVEL3 3
 
+
+    kCAMERA_DeviceBrightnessAdjust, /*Brightness adjust. */
+
+#define CAMERA_BRIGHTNESS_DECREASE -1
+#define CAMERA_BRIGHTNESS_INCREASE 1
+#define	CAMERA_BRIGHTNESS_DEFAULT  0
+
 } camera_device_cmd_t;
 
 /*! @brief Camera device operations. */
