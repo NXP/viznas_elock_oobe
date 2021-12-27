@@ -1,5 +1,5 @@
 /*
- * Copyright  2017-2018 NXP
+ * Copyright 2017-2018, 2020 NXP
  * All rights reserved.
  *
  *
@@ -10,6 +10,16 @@
 #define _FSL_VIDEO_I2C_H_
 
 #include "fsl_common.h"
+
+/*
+ * Change log:
+ *
+ *   1.0.1
+ *     - Fixed MISRA-C 2012 issues.
+ *
+ *   1.0.0
+ *     - Initial version
+ */
 
 /*******************************************************************************
  * Definitions
@@ -62,6 +72,23 @@ status_t VIDEO_I2C_WriteReg(uint8_t i2cAddr,
                             uint32_t value,
                             video_i2c_send_func_t i2cSendFunc);
 
+/*!
+ * @brief Write values to multiple registers.
+ *
+ * @param i2cAddr I2C address.
+ * @param addrType Register address type.
+ * @param reg The register to write.
+ * @param len Length of the value to write.
+ * @param value Pointer to the value to write.
+ * @param i2cSendFunc The actual I2C send function.
+ * @return Returns @ref kStatus_Success if success, otherwise returns error code.
+ */
+status_t VIDEO_I2C_WriteMultiRegs(uint8_t i2cAddr,
+                                  video_reg_addr_t addrType,
+                                  uint32_t reg,
+                                  uint32_t len,
+                                  const uint8_t *value,
+                                  video_i2c_send_func_t i2cSendFunc);
 /*!
  * @brief Read the register value.
  *

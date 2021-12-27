@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 NXP.
+ * Copyright 2018-2021 NXP.
  * This software is owned or controlled by NXP and may only be used strictly in accordance with the
  * license terms that accompany it. By expressly accepting such terms or by downloading, installing,
  * activating and/or otherwise using the software, you are agreeing that you have read, and that you
@@ -9,23 +9,125 @@
 
 #ifndef _FICA_DEFINITION_
 #define _FICA_DEFINITION_
-#include "board.h"
+
+#include "sln_flash_config.h"
 
 /*******************************************************************************
  * FICA (Flash Image Configuration Area) Definitions
  ******************************************************************************/
-#define FICA_VER 2
+#define FICA_VER 3
 
-// FICA Descriptor, used to determine if the FICA area has been initialized or not
-#define FICA_ICA_DESC 0xA5A5A5A5
+/* FICA Descriptor, used to determine if the FICA area has been initialized or not */
+#define FICA_ICA_DESC  0xA5A5A5A5
+#define CHECK_APP_SIGN 1
+#define APP_SIGN_SIZE  2048
 
-// Start address of FICA area in flash is the last sector
-#define FICA_START_ADDR (BOARD_FLASH_SIZE-BOARD_FLASH_SECTOR_SIZE) // with 256KB Erase Block
-#define FICA_TABLE_SIZE BOARD_FLASH_SECTOR_SIZE // with 256KB Erase Block
+/*******************************************************************************
+ * Image Field Definitions
+ * Defaults and choices for each of the FICA Record fields
+ * Each offset is a word (4 bytes)
+ ******************************************************************************/
+
+/* Image Record Start Descriptor */
+#define FICA_REC_START_ID 0x5A5A5A5A
+
+#define FICA_OFFSET_ICA_COMM 8
+
+/* Image Record Field Default values and choices
+ * Offset 0 - Descriptor ID (start id)
+ */
+#define FICA_IMG_DESC_ID 0x5A5A5A5A
+
+#define FICA_COMM_BOOT_NONE   0x00000000
+#define FICA_COMM_AIS_OTA_BIT 0x00000010
+/* Bit indicates that a firmware update is needed using solutions method */
+#define FICA_COMM_FWUPDATE_BIT 0x00000020
+/* Bit indicates which method to be used for firmware update SLN_OTA/SLN_OTW */
+#define FICA_COMM_FWUPDATE_METHOD_BIT 0x00000040
+#define FICA_COMM_AIS_NAV_BIT         0x00000100
+#define FICA_COMM_AIS_NAP_BIT         0x00000200
+#define FICA_COMM_AIS_NAI_BIT         0x00000400
+
+#if (defined(ENABLE_UNSIGNED_USB_MSD) || ENABLE_UNSIGNED_USB_MSD == 1)
+/* NOTE: To facilitate ease of use in SLN-ALEXA-IOT kits */
+#define FICA_COMM_AIS_USB_BIT 0x00000800
+#endif
+
+/* The ResetISR address is placed on the index 1 of the vector table */
+#define APPLICATION_RESET_ISR_ADDRESS (SCB->VTOR + 0x4)
+
+#define FICA_IMG_SIZE_ZERO 0 /* Image Size - default */
+#define FICA_IMG_CRC_NONE  0 /* Image CRC - default */
+#define FICA_IMG_HASH_NONE 0 /* Image Key - default */
+#define FICA_IMG_RSV       0 /* Offset 7 - Reserved - default */
+
+/*******************************************************************************
+ * Images` sizes (based on flash size)
+ ******************************************************************************/
+
+#if defined(ENABLE_BOOTSTRAP)
+#define FICA_IMG_BOOTSTRAP_SIZE  0x00040000 /* 0.25 MB */
+#define FICA_IMG_BOOTLOADER_SIZE 0x001C0000 /* 1.75 MB */
+#else
+#define FICA_IMG_BOOTSTRAP_SIZE  0x00000000 /* 0.00 MB */
+#define FICA_IMG_BOOTLOADER_SIZE 0x00200000 /* 2.00 MB */
+#endif
 
 
-// FICA field size
-#define FICA_FIELD_SIZE 4
+#if FLASH_SIZE < 0x1000000U
+/* FLASH_SIZE < 16MB */
+#error "Application cannot run with a flash size smaller than 16MB"
+
+#elif FLASH_SIZE < 0x2000000U
+/* 16MB <= FLASH_SIZE < 32MB */
+#define FICA_IMG_RESERVED_SIZE   0x00000000 /* 0   MB - toolbox - deprecated */
+#define FICA_IMG_APP_A_SIZE      0x00600000 /* 6   MB */
+#define FICA_IMG_APP_B_SIZE      0x00600000 /* 6   MB */
+
+#else
+/* FLASH_SIZE >= 32MB */
+#define FICA_IMG_RESERVED_SIZE   0x00000000 /* 0  MB - toolbox - deprecated */
+#define FICA_IMG_APP_A_SIZE      0x00A00000 /* 10 MB */
+#define FICA_IMG_APP_B_SIZE      0x00A00000 /* 10 MB */
+
+#endif
+
+#define FICA_FILE_SYS_SIZE      (0x100000)
+#define FICA_CRYPTO_BACKUP_SIZE (FLASH_SECTOR_SIZE)
+#define FICA_TABLE_SIZE         (FLASH_SECTOR_SIZE)
+
+/*******************************************************************************
+ * Images` start addresses offsets (based on images` sizes)
+ ******************************************************************************/
+
+#define FICA_IMG_BOOTSTRAP_ADDR     (0x00000000)
+#define FICA_IMG_BOOTSTRAP_IVT_ADDR (FICA_IMG_BOOTSTRAP_ADDR + 0x00001000)
+#define FICA_IMG_BOOTLOADER_ADDR    (FICA_IMG_BOOTSTRAP_ADDR + FICA_IMG_BOOTSTRAP_SIZE)
+#define FICA_IMG_RESERVED_ADDR      (FICA_IMG_BOOTLOADER_ADDR + FICA_IMG_BOOTLOADER_SIZE) /* toolbox - deprecated */
+#define FICA_IMG_APP_A_ADDR         (FICA_IMG_RESERVED_ADDR + FICA_IMG_RESERVED_SIZE)
+#define FICA_IMG_APP_B_ADDR         (FICA_IMG_APP_A_ADDR + FICA_IMG_APP_A_SIZE)
+#define FICA_IMG_FILE_SYS_ADDR      (FICA_IMG_APP_B_ADDR + FICA_IMG_APP_B_SIZE)
+#define FICA_FREE_MEM_START_ADDR    (FICA_IMG_FILE_SYS_ADDR + FICA_FILE_SYS_SIZE)
+#define FICA_IMG_INVALID_ADDR       0xFFFFFFFF
+
+/* FICA Table and Crypto Context Backup are placed at the end of the flash */
+#define FICA_START_ADDR         (FLASH_SIZE - FICA_TABLE_SIZE)
+#define FICA_CRYPTO_BACKUP_ADDR (FICA_START_ADDR - FICA_CRYPTO_BACKUP_SIZE)
+#define FICA_FREE_MEM_END_ADDR  (FICA_CRYPTO_BACKUP_ADDR)
+
+/* Flash memory between FICA_FREE_MEM_START_ADDR and FICA_FREE_MEM_END_ADDR is considered not mapped
+ * and may be used by the application. EX:
+ * - Alexa2 QSPI maps first 128KB as KVS.
+ *
+ * Perform a memory sufficiency/overlapping check.
+ */
+#if FICA_FREE_MEM_START_ADDR > FICA_FREE_MEM_END_ADDR
+#error "Some memory sections overlap due to insufficient flash memory."
+#endif
+
+/*******************************************************************************
+ * FICA typedefs
+ ******************************************************************************/
 
 /*! @brief FICA Header Structure */
 typedef struct __attribute__((packed)) _fica_header
@@ -38,22 +140,6 @@ typedef struct __attribute__((packed)) _fica_header
     uint32_t currBootType;  /*!< Current boot type, typically FICA_IMG_TYPE_BOOTLOADER, but may vary */
 } fica_header_t;
 
-#define CHECK_APP_SIGN 1
-#define APP_SIGN_SIZE  2048
-
-/*******************************************************************************
- * Image Field Definitions
- * Defaults and choices for each of the FICA Record fields
- * Each offset is a word (4 bytes)
- ******************************************************************************/
-
-// Image Record Start Descriptor
-#define FICA_REC_START_ID 0x5A5A5A5A
-
-// Image Record Field Default values and choices
-// Offset 0 - Descriptor ID (start id)
-#define FICA_IMG_DESC_ID 0x5A5A5A5A
-
 /*! @brief FICA Image Types enumeration */
 typedef enum _fica_img_type
 {
@@ -64,42 +150,6 @@ typedef enum _fica_img_type
     FICA_NUM_IMG_TYPES,       /*!< Total Number of Images Defined in this Version */
 } fica_img_type_t;
 
-#define FICA_COMM_BOOT_NONE           0x00000000
-#define FICA_COMM_AIS_OTA_BIT         0x00000010
-#define FICA_COMM_FWUPDATE_BIT        0x00000020
-#define FICA_COMM_FWUPDATE_METHOD_BIT 0x00000040
-#define FICA_COMM_AIS_NAV_BIT         0x00000100
-#define FICA_COMM_AIS_NAP_BIT         0x00000200
-#define FICA_COMM_AIS_NAI_BIT         0x00000400
-
-#if (defined(ENABLE_UNSIGNED_USB_MSD) || ENABLE_UNSIGNED_USB_MSD == 1)
-// NOTE: To facilitate ease of use in SLN-ALEXA-IOT kits
-#define FICA_COMM_AIS_USB_BIT 0x00000800
-#endif
-
-// Image Flash Start Addresses for this flash (IS26KL256S)
-//#define FICA_IMG_ICA_DEF_ADDR FICA_START_ADDR + FICA_ICA_DEFINITION_SIZE
-
-//#define FICA_IMG_BOOTSTRAP_ADDR     0x00000000
-//#define FICA_IMG_BOOTSTRAP_IVT_ADDR 0x00001000
-#define FICA_IMG_BOOTLOADER_ADDR    0//0x00040000
-//#define FICA_IMG_RESERVED_ADDR      0x00100000
-#define FICA_IMG_APP_A_ADDR         0x00100000
-#define FICA_IMG_APP_B_ADDR         0x00600000
-#define FICA_IMG_INVALID_ADDR       0xFFFFFFFF
-
-// The ResetISR address is placed on the index 1 of the vector table
-#define APPLICATION_RESET_ISR_ADDRESS (SCB->VTOR + 0x4)
-
-//#define FICA_IMG_BOOTSTRAP_SIZE  0x00000000 //0 MB
-#define FICA_IMG_BOOTLOADER_SIZE 0x100000// 1 MB
-#define FICA_IMG_RESERVED_SIZE   0x00000000 // 0 MB
-#define FICA_IMG_APP_A_SIZE      0x00500000 // 5 MB
-#define FICA_IMG_APP_B_SIZE      0x00500000 // 5 MB
-
-// Image Size
-#define FICA_IMG_SIZE_ZERO 0 // default
-
 /*! @brief FICA Image Format Types enumeration */
 typedef enum _fica_img_fmt
 {
@@ -108,15 +158,6 @@ typedef enum _fica_img_fmt
     FICA_IMG_FMT_SREC,     /*!< S-Record */
     FICA_IMG_FMT_AES_128,  /*!< Secure Binary */
 } fica_img_fmt_t;
-
-// Image CRC
-#define FICA_IMG_CRC_NONE 0 // default
-
-// Image Key
-#define FICA_IMG_HASH_NONE 0 // default
-
-// Offset 7 - Reserved
-#define FICA_IMG_RSV 0 // default
 
 /*! @brief FICA Record Structure */
 typedef struct __attribute__((packed)) _fica_record
@@ -142,4 +183,4 @@ typedef struct __attribute__((packed)) _fica
     fica_record_t records[FICA_NUM_IMG_TYPES];
 } fica_t;
 
-#endif // _FICA_DEFINITION_
+#endif /* _FICA_DEFINITION_ */

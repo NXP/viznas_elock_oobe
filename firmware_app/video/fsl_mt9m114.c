@@ -11,8 +11,6 @@
 #include "fsl_camera_device.h"
 #include "fsl_mt9m114.h"
 
-#define ADAPTIVE_WEIGHTED_AE 1
-
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -149,7 +147,7 @@ static const mt9m114_reg_t mt9m114InitConfig[] = {
     {MT9M114_VAR_CAM_SENSOR_CFG_LINE_LENGTH_PCK, 2u, 0x0845},     /*  cam_sensor_cfg_line_length_pck = 2117 */
     {MT9M114_VAR_CAM_SENSOR_CFG_FINE_CORRECTION, 2u, 0x0060},     /*  cam_sensor_cfg_fine_correction = 96 */
     {MT9M114_VAR_CAM_SENSOR_CFG_REG_0_DATA, 2u, 0x0020},          /*  cam_sensor_cfg_reg_0_data = 32 */
-    {MT9M114_VAR_CAM_SENSOR_CONTROL_READ_MODE, 2u, 0x0000},       /*  cam_sensor_control_read_mode = 0 */
+    {MT9M114_VAR_CAM_SENSOR_CONTROL_READ_MODE, 2u, 0x0001},       /*  cam_sensor_control_read_mode = 0 */
     {MT9M114_VAR_CAM_CROP_WINDOW_XOFFSET, 2u, 0x0000},            /*  cam_crop_window_xoffset = 0 */
     {MT9M114_VAR_CAM_CROP_WINDOW_YOFFSET, 2u, 0x0000},            /*  cam_crop_window_yoffset = 0 */
     {MT9M114_VAR_CAM_CROP_CROPMODE, 1u, 0x03},                    /*  cam_crop_cropmode = 3 */
@@ -294,12 +292,11 @@ static const mt9m114_reg_t mt9m114InitConfig_15fps[] = {
     {MT9M114_VAR_CAM_SENSOR_CFG_LINE_LENGTH_PCK, 2u, 0x0644},     /*  cam_sensor_cfg_line_length_pck = 1604 */
     {MT9M114_VAR_CAM_SENSOR_CFG_FINE_CORRECTION, 2u, 0x0060},     /*  cam_sensor_cfg_fine_correction = 96 */
     {MT9M114_VAR_CAM_SENSOR_CFG_REG_0_DATA, 2u, 0x0020},          /*  cam_sensor_cfg_reg_0_data = 32 */
-
+#if ((DUAL_CAMERA) && (CAMERA_ADAPTOR_REV_C))
     {MT9M114_VAR_CAM_SENSOR_CONTROL_READ_MODE, 2u, 0x0002}, /*  cam_sensor_control_read_mode = 2 */
-
-	//for single camera case
-    //{MT9M114_VAR_CAM_SENSOR_CONTROL_READ_MODE, 2u, 0x0001}, /*  cam_sensor_control_read_mode = 1 */
-
+#else
+    {MT9M114_VAR_CAM_SENSOR_CONTROL_READ_MODE, 2u, 0x0001}, /*  cam_sensor_control_read_mode = 1 */
+#endif
     {MT9M114_VAR_CAM_CROP_WINDOW_XOFFSET, 2u, 0x0000}, /*  cam_crop_window_xoffset = 0 */
     {MT9M114_VAR_CAM_CROP_WINDOW_YOFFSET, 2u, 0x0000}, /*  cam_crop_window_yoffset = 0 */
     {MT9M114_VAR_CAM_CROP_CROPMODE, 1u, 0x03},         /*  cam_crop_cropmode = 3 */
@@ -410,62 +407,43 @@ static const mt9m114_reg_t mt9m114InitConfig_15fps[] = {
     {0xB42A, 1u, 0x05},
     {0xA80A, 1u, 0x20},
 
-#if CONTRAST_ENHANCEMENT
-    //[Enhancement]
-    {0xC92F, 1u, 0x06}, // CAM_LL_START_AP_GAIN
-    {0xC930, 1u, 0x03}, // CAM_LL_START_AP_THRESH
-    {0xC932, 1u, 0x02}, // CAM_LL_STOP_AP_GAIN
-    {0xC942, 1u, 0x42}, // CAM_LL_START_CONTRAST_GRADIENT
-    {0xC943, 1u, 0x38}, // CAM_LL_STOP_CONTRAST_GRADIENT
-    {0xC945, 1u, 0x1E}, // CAM_LL_STOP_CONTRAST_LUMA_PERCENTAGE
-    //[Gamma_contrast]
-    {0xBC07, 1u, 0x01}, // LL_GAMMA_SELECT
-    //[De-noise]
-    {0xC937, 1u, 0x00}, // CAM_LL_START_NR_THRESH
-    {0xC93B, 1u, 0x30}, // CAM_LL_STOP_NR_THRESH
-#endif
-
     {MT9M114_VAR_CAM_STAT_AWB_CLIP_WINDOW_XSTART, 2u, 0x0000},   /*  cam_stat_awb_clip_window_xstart = 0 */
     {MT9M114_VAR_CAM_STAT_AWB_CLIP_WINDOW_YSTART, 2u, 0x0000},   /*  cam_stat_awb_clip_window_ystart = 0 */
     {MT9M114_VAR_CAM_STAT_AE_INITIAL_WINDOW_XSTART, 2u, 0x0000}, /*  cam_stat_ae_initial_window_xstart = 0 */
     {MT9M114_VAR_CAM_STAT_AE_INITIAL_WINDOW_YSTART, 2u, 0x0000}, /*  cam_stat_ae_initial_window_ystart = 0 */
-#if CAMERA_DRIVE_STRENGTH_LOW
-    {MT9M114_REG_PAD_SLEW, 2u, 0x0445},                          /*  Pad slew rate */
-#else
     {MT9M114_REG_PAD_SLEW, 2u, 0x0777},                          /*  Pad slew rate */
-#endif
     {MT9M114_VAR_CAM_OUTPUT_FORMAT_YUV, 2u, 0x0038},             /*  Must set cam_output_format_yuv_clip for CSI */
 #if ADAPTIVE_WEIGHTED_AE
     // added by Raymond to enable Adaptive Weighted AE for lowlights
     {MT9M114_VAR_AE_RULE_ALGO, 2u, 0x0001},
-    {MT9M114_VAR_CAM_AET_TARGET_AVERAGE_LUMA, 1u, 60},
+    //{MT9M114_VAR_CAM_AET_TARGET_AVERAGE_LUMA,1u,60},
     //{MT9M114_VAR_CAM_AET_TARGET_AVERAGE_LUMA_DARK,1u,45},
 
-    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_0_0, 1u, 0x00},
-    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_0_1, 1u, 0x00},
-    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_0_2, 1u, 0x00},
-    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_0_3, 1u, 0x00},
-    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_0_4, 1u, 0x00},
-    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_1_0, 1u, 0x00},
-    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_1_1, 1u, 0x00},
-    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_1_2, 1u, 0x10},
-    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_1_3, 1u, 0x00},
-    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_1_4, 1u, 0x00},
-    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_2_0, 1u, 0x00},
-    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_2_1, 1u, 0x10},
-    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_2_2, 1u, 0x64},
-    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_2_3, 1u, 0x10},
-    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_2_4, 1u, 0x00},
-    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_3_0, 1u, 0x00},
-    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_3_1, 1u, 0x00},
-    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_3_2, 1u, 0x10},
-    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_3_3, 1u, 0x00},
-    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_3_4, 1u, 0x00},
-    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_4_0, 1u, 0x00},
-    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_4_1, 1u, 0x00},
-    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_4_2, 1u, 0x00},
-    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_4_3, 1u, 0x00},
-    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_4_4, 1u, 0x00},
+    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_0_0, 1u, 0x0},
+    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_0_1, 1u, 0x0},
+    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_0_2, 1u, 0x0},
+    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_0_3, 1u, 0x0},
+    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_0_4, 1u, 0x0},
+    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_1_0, 1u, 0x0},
+    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_1_1, 1u, 0x0},
+    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_1_2, 1u, 0x0},
+    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_1_3, 1u, 0x0},
+    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_1_4, 1u, 0x0},
+    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_2_0, 1u, 0x0},
+    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_2_1, 1u, 0x0},
+    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_2_2, 1u, 100},
+    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_2_3, 1u, 0x0},
+    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_2_4, 1u, 0x0},
+    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_3_0, 1u, 0x0},
+    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_3_1, 1u, 0x0},
+    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_3_2, 1u, 0x0},
+    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_3_3, 1u, 0x0},
+    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_3_4, 1u, 0x0},
+    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_4_0, 1u, 0x0},
+    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_4_1, 1u, 0x0},
+    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_4_2, 1u, 0x0},
+    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_4_3, 1u, 0x0},
+    {MT9M114_VAR_AE_RULE_AE_WEIGHT_TABLE_4_4, 1u, 0x0},
 #endif
 };
 
@@ -609,11 +587,10 @@ status_t MT9M114_Init(camera_device_handle_t *handle, const camera_config_t *con
     }
     resource->pullPowerDownPin(true); /* PWDN pin high. */
 
-    // The function that pullResetPin points to does nothing. No need to wait for 100ms.
-    // resource->pullResetPin(false); /* Reset pin low. */
-    // MT9M114_DelayMs(50);           /* Delay at least 50 ms. */
-    // resource->pullResetPin(true);  /* Reset pin high. */
-    // MT9M114_DelayMs(45);           /* Delay typically 44.5 ms. */
+    resource->pullResetPin(false); /* Reset pin low. */
+    MT9M114_DelayMs(50);           /* Delay at least 50 ms. */
+    resource->pullResetPin(true);  /* Reset pin high. */
+    MT9M114_DelayMs(45);           /* Delay typically 44.5 ms. */
 
     /* Identify the device. */
     status = MT9M114_Read(handle, MT9M114_REG_CHIP_ID, 2u, &chip_id);

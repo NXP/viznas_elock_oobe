@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2015, Freescale Semiconductor, Inc.
- * Copyright 2016-2021 NXP
+ * Copyright 2016-2020 NXP
  *
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -11,7 +11,7 @@
 
 #include "fsl_common.h"
 #include "fsl_os_abstraction_config.h"
-#include "generic_list.h"
+#include "fsl_component_generic_list.h"
 
 /*!
  * @addtogroup osa_adapter
@@ -179,11 +179,11 @@ typedef enum _osa_status
 #define SIZE_IN_UINT32_UNITS(size) (((size) + sizeof(uint32_t) - 1) / sizeof(uint32_t))
 
 /*! @brief Constant to pass as timeout value in order to wait indefinitely. */
-#define osaWaitForever_c ((uint32_t)(-1))
-#define osaEventFlagsAll_c ((osa_event_flags_t)(0x00FFFFFF))
+#define osaWaitForever_c         ((uint32_t)(-1))
+#define osaEventFlagsAll_c       ((osa_event_flags_t)(0x00FFFFFF))
 #define osThreadStackArray(name) osThread_##name##_stack
 #define osThreadStackDef(name, stacksize, instances) \
-    uint32_t osThreadStackArray(name)[SIZE_IN_UINT32_UNITS(stacksize) * (instances)];
+    const uint32_t osThreadStackArray(name)[SIZE_IN_UINT32_UNITS(stacksize) * (instances)];
 
 /* ==== Thread Management ==== */
 
@@ -214,13 +214,13 @@ typedef enum _osa_status
 #endif
 #else
 #define OSA_TASK_DEFINE(name, priority, instances, stackSz, useFloat)                             \
-    osa_task_def_t os_thread_def_##name = {(name), (priority), (instances),      (stackSz), \
+    const osa_task_def_t os_thread_def_##name = {(name), (priority), (instances),      (stackSz), \
                                                  NULL,   NULL,       (uint8_t *)#name, (useFloat)}
 #endif
 /* Access a Thread defintion.
  * \param         name          name of the thread definition object.
  */
-#define OSA_TASK(name) &os_thread_def_##name
+#define OSA_TASK(name) (const osa_task_def_t *)&os_thread_def_##name
 
 #define OSA_TASK_PROTO(name) externosa_task_def_t os_thread_def_##name
 /*  ==== Timer Management  ====
@@ -425,7 +425,9 @@ void OSA_ExitCritical(uint32_t sr);
  * @retval KOSA_StatusError   The task can not be created.
  */
 #if ((defined(FSL_OSA_TASK_ENABLE)) && (FSL_OSA_TASK_ENABLE > 0U))
-osa_status_t OSA_TaskCreate(osa_task_handle_t taskHandle, osa_task_def_t *thread_def, osa_task_param_t task_param);
+osa_status_t OSA_TaskCreate(osa_task_handle_t taskHandle,
+                            const osa_task_def_t *thread_def,
+                            osa_task_param_t task_param);
 #endif /* FSL_OSA_TASK_ENABLE */
 
 /*!
@@ -789,6 +791,17 @@ osa_status_t OSA_MsgQPut(osa_msgq_handle_t msgqHandle, osa_msg_handle_t pMessage
  * @retval KOSA_StatusError     Invalid parameter.
  */
 osa_status_t OSA_MsgQGet(osa_msgq_handle_t msgqHandle, osa_msg_handle_t pMessage, uint32_t millisec);
+
+/*!
+ * @brief Get the available message
+ *
+ * This function is used to get the available message.
+ *
+ * @param msgqHandle Message Queue handler.
+ *
+ * @return Available message count
+ */
+int OSA_MsgQAvailableMsgs(osa_msgq_handle_t msgqHandle);
 
 /*!
  * @brief Destroys a previously created queue.

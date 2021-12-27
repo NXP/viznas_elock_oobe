@@ -1,14 +1,12 @@
 /*
- * Copyright 2019-2021 NXP.
+ * Copyright 2019-2020 NXP.
  * This software is owned or controlled by NXP and may only be used strictly in accordance with the
  * license terms that accompany it. By expressly accepting such terms or by downloading, installing,
  * activating and/or otherwise using the software, you are agreeing that you have read, and that you
  * agree to comply with and are bound by, such license terms. If you do not agree to be bound by the
- * applicable license terms, then you may not retain, install, activate or otherwise use the software.d
- *
- * Created by: NXP China Solution Team.
+ * applicable license terms, then you may not retain, install, activate or otherwise use the software.
  */
-#include "board.h"
+
 #include "fsl_gc0308.h"
 #include "fsl_video_common.h"
 #include "fsl_camera.h"
@@ -84,26 +82,23 @@ const camera_device_operations_t gc0308_ops = {
 
 /*!
  * @brief Reset GC0308 camera.
- *
  * This function pulls the camera reset line during 50ms.
- *
  * @param handle Handle to the camera pointer.
  */
 static status_t GC0308_Reset(camera_device_handle_t *handle)
 {
     /* Hard reset */
     // The function that pullResetPin points to does nothing. No need to wait for 60ms.
-    //((gc0308_resource_t *)(handle->resource))->pullResetPin(false);
-    // GC0308_DelayMs(50);
-    //((gc0308_resource_t *)(handle->resource))->pullResetPin(true);
-    // GC0308_DelayMs(10);
+    //    ((gc0308_resource_t *)(handle->resource))->pullResetPin(false);
+    //     GC0308_DelayMs(50);
+    //    ((gc0308_resource_t *)(handle->resource))->pullResetPin(true);
+    //     GC0308_DelayMs(10);
 
     return kStatus_Success;
 }
 
 /*!
  * @brief Enable / Disable GC0308 power-down.
- *
  * @param handle Handle to the camera pointer.
  * @param powerdown 1 to activate the power-down mode, 0 to activate the normal mode
  */
@@ -116,7 +111,6 @@ static status_t GC0308_PowerDown(camera_device_handle_t *handle, bool powerdown)
 
 /*!
  * @brief Select GC0308 Gamma Curve.
- *
  * @param handle Handle to the camera pointer.
  * @param GammaLvl The gamma level between 1 to 5.
  */
@@ -226,14 +220,21 @@ static void GC0308_GammaSelect(camera_device_handle_t *handle, uint32_t GammaLvl
 
 /*!
  * @brief Applies the initial settings to GC0308 sensor.
- *
  * Note that GC0308 initial registers should not be changed here.
- *
  * @param handle Handle to the camera pointer.
  * @param config Pointer to the user-defined configuration structure.
  */
 static void GC0308_SensorInitialSetting(camera_device_handle_t *handle, const camera_config_t *config)
 {
+    uint32_t vb = 0, hb = 0;
+    uint32_t inputClockFreq_Hz = ((gc0308_resource_t *)(handle->resource))->inputClockFreq_Hz;
+
+#define VB_MIN                  488
+#define HB_MIN                  694
+#define VB_HIGH_HB_HIGH(vb, hb) ((((vb - VB_MIN) >> 8) << 4) | ((hb - HB_MIN) >> 8))
+#define VB_LOW(vb)              ((vb - VB_MIN) & 0xFF)
+#define HB_LOW(hb)              ((hb - HB_MIN) & 0xFF)
+
     GC0308_Write(handle, 0xfe, 1U, 0x80);
     GC0308_Write(handle, 0xfe, 1U, 0x00); /* set page0 */
     GC0308_Write(handle, 0xd2, 1U, 0x10); /* close AEC */
@@ -245,17 +246,95 @@ static void GC0308_SensorInitialSetting(camera_device_handle_t *handle, const ca
 
     GC0308_Write(handle, 0x22, 1U, 0x57); /* Open AWB */
 
-#if (CAMERA_DIFF_I2C_BUS)
-    //fps = 24M/2/(694+106)/(488+12)=30
-    GC0308_Write(handle, 0x01, 1U, 0x6a);  //694 + 106 = 800
-    GC0308_Write(handle, 0x02, 1U, 0x0c); //488 +  12 = 500
-    GC0308_Write(handle, 0x0f, 1U, 0x00);
-#else
-    /* fps = 24M/2/(694+306)/(488+112)=20 */
-    GC0308_Write(handle, 0x01, 1U, 0x32); // 694 + 306 = 1000
-    GC0308_Write(handle, 0x02, 1U, 0x70); // 488 + 112 = 600
-    GC0308_Write(handle, 0x0f, 1U, 0x01);
-#endif
+    // fps: inputClockFreq_Hz/2/(V+Vblank)/(H+Hblank)
+    // 0xf[3:0] and 0x1[7:0]  indicate Hblank or dummy pixel time
+    // 0xf[7:4] and 0x2[7:0]  indicate Vblank or dummy pixel time
+    if (24000000 == inputClockFreq_Hz)
+    {
+        switch (config->framePerSec)
+        {
+            case 30:
+                vb = 500;
+                hb = 800;
+                // fps = 24M/2/(694+106)/(488+12)=30
+                // GC0308_Write(handle, 0x01, 1U, 0x6a); //694 + 106 = 800
+                // GC0308_Write(handle, 0x02, 1U, 0x0c); //488 +  12 = 500
+                // GC0308_Write(handle, 0x0f, 1U, 0x00);
+                break;
+            case 20:
+                vb = 750;
+                hb = 800;
+                // fps = 24M/2/(694+306)/(488+112)=20
+                // GC0308_Write(handle, 0x01, 1U, 0x32); // 694 + 306 = 1000
+                // GC0308_Write(handle, 0x02, 1U, 0x70); // 488 + 112 = 600
+                // GC0308_Write(handle, 0x0f, 1U, 0x01);
+                break;
+            case 15:
+                vb = 1000;
+                hb = 800;
+                // fps = 24M/2/(694+106)/(488+512)=15
+                // GC0308_Write(handle, 0x01, 1U, 0x6a); // 694 + 106 = 800
+                // GC0308_Write(handle, 0x02, 1U, 0x00); // 488 + 0x200 = 1000
+                // GC0308_Write(handle, 0x0f, 1U, 0x20);
+                break;
+            case 10:
+                vb = 800;
+                hb = 1500;
+                // GC0308_Write(handle, 0x01, 1U, 0x6a); //694 + 106 = 800
+                // GC0308_Write(handle, 0x02, 1U, 0xF4); //488 + 1012 = 1500
+                // GC0308_Write(handle, 0x0f, 1U, (1500-694)&0xF00);
+                break;
+            case 5:
+                vb = 1200;
+                hb = 2000;
+                // GC0308_Write(handle, 0x01, 1U, VB_LOW(2000)); // 694 + 0x51a = 2000
+                // GC0308_Write(handle, 0x02, 1U, HB_LOW(1200)); // 488 + 0x2c8 = 1200
+                // GC0308_Write(handle, 0x0f, 1U, VB_HIGH_HB_HIGH(1200,2000));
+                break;
+            default:
+                vb = 500;
+                hb = 800;
+                // fps = 24M/2/(694+106)/(488+12)=30
+                // GC0308_Write(handle, 0x01, 1U, 0x6a); //694 + 106 = 800
+                // GC0308_Write(handle, 0x02, 1U, 0x0c); //488 +  12 = 500
+                // GC0308_Write(handle, 0x0f, 1U, 0x00);
+                break;
+        }
+    }
+    else if (12000000 == inputClockFreq_Hz)
+    {
+        switch (config->framePerSec)
+        {
+            case 15:
+                vb = 500;
+                hb = 800;
+                // fps = 12M/2/(694+106)/(488+12)=15
+                // GC0308_Write(handle, 0x01, 1U, 0x6a); //694 + 106 = 800
+                // GC0308_Write(handle, 0x02, 1U, 0x0c); //488 +  12 = 500
+                // GC0308_Write(handle, 0x0f, 1U, 0x00);
+                break;
+            case 10:
+                vb = 750;
+                hb = 800;
+                // fps = 12M/2/(694+306)/(488+112)=10 */
+                // GC0308_Write(handle, 0x01, 1U, 0x32); // 694 + 306 = 1000
+                // GC0308_Write(handle, 0x02, 1U, 0x70); // 488 + 112 = 600
+                // GC0308_Write(handle, 0x0f, 1U, 0x01);
+                break;
+            default:
+                vb = 500;
+                hb = 800;
+                // fps = 12M/2/(694+106)/(488+12)=15
+                // GC0308_Write(handle, 0x01, 1U, 0x6a); //694 + 106 = 800
+                // GC0308_Write(handle, 0x02, 1U, 0x0c); //488 +  12 = 500
+                // GC0308_Write(handle, 0x0f, 1U, 0x00);
+                break;
+        }
+    }
+
+    GC0308_Write(handle, 0x01, 1U, HB_LOW(hb));
+    GC0308_Write(handle, 0x02, 1U, VB_LOW(vb));
+    GC0308_Write(handle, 0x0f, 1U, VB_HIGH_HB_HIGH(vb, hb));
 
     GC0308_Write(handle, 0x03, 1U, 0x01); // 300
     GC0308_Write(handle, 0x04, 1U, 0x2c);
@@ -273,25 +352,16 @@ static void GC0308_SensorInitialSetting(camera_device_handle_t *handle, const ca
         GC0308_Write(handle, 0xea, 1U, 0x09);    exp level 3  4.00fps
         GC0308_Write(handle, 0xeb, 1U, 0xc4);
     */
-#if (CAMERA_DIFF_I2C_BUS)
-	GC0308_Write(handle, 0xe4, 1U, 0x02);	/* exp level 0, 600*/
-	GC0308_Write(handle, 0xe5, 1U, 0x58);
-	GC0308_Write(handle, 0xe6, 1U, 0x03);	/* exp level 1, 900*/
-	GC0308_Write(handle, 0xe7, 1U, 0x84);
-	GC0308_Write(handle, 0xe8, 1U, 0x07);	/* exp level 2, 1800*/
-	GC0308_Write(handle, 0xe9, 1U, 0x08);
-	GC0308_Write(handle, 0xea, 1U, 0x0a);	/* exp level 3, 2700*/
-	GC0308_Write(handle, 0xeb, 1U, 0x8c);
-#else
-    GC0308_Write(handle, 0xe4, 1U, 0x02);  /* exp level 0 */
+
+    GC0308_Write(handle, 0xe4, 1U, 0x02); /* exp level 0, 600*/
     GC0308_Write(handle, 0xe5, 1U, 0x58);
-	GC0308_Write(handle, 0xe6, 1U, 0x03);	/* exp level 1, 900*/
-	GC0308_Write(handle, 0xe7, 1U, 0x84);
-	GC0308_Write(handle, 0xe8, 1U, 0x07);	/* exp level 2, 1800*/
-	GC0308_Write(handle, 0xe9, 1U, 0x08);
-	GC0308_Write(handle, 0xea, 1U, 0x0a);	/* exp level 3, 2700*/
-	GC0308_Write(handle, 0xeb, 1U, 0x8c);
-#endif
+    GC0308_Write(handle, 0xe6, 1U, 0x03); /* exp level 1, 900*/
+    GC0308_Write(handle, 0xe7, 1U, 0x84);
+    GC0308_Write(handle, 0xe8, 1U, 0x07); /* exp level 2, 1800*/
+    GC0308_Write(handle, 0xe9, 1U, 0x08);
+    GC0308_Write(handle, 0xea, 1U, 0x0a); /* exp level 3, 2700*/
+    GC0308_Write(handle, 0xeb, 1U, 0x8c);
+
     GC0308_Write(handle, 0x05, 1U, 0x00);
     GC0308_Write(handle, 0x06, 1U, 0x00);
     GC0308_Write(handle, 0x07, 1U, 0x00);
@@ -306,7 +376,7 @@ static void GC0308_SensorInitialSetting(camera_device_handle_t *handle, const ca
     GC0308_Write(handle, 0x11, 1U, 0xfd);
     GC0308_Write(handle, 0x12, 1U, 0x2a);
     GC0308_Write(handle, 0x13, 1U, 0x00);
-#if RTVISION_BOARD
+#if (DUAL_CAMERA)
     GC0308_Write(handle, 0x14, 1U, 0x12);
 #else
     GC0308_Write(handle, 0x14, 1U, 0x11);
@@ -382,13 +452,13 @@ static void GC0308_SensorInitialSetting(camera_device_handle_t *handle, const ca
     GC0308_Write(handle, 0x3e, 1U, 0x00);
     GC0308_Write(handle, 0x3f, 1U, 0x00);
     GC0308_Write(handle, 0x50, 1U, 0x10);
-    GC0308_Write(handle, 0x53, 1U, 0x80); //0x82
+    GC0308_Write(handle, 0x53, 1U, 0x82);
     GC0308_Write(handle, 0x54, 1U, 0x80);
     GC0308_Write(handle, 0x55, 1U, 0x80);
-    GC0308_Write(handle, 0x56, 1U, 0x80); //0x82
-    GC0308_Write(handle, 0x57, 1U, 0x80); //0x78
-    GC0308_Write(handle, 0x58, 1U, 0x80); //0x78
-    GC0308_Write(handle, 0x59, 1U, 0x80); //0x86
+    GC0308_Write(handle, 0x56, 1U, 0x82);
+    GC0308_Write(handle, 0x57, 1U, 0x78);
+    GC0308_Write(handle, 0x58, 1U, 0x78);
+    GC0308_Write(handle, 0x59, 1U, 0x86);
 
     GC0308_Write(handle, 0x8b, 1U, 0x40);
     GC0308_Write(handle, 0x8c, 1U, 0x40);
@@ -452,11 +522,12 @@ static void GC0308_SensorInitialSetting(camera_device_handle_t *handle, const ca
     GC0308_Write(handle, 0xd9, 1U, 0x00);
     GC0308_Write(handle, 0xda, 1U, 0x00);
     GC0308_Write(handle, 0xe0, 1U, 0x09);
-	/*bit [4,5] decide which exp level is activated: 0-3*/
-	//GC0308_Write(handle, 0xec, 1U, 0x20);
-	GC0308_Write(handle, 0xec, 1U, 0x00);
+    /*bit [4,5] decide which exp level is activated: 0-3*/
+    // GC0308_Write(handle, 0xec, 1U, 0x20);
+    GC0308_Write(handle, 0xec, 1U, 0x00);
+
     GC0308_Write(handle, 0xed, 1U, 0x04);
-    GC0308_Write(handle, 0xee, 1U, 0x80);
+    GC0308_Write(handle, 0xee, 1U, 0x40);
     GC0308_Write(handle, 0xef, 1U, 0x40);
     GC0308_Write(handle, 0x80, 1U, 0x03);
     GC0308_Write(handle, 0x80, 1U, 0x03);
@@ -557,10 +628,8 @@ static void GC0308_SensorInitialSetting(camera_device_handle_t *handle, const ca
 
 /*!
  * @brief Applies the customizable settings to GC0308 sensor.
- *
  *  This function is provided to modify the necessary initialization Registers.
  *  Do not modify the registers in GC0308_SensorInitialSetting directly.
- *
  * @param handle Handle to the camera pointer.
  */
 static void GC0308_WriteMoreRegisters(camera_device_handle_t *handle)
@@ -621,9 +690,9 @@ static void GC0308_WriteMoreRegisters(camera_device_handle_t *handle)
     GC0308_Write(handle, 0x14, 1U, 0x44);
     GC0308_Write(handle, 0x15, 1U, 0x44);
 
-    GC0308_Write(handle, 0x1c, 1U, 0x80); // 0x70
-    GC0308_Write(handle, 0x1d, 1U, 0x80); // 0x58
-    GC0308_Write(handle, 0x1e, 1U, 0x80); // 0x50
+    GC0308_Write(handle, 0x1c, 1U, 0x70);
+    GC0308_Write(handle, 0x1d, 1U, 0x58);
+    GC0308_Write(handle, 0x1e, 1U, 0x50);
 
     GC0308_Write(handle, 0x19, 1U, 0x50);
     GC0308_Write(handle, 0x1a, 1U, 0xd8);
@@ -647,9 +716,7 @@ static void GC0308_WriteMoreRegisters(camera_device_handle_t *handle)
 
 /*!
  * @brief Crop the image frame.
- *
  *  Crop the image width and height, define the origin of the cropped image
- *
  * @param handle Handle to the camera pointer.
  * @param window_width width of the output frame.
  * @param window_height height of the output frame.
@@ -719,9 +786,7 @@ static status_t GC0308_CropImage(
 
 /*!
  * @brief Enable test patterns.
- *
  *  This function allows to output test patterns supported by the GC0308.
- *
  * @param handle Handle to the camera pointer.
  * @param mode pattern mode to be used.
  * @param enable_test_mode enable / disable the test mode.
@@ -761,9 +826,7 @@ static status_t GC0308_SetTestMode(camera_device_handle_t *handle, gc0308_testmo
 
 /*!
  * @brief Enable XY-mirror and / or Upside-Down.
- *
  *  This function allows swap the picture on the horizontal and, or vertical axis.
- *
  * @param handle Handle to the camera pointer.
  * @param enable_XYmirror swap the image on the horizontal axis.
  * @param enable_UpsideDown swap the image on the vertical axis.
@@ -792,7 +855,6 @@ static status_t GC0308_SetOrientation(camera_device_handle_t *handle, bool enabl
 
 /*!
  * @brief Adjust the image white balance.
- *
  * @param handle Handle to the camera pointer.
  * @param white_balance gc0308_white_balance_t configuration.
  * @return Returns @ref kStatus_Success if success, otherwise returns error code.
@@ -858,7 +920,6 @@ static status_t GC0308_SetWhiteBalance(camera_device_handle_t *handle, gc0308_wh
 
 /*!
  * @brief Adjust the brightness (actually the exposure value).
- *
  * @param handle Handle to the camera pointer.
  * @param brightness between -2 to +2.
  * @return Returns @ref kStatus_Success if success, otherwise returns error code.
@@ -906,7 +967,6 @@ static status_t GC0308_SetBrightness(camera_device_handle_t *handle, int8_t brig
 
 /*!
  * @brief select and enable a picture effect.
- *
  * @param handle Handle to the camera pointer.
  * @param white_balance gc0308_cam_effect_t configuration.
  * @return Returns @ref kStatus_Success if success, otherwise returns error code.
@@ -997,9 +1057,7 @@ static status_t GC0308_SetEffect(camera_device_handle_t *handle, gc0308_cam_effe
 
 /*!
  * @brief Initialize GC0308 registers.
- *
  * Write GC0308 default settings and customizable settings via I2C.
- *
  * @param handle Handle to the camera pointer.
  * @param config pointer to camera_config_t configuration.
  * @return Returns @ref kStatus_Success if success, otherwise returns error code.
@@ -1008,6 +1066,8 @@ static status_t GC0308_RegInit(camera_device_handle_t *handle, const camera_conf
 {
     status_t status = kStatus_Success;
 
+    uint16_t width  = FSL_VIDEO_EXTRACT_WIDTH(config->resolution);
+    uint16_t height = FSL_VIDEO_EXTRACT_HEIGHT(config->resolution);
     GC0308_SensorInitialSetting(handle, config);
     GC0308_WriteMoreRegisters(handle);
 
@@ -1017,26 +1077,16 @@ static status_t GC0308_RegInit(camera_device_handle_t *handle, const camera_conf
             /* GC0308 has a native resolution of 640x480. This is already handled in GC0308_SensorInitialSetting
              * function */
             break;
-        case kVIDEO_ResolutionQVGA:
-            status = GC0308_CropImage(handle, 320U, 240U, (uint16_t)((GC0308_SENSOR_WIDTH - 320U) / 2),
-                                      (uint16_t)((GC0308_SENSOR_HEIGHT - 240U) / 2));
-            break;
-        case FSL_VIDEO_RESOLUTION(480, 272):
-            status = GC0308_CropImage(handle, 480U, 272U, (uint16_t)((GC0308_SENSOR_WIDTH - 480U) / 2),
-                                      (uint16_t)((GC0308_SENSOR_HEIGHT - 272U) / 2));
-            break;
-        case kVIDEO_ResolutionQQVGA:
-            status = GC0308_CropImage(handle, 160U, 120U, (uint16_t)((GC0308_SENSOR_WIDTH - 160U) / 2),
-                                      (uint16_t)((GC0308_SENSOR_HEIGHT - 120U) / 2));
+        default:
+            status = GC0308_CropImage(handle, width, height, (uint16_t)((GC0308_SENSOR_WIDTH - width) / 2),
+                                      (uint16_t)((GC0308_SENSOR_HEIGHT - height) / 2));
             break;
     }
-
     return status;
 }
 
 /*!
  * @brief send multiple registers via I2C bus.
- *
  * @param handle Handle to the camera pointer.
  * @param regs registers table.
  * @param num number of registers to be sent
@@ -1060,9 +1110,7 @@ static status_t GC0308_MultiWrite(camera_device_handle_t *handle, const gc0308_r
 
 /*!
  * @brief Initialize GC0308 sensor.
- *
  * Reset the sensor, disable the power-down mode and write the sensor settings via I2C.
- *
  * @param handle Handle to the camera pointer.
  * @param config pointer to camera_config_t configuration.
  * @return Returns @ref kStatus_Success if success, otherwise returns error code.
@@ -1079,13 +1127,15 @@ status_t GC0308_Init(camera_device_handle_t *handle, const camera_config_t *conf
 
     /* support 640x480 (VGA), 320x240 (QVGA), 160x120 (QQVGA), 480x272 (iMXRT1062 EVK configuration) resolutions */
     if ((kVIDEO_ResolutionVGA != config->resolution) && (kVIDEO_ResolutionQVGA != config->resolution) &&
-        (kVIDEO_ResolutionQQVGA != config->resolution) && (FSL_VIDEO_RESOLUTION(480, 272) != config->resolution))
+        (kVIDEO_ResolutionQQVGA != config->resolution) &&
+        (FSL_VIDEO_RESOLUTION(GC0308_SENSOR_WIDTH, GC0308_SENSOR_HEIGHT) != config->resolution))
     {
         return kStatus_InvalidArgument;
     }
 
     /* support 15 fps. */
-    if (15 != config->framePerSec)
+    if (15 != config->framePerSec && 20 != config->framePerSec && 30 != config->framePerSec &&
+        10 != config->framePerSec && 5 != config->framePerSec)
     {
         return kStatus_InvalidArgument;
     }
@@ -1098,8 +1148,9 @@ status_t GC0308_Init(camera_device_handle_t *handle, const camera_config_t *conf
         return kStatus_InvalidArgument;
     }
 
-    /* The input clock (EXTCLK) must be 24MHz. */
-    if (24000000 != ((gc0308_resource_t *)(handle->resource))->inputClockFreq_Hz)
+    /* The input clock (EXTCLK) must be 24MHz or 12MHz. */
+    if ((24000000 != ((gc0308_resource_t *)(handle->resource))->inputClockFreq_Hz) &&
+        (12000000 != ((gc0308_resource_t *)(handle->resource))->inputClockFreq_Hz))
     {
         return kStatus_InvalidArgument;
     }
@@ -1140,9 +1191,7 @@ status_t GC0308_Init(camera_device_handle_t *handle, const camera_config_t *conf
 
 /*!
  * @brief Deinitialize GC0308 sensor.
- *
  * Reset the sensor and enable the power-down mode
- *
  * @param handle Handle to the camera pointer.
  * @return Allways returns @ref kStatus_Success.
  */
@@ -1156,45 +1205,31 @@ status_t GC0308_Deinit(camera_device_handle_t *handle)
 
 /*!
  * @brief Start GC0308 sensor.
- *
  * Actually does nothing !
- *
  * @param handle Handle to the camera pointer.
  * @return Allways returns @ref kStatus_Success.
  */
 status_t GC0308_Start(camera_device_handle_t *handle)
 {
-#if (CAMERA_DIFF_I2C_BUS)
-    GC0308_Write(handle, 0x25, 1U, 0x0f);
-#else
     GC0308_PowerDown(handle, false);
-#endif
     return kStatus_Success;
 }
 
 /*!
  * @brief Stop GC0308 sensor.
- *
  * Actually does nothing !
- *
  * @param handle Handle to the camera pointer.
  * @return Allways returns @ref kStatus_Success.
  */
 status_t GC0308_Stop(camera_device_handle_t *handle)
 {
-#if (CAMERA_DIFF_I2C_BUS)
-    GC0308_Write(handle, 0x25, 1U, 0x00);
-#else
     GC0308_PowerDown(handle, true);
-#endif
     return kStatus_Success;
 }
 
 /*!
  * @brief Control GC0308 sensor.
- *
  * Actually does nothing !
- *
  * @param handle Handle to the camera pointer.
  * @return Allways returns @ref kStatus_Success.
  */
@@ -1208,42 +1243,52 @@ status_t GC0308_Control(camera_device_handle_t *handle, camera_device_cmd_t cmd,
             GC0308_SetEffect(handle, kcam_effect_enc_normal);
         return kStatus_Success;
     }
-    else if ( cmd == kCAMERA_DeviceExposureMode) {
+    else if (cmd == kCAMERA_DeviceExposureMode)
+    {
         uint8_t reg_value;
-        GC0308_Write(handle, 0xfe, 1U, 0x00);/* set page0 */
-        GC0308_Write(handle, 0xec, 1U, (arg<<4));
+        GC0308_Write(handle, 0xfe, 1U, 0x00); /* set page0 */
+        GC0308_Write(handle, 0xec, 1U, (arg << 4));
 
-        switch(arg) {
+        switch (arg)
+        {
             case CAMERA_EXPOSURE_MODE_AUTO_LEVEL0:
-                GC0308_Write(handle, 0xee, 1U, 0x80); //post gain limit
-                GC0308_Write(handle, 0xef, 1U, 0x40); //pre gain limit
+            {
+                GC0308_Write(handle, 0xee, 1U, 0x80); // post gain limit
+                GC0308_Write(handle, 0xef, 1U, 0x40); // pre gain limit
+            }
             break;
             case CAMERA_EXPOSURE_MODE_AUTO_LEVEL1:
-                GC0308_Write(handle, 0xee, 1U, 0x80); //post gain limit
-                GC0308_Write(handle, 0xef, 1U, 0x80); //pre gain limit
+            {
+                GC0308_Write(handle, 0xee, 1U, 0x80); // post gain limit
+                GC0308_Write(handle, 0xef, 1U, 0x80); // pre gain limit
+            }
             break;
             case CAMERA_EXPOSURE_MODE_AUTO_LEVEL2:
-                GC0308_Write(handle, 0xee, 1U, 0xa0); //post gain limit
-                GC0308_Write(handle, 0xef, 1U, 0x80); //pre gain limit
+            {
+                GC0308_Write(handle, 0xee, 1U, 0xa0); // post gain limit
+                GC0308_Write(handle, 0xef, 1U, 0x80); // pre gain limit
+            }
             break;
             case CAMERA_EXPOSURE_MODE_AUTO_LEVEL3:
-                GC0308_Write(handle, 0xee, 1U, 0xa0); //post gain limit
-                GC0308_Write(handle, 0xef, 1U, 0xa0); //pre gain limit
+            {
+                GC0308_Write(handle, 0xee, 1U, 0xa0); // post gain limit
+                GC0308_Write(handle, 0xef, 1U, 0xa0); // pre gain limit
+            }
             break;
             default:
                 break;
-       }
-       return kStatus_Success;
+        }
+        return kStatus_Success;
     }
     else
+    {
         return kStatus_InvalidArgument;
+    }
 }
 
 /*!
  * @brief Initialize GC0308 sensor.
- *
  * Launch GC0308_Init function.
- *
  * @param handle Handle to the camera pointer.
  * @return Returns @ref kStatus_Success if success, otherwise returns error code.
  */

@@ -1,0 +1,12 @@
+[submodule "sln_framework"]
+	path = sln_framework
+	url = ssh://git@bitbucket.sw.nxp.com/miss/sln_framework.git
+	branch = vizn3_release_1_0_0
+[submodule "sln_hal/common"]
+	path = sln_hal/common
+	url = ssh://git@bitbucket.sw.nxp.com/miss/sln_hal_common.git
+	branch = vizn3_release_1_0_0
+[submodule "sln_hal/face_rec"]
+	path = sln_hal/face_rec
+	url = ssh://git@bitbucket.sw.nxp.com/miss/sln_hal_face_rec.git
+	branch = vizn3_release_1_0_0

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 NXP.
+ * Copyright 2019-2020 NXP.
  * This software is owned or controlled by NXP and may only be used strictly in accordance with the
  * license terms that accompany it. By expressly accepting such terms or by downloading, installing,
  * activating and/or otherwise using the software, you are agreeing that you have read, and that you
@@ -8,15 +8,11 @@
  */
 
 #include "sln_flash.h"
-#include "board.h"
-#if FLASH_TYPE == HYPER_FLASH
-#include "flexspi_hyper_flash_ops.h"
-#else
-#include "flexspi_qspi_flash_ops.h"
-#endif
+#include "sln_flash_config.h"
+#include "sln_flash_ops.h"
 #include "fsl_flexspi.h"
 
-extern const uint32_t customLUT[];
+extern const uint32_t customLUT[CUSTOM_LUT_LENGTH];
 
 #ifdef __REDLIB__
 size_t safe_strlen(const char *ptr, size_t max)
@@ -152,12 +148,9 @@ void SLN_Flash_Init(void)
 
     SLN_ram_disable_d_cache();
 
-    /* Update LUT table. */
-#if FLASH_TYPE == HYPER_FLASH
-    FLEXSPI_UpdateLUT(FLEXSPI, 0, customLUT, CUSTOM_LUT_LENGTH);
-#else
-    FLEXSPI_UpdateLUT(FLEXSPI, 4, &customLUT[4], CUSTOM_LUT_LENGTH); 
-#endif
+
+    sln_flash_ops_init(FLEXSPI);
+
     /* Do software reset. */
     FLEXSPI_SoftwareReset(FLEXSPI);
 
@@ -186,7 +179,7 @@ status_t SLN_Write_Flash_Page(uint32_t address, uint8_t *data, uint32_t len)
     SLN_ram_memcpy(tempPage, data, len);
 
     /* Program page. */
-    status = flexspi_nor_flash_page_program_with_buffer(FLEXSPI, address, (void *)tempPage);
+    status = sln_flash_ops_page_program(FLEXSPI, address, (void *)tempPage);
 
     SLN_ram_enable_d_cache();
 
@@ -210,7 +203,7 @@ static status_t SLN_Write_Flash_Page2(uint32_t address, uint8_t *data, uint32_t 
     SLN_ram_memcpy(tempPage, data, len);
 
     /*Program page. */
-    status = flexspi_nor_flash_page_program_with_buffer(FLEXSPI, address, (void *)tempPage);
+    status = sln_flash_ops_page_program(FLEXSPI, address, (void *)tempPage);
 
     return status;
 }
@@ -220,7 +213,7 @@ static status_t SLN_Erase_Sector2(uint32_t address)
     status_t status = 0;
 
     /* Erase sectors. */
-    status = flexspi_nor_flash_erase_sector(FLEXSPI, address);
+    status = sln_flash_ops_erase_sector(FLEXSPI, address);
 
     /* Do software reset. */
     FLEXSPI_SoftwareReset(FLEXSPI);
@@ -245,7 +238,7 @@ int32_t SLN_Write_Sector(uint32_t address, uint8_t *buf, uint32_t len)
     if (kStatus_Success == status)
     {
         // Adjust total write length to fit in sector
-        len = (SECTOR_SIZE < len) ? SECTOR_SIZE : len;
+        len = (FLASH_SECTOR_SIZE < len) ? FLASH_SECTOR_SIZE : len;
 
         pageCount = len / FLASH_PAGE_SIZE;
         pageMod   = len % FLASH_PAGE_SIZE;
@@ -294,7 +287,7 @@ status_t SLN_Erase_Sector(uint32_t address)
     SLN_ram_disable_d_cache();
 
     /* Erase sectors. */
-    status = flexspi_nor_flash_erase_sector(FLEXSPI, address);
+    status = sln_flash_ops_erase_sector(FLEXSPI, address);
 
     /* Do software reset. */
     FLEXSPI_SoftwareReset(FLEXSPI);
@@ -325,7 +318,7 @@ status_t SLN_Write_Flash_At_Address(uint32_t address, uint8_t *data)
     FLEXSPI_SoftwareReset(FLEXSPI);
 
     /*Program page. */
-    status = flexspi_nor_flash_page_program_with_buffer(FLEXSPI, address, (void *)data);
+    status = sln_flash_ops_page_program(FLEXSPI, address, (void *)data);
 
     SLN_ram_enable_d_cache();
 
@@ -339,12 +332,12 @@ status_t SLN_Write_Flash_At_Address(uint32_t address, uint8_t *data)
 
 status_t SLN_Read_Flash_At_Address(uint32_t address, uint8_t *data, uint32_t size)
 {
-    SLN_ram_memcpy(data, (void *)(FlexSPI_AMBA_BASE + address), size);
+    SLN_ram_memcpy(data, (void *)(FLEXSPI_AMBA_BASE + address), size);
 
     return kStatus_Success;
 }
 
 uint32_t SLN_Flash_Get_Read_Address(uint32_t address)
 {
-    return FlexSPI_AMBA_BASE + address;
+    return FLEXSPI_AMBA_BASE + address;
 }

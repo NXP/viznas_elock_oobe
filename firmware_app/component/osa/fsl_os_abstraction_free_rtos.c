@@ -18,7 +18,7 @@
 #include "fsl_os_abstraction.h"
 #include "fsl_os_abstraction_free_rtos.h"
 #include <string.h>
-#include "generic_list.h"
+#include "fsl_component_generic_list.h"
 
 /*! *********************************************************************************
 *************************************************************************************
@@ -96,7 +96,7 @@ void startup_task(void *argument);
 * Public memory declarations
 *************************************************************************************
 ********************************************************************************** */
-const uint8_t gUseRtos_c = USE_RTOS; // USE_RTOS = 0 for BareMetal and 1 for OS
+const uint8_t gUseRtos_c = USE_RTOS; /* USE_RTOS = 0 for BareMetal and 1 for OS */
 
 static osa_state_t s_osaState = {0};
 /*! *********************************************************************************
@@ -122,7 +122,7 @@ void *OSA_MemoryAllocate(uint32_t length)
 
     if (NULL != p)
     {
-        memset(p, 0, length);
+        (void)memset(p, 0, length);
     }
 
     return p;
@@ -144,7 +144,7 @@ void OSA_EnterCritical(uint32_t *sr)
 #if defined(__GIC_PRIO_BITS)
     if ((__get_CPSR() & CPSR_M_Msk) == 0x13)
 #else
-    if (__get_IPSR())
+    if (0U != __get_IPSR())
 #endif
     {
         *sr = portSET_INTERRUPT_MASK_FROM_ISR();
@@ -160,7 +160,7 @@ void OSA_ExitCritical(uint32_t sr)
 #if defined(__GIC_PRIO_BITS)
     if ((__get_CPSR() & CPSR_M_Msk) == 0x13)
 #else
-    if (__get_IPSR())
+    if (0U != __get_IPSR())
 #endif
     {
         portCLEAR_INTERRUPT_MASK_FROM_ISR(sr);
@@ -264,12 +264,19 @@ osa_status_t OSA_TaskSetPriority(osa_task_handle_t taskHandle, osa_task_priority
  *
  *END**************************************************************************/
 #if (defined(FSL_OSA_TASK_ENABLE) && (FSL_OSA_TASK_ENABLE > 0U))
-osa_status_t OSA_TaskCreate(osa_task_handle_t taskHandle, osa_task_def_t *thread_def, osa_task_param_t task_param)
+osa_status_t OSA_TaskCreate(osa_task_handle_t taskHandle, const osa_task_def_t *thread_def, osa_task_param_t task_param)
 {
+    static uint8_t s_osaTaskListInitialized = 0;
     assert(sizeof(osa_freertos_task_t) == OSA_TASK_HANDLE_SIZE);
     assert(taskHandle);
     TaskHandle_t pxCreatedTask;
     osa_freertos_task_t *ptask = (osa_freertos_task_t *)taskHandle;
+
+    if (0u == s_osaTaskListInitialized)
+    {
+        s_osaTaskListInitialized = 1u;
+        LIST_Init((&s_osaState.taskList), 0);
+    }
 
     if (xTaskCreate((TaskFunction_t)thread_def->pthread, /* pointer to the task */
                     (char const *)thread_def->tname,     /* task name for kernel awareness debugging */
@@ -455,7 +462,7 @@ osa_status_t OSA_SemaphorePost(osa_semaphore_handle_t semaphoreHandle)
 
         if (pdTRUE == xSemaphoreGiveFromISR(sem, &taskToWake))
         {
-            portYIELD_FROM_ISR(taskToWake);
+            portYIELD_FROM_ISR((taskToWake));
             status = KOSA_StatusSuccess;
         }
         else
@@ -624,7 +631,7 @@ osa_status_t OSA_EventSet(osa_event_handle_t eventHandle, osa_event_flags_t flag
         result = xEventGroupSetBitsFromISR(pEventStruct->handle, (event_flags_t)flagsToSet, &taskToWake);
         assert(pdPASS == result);
         (void)result;
-        portYIELD_FROM_ISR(taskToWake);
+        portYIELD_FROM_ISR((taskToWake));
     }
     else
     {
@@ -835,7 +842,7 @@ osa_status_t OSA_MsgQPut(osa_msgq_handle_t msgqHandle, osa_msg_handle_t pMessage
     {
         if (pdTRUE == xQueueSendToBackFromISR(handler, pMessage, &taskToWake))
         {
-            portYIELD_FROM_ISR(taskToWake);
+            portYIELD_FROM_ISR((taskToWake));
             osaStatus = KOSA_StatusSuccess;
         }
         else
@@ -889,6 +896,21 @@ osa_status_t OSA_MsgQGet(osa_msgq_handle_t msgqHandle, osa_msg_handle_t pMessage
         osaStatus = KOSA_StatusSuccess;
     }
     return osaStatus;
+}
+
+/*FUNCTION**********************************************************************
+ *
+ * Function Name : OSA_MsgQAvailableMsgs
+ * Description   : This function is used to get the available message.
+ * Return        : Available message count
+ *
+ *END**************************************************************************/
+int OSA_MsgQAvailableMsgs(osa_msgq_handle_t msgqHandle)
+{
+    QueueHandle_t handler;
+    assert(NULL != msgqHandle);
+    handler = (QueueHandle_t)(void *)(uint32_t *)(*(uint32_t *)msgqHandle);
+    return (int)uxQueueMessagesWaiting((QueueHandle_t)handler);
 }
 
 /*FUNCTION**********************************************************************
@@ -1015,15 +1037,15 @@ void OSA_InstallIntHandler(uint32_t IRQNumber, void (*handler)(void))
 *************************************************************************************
 ********************************************************************************** */
 #if (defined(FSL_OSA_TASK_ENABLE) && (FSL_OSA_TASK_ENABLE > 0U))
-
+#if (defined(FSL_OSA_MAIN_FUNC_ENABLE) && (FSL_OSA_MAIN_FUNC_ENABLE > 0U))
 static OSA_TASK_DEFINE(startup_task, gMainThreadPriority_c, 1, gMainThreadStackSize_c, 0);
 
-int main(void)
+__WEAK_FUNC int main(void)
 {
     extern void BOARD_InitHardware(void);
+
     /* Initialize MCU clock */
     BOARD_InitHardware();
-    LIST_Init((&s_osaState.taskList), 0);
 
     s_osaState.basePriorityNesting   = 0;
     s_osaState.interruptDisableCount = 0;
@@ -1032,4 +1054,7 @@ int main(void)
     vTaskStartScheduler();
     return 0;
 }
+
+#endif
+
 #endif /* FSL_OSA_TASK_ENABLE */
