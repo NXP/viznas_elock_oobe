@@ -146,6 +146,7 @@ typedef struct
 			uint8_t add_newface;
 			char new_face_name[31];
 			void* feature;
+			uint8_t stop_reason;
         }add_face;
         uint8_t interface_mode;
         uint16_t control_status;
@@ -156,6 +157,8 @@ typedef struct
 {
     uint16_t *pFaceData;
     char name[64];
+    bool recognize;
+    bool enrolment;
     float similar;
     int rect[4];
     int rect2[4];

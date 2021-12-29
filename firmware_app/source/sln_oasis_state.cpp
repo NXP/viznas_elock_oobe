@@ -51,7 +51,7 @@ static void SendDelFaceQMsg(uint8_t start)
     Oasis_SendQMsg((void *)&pQMsg);
 }
 
-static void SendAddFaceQMsg(uint8_t start, char* name)
+static void SendAddFaceQMsg(uint8_t start, char* name, uint8_t stop_reason)
 {
     QMsg *pQMsg = (QMsg*)pvPortMalloc(sizeof(QMsg));
     if (NULL == pQMsg)
@@ -61,6 +61,7 @@ static void SendAddFaceQMsg(uint8_t start, char* name)
     }
     pQMsg->id = QMSG_FACEREC_ADDNEWFACE;
     pQMsg->msg.cmd.data.add_face.add_newface = start;
+    pQMsg->msg.cmd.data.add_face.stop_reason = stop_reason;
     if (name)
     {
     	memcpy(pQMsg->msg.cmd.data.add_face.new_face_name,name,strlen(name) + 1);
@@ -128,7 +129,7 @@ void StartRegistrationProcess(char* name)
     s_face_detect                        = false;
     s_firstDetected                      = false;
     g_AddNewFace                         = 1;
-    SendAddFaceQMsg(g_AddNewFace,name);
+    SendAddFaceQMsg(g_AddNewFace,name, 0);
     StartRegistrationTimers();
     StopLockProcess();
 }
@@ -155,7 +156,7 @@ void StopRegistrationProcess(uint8_t event)
     s_API_Events = 1 << event;
 //    g_AddNewFaceName.assign("");
     g_AddNewFace = 0;
-    SendAddFaceQMsg(g_AddNewFace, NULL);
+    SendAddFaceQMsg(g_AddNewFace, NULL, event);
     if (event != kEvents_API_Layer_RegCanceled)
     {
         StartLockProcess(true);

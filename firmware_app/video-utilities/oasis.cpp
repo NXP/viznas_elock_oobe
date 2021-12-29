@@ -21,6 +21,7 @@
 #include "sln_api_internal.h"
 #include "sln_shell.h"
 #include "toojpeg.h"
+#include "face_rec_rt_info.h"
 
 /*******************************************************************************
  * Definitions
@@ -88,6 +89,15 @@ static int Oasis_SetImgType(OASISLTImageType_t *img_type);
 /*******************************************************************************
  * Variables
  *******************************************************************************/
+#if defined (__cplusplus)
+extern "C" {
+#endif
+extern void __base_BOARD_SDRAM_RT_INFO(void);
+extern void __top_BOARD_SDRAM_RT_INFO(void);
+#if defined (__cplusplus)
+} // extern "C"
+#endif
+
 extern uint8_t g_RemoveExistingFace;
 extern VIZN_api_client_t VIZN_API_CLIENT(Buttons);
 //extern std::string g_AddNewFaceName;
@@ -139,6 +149,8 @@ static void clearFaceInfoMsg(QUIInfoMsg *info)
     DB_Count(&count);
 
     memset(info->name, 0x0, 64);
+    info->recognize       = false;
+    info->enrolment       = false;
     info->similar         = 1.0f;
     info->dt              = 0;
     info->rt              = 0;
@@ -263,7 +275,7 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
             break;
         case OASISLT_EVT_QUALITY_CHK_COMPLETE:
         {
-            UsbShell_Printf("[OASIS]:quality chk res:%d\r\n", para->qualityResult);
+            UsbShell_DbgPrintf(VERBOSE_MODE_L2,"[OASIS]:quality chk res:%d\r\n", para->qualityResult);
 
             gui_info.irLive  = para->reserved[5];
             gui_info.front   = para->reserved[1];
@@ -365,6 +377,7 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
                 UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[OASIS]:face id:%d\r\n", id);
                 DB_GetName(id, name);
                 memcpy(gui_info.name, name.c_str(), name.size());
+                gui_info.recognize  = true;
                 face_info.recognize = true;
                 face_info.name      = std::string(name);
                 UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[OASIS]:face id:%d name:%s\r\n", id, gui_info.name);
@@ -374,6 +387,7 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
                 // face is not recognized, do nothing
                 UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[OASIS]:face unrecognized\r\n");
                 face_info.recognize = false;
+                gui_info.recognize  = false;
             }
 
 
@@ -460,6 +474,7 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
                 DB_Count(&count);
                 // gFaceInfoMsg.msg.info.registeredFaces = featurenames.size();
                 gui_info.registeredFaces = count;
+                gui_info.enrolment  = true;
                 // gui_info.updateFlag |= DISPLAY_INFO_UPDATE_NAME_SIM_RT|DISPLAY_INFO_UPDATE_NEW_REG_FACE;
                 face_info.dt        = gui_info.dt;
                 face_info.rt        = gui_info.rt;
@@ -469,6 +484,7 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
             else
             {
                 face_info.enrolment = false;
+                gui_info.enrolment  = false;
             }
             VIZN_EnrolmentEvent(gApiHandle, face_info);
         }
@@ -754,19 +770,27 @@ static void Oasis_Task(void *param)
 
                 case QMSG_FACEREC_ADDNEWFACE:
                 {
-                	if (rxQMsg->msg.cmd.data.add_face.add_newface)
-                	{
-                		run_flag = OASIS_DET_REC_REG;
-                		Oasis_SetState(OASIS_STATE_FACE_REG_START);
+                    if (rxQMsg->msg.cmd.data.add_face.add_newface)
+                    {
+                        run_flag = OASIS_DET_REC_REG;
+                        Oasis_SetState(OASIS_STATE_FACE_REG_START);
 
-                		memcpy(gTimeStat.new_name,
-                				rxQMsg->msg.cmd.data.add_face.new_face_name,
-								sizeof(rxQMsg->msg.cmd.data.add_face.new_face_name));
-                	}else
-                	{
-                		run_flag = OASIS_DET_REC;
-                		Oasis_SetState(OASIS_STATE_FACE_REG_STOP);
-                	}
+                        memcpy(gTimeStat.new_name,
+                                rxQMsg->msg.cmd.data.add_face.new_face_name,
+                                sizeof(rxQMsg->msg.cmd.data.add_face.new_face_name));
+                    }else
+                    {
+                        run_flag = OASIS_DET_REC;
+                        Oasis_SetState(OASIS_STATE_FACE_REG_STOP);
+
+                        UsbShell_Printf("[oasis] stop_reg: %x\r\n", rxQMsg->msg.cmd.data.add_face.stop_reason);
+
+                        // when stopping registration process in manual, better to call OASISLT_run_extend again to clean state in lib.
+                        if ((rxQMsg->msg.cmd.data.add_face.stop_reason == kEvents_API_Layer_RegFailed) && !gui_info.enrolment)
+                        {
+                            OASISLT_run_extend(frames, run_flag, init_p->minFace, &gTimeStat);
+                        }
+                    }
 //                    run_flag &= ~(OASIS_REG_MODE);
 //                    reg_mode = (rxQMsg->msg.cmd.data.add_newface) ? OASIS_REG_MODE : 0;
 //                    run_flag |= reg_mode;
@@ -864,9 +888,19 @@ static int Oasis_SetModelClass(OASISLTModelClass_t *model_class)
     return 0;
 }
 
+static void _FaceRecRtInfo_Log(const char *formatString)
+{
+	UsbShell_DbgPrintf(VERBOSE_MODE_L2, formatString);
+}
+
 int Oasis_Start()
 {
     //uint8_t mode = Cfg_AppDataGetEmotionRecTypes();
+    /* Runtime info REGION START ADDRESS, need to align with the definition in the MCUXpresso MCU Setting */
+    unsigned int rtInfoAddress = (unsigned int)__base_BOARD_SDRAM_RT_INFO;
+    unsigned int rtInfoSize = (unsigned int)__top_BOARD_SDRAM_RT_INFO - (unsigned int)__base_BOARD_SDRAM_RT_INFO;
+    FaceRecRtInfo_Init((unsigned char *)rtInfoAddress, rtInfoSize, _FaceRecRtInfo_Log);
+
     s_appType    = Cfg_AppDataGetApplicationType();
     int ret      = 0;
 

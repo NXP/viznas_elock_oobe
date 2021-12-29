@@ -18,6 +18,7 @@
 #include "sln_dev_cfg.h"
 #include "sln_api.h"
 #include "sln_connection.h"
+#include "face_rec_rt_info.h"
 /*******************************************************************************
  * Prototypes
  *******************************************************************************/
@@ -93,6 +94,9 @@ static shell_status_t FFI_CLI_LowPowerCommand(shell_handle_t shellContextHandle,
 static shell_status_t FFI_CLI_AlgoStartCommand(shell_handle_t shellContextHandle,
                                               int32_t argc,
                                               char **argv); /*!< Algo Start command */
+static shell_status_t _RtInfoCommand(shell_handle_t shellContextHandle,
+                                              int32_t argc,
+                                              char **argv); /*!< RtInfo command */
 
 extern "C" {
 
@@ -174,6 +178,8 @@ SHELL_COMMAND_DEFINE(app_type, (char *)"\r\n\"app_type <0|1|2|3|4>\":\r\n "
 SHELL_COMMAND_DEFINE(low_power, (char *)"\r\n\"low_power <on|off>\":  Turn low power mode on|off\r\n", FFI_CLI_LowPowerCommand, SHELL_IGNORE_PARAMETER_COUNT);
 SHELL_COMMAND_DEFINE(algo_start, (char *)"\r\n\"algo_start <auto|manual>\":  Set algo start mode auto|manual\r\n", FFI_CLI_AlgoStartCommand, SHELL_IGNORE_PARAMETER_COUNT);
 
+SHELL_COMMAND_DEFINE(rtinfo, (char *)"\r\n\"rtinfo\": runtime information filter\r\n", _RtInfoCommand, SHELL_IGNORE_PARAMETER_COUNT);
+
 extern QueueHandle_t g_UsbShellQueue;
 extern VIZN_api_handle_t gApiHandle;
 extern VIZN_api_client_t VIZN_API_CLIENT(Shell);
@@ -203,6 +209,7 @@ shell_status_t RegisterFFICmds(shell_handle_t shellContextHandle)
     SHELL_RegisterCommand(shellContextHandle, SHELL_COMMAND(app_type));
     SHELL_RegisterCommand(shellContextHandle, SHELL_COMMAND(low_power));
     SHELL_RegisterCommand(shellContextHandle, SHELL_COMMAND(algo_start));
+    SHELL_RegisterCommand(shellContextHandle, SHELL_COMMAND(rtinfo));
     return kStatus_SHELL_Success;
 }
 
@@ -1281,4 +1288,116 @@ void UsbShell_CmdProcess_Task(void *arg)
     }
 
     vTaskDelete(NULL);
+}
+
+static shell_status_t _RtInfoCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv)
+{
+    char *pEnd;
+
+    if (argc == 2)
+    {
+        if (!strcmp((char *)argv[1], "size"))
+        {
+            /* print the runtime information start address and size */
+            unsigned char *pStart = NULL;
+            unsigned int size     = 0;
+            FaceRecRtInfo_Size(&pStart, &size);
+            if (pStart && size)
+            {
+                SHELL_Printf(shellContextHandle, "\"%s\" start:0x%x size:0x%x\r\n", argv[1], pStart, size);
+            }
+            return kStatus_SHELL_Success;
+        }
+        else if (!strcmp((char *)argv[1], "clean"))
+        {
+            /* clean the captured runtime information */
+            FaceRecRtInfo_Clean();
+            return kStatus_SHELL_Success;
+        }
+        else if (!strcmp((char *)argv[1], "disable"))
+        {
+            /* disable all the filters */
+            FaceRecRtInfo_Disable();
+            return kStatus_SHELL_Success;
+        }
+        else
+        {
+            SHELL_Printf(shellContextHandle, "Invalid # of parameters supplied\r\n");
+            return kStatus_SHELL_Error;
+        }
+    }
+    else if ((argc == 3) || (argc == 4))
+    {
+        uint32_t tmp;
+        face_rec_rt_info_id_t id = kFaceRecRtInfoId_Count;
+        unsigned char enable     = 0;
+        unsigned char filter     = 0;
+
+        if (!strcmp((char *)argv[1], "global"))
+        {
+            id = kFaceRecRtInfoId_Global;
+        }
+        else if (!strcmp((char *)argv[1], "detect"))
+        {
+            id = kFaceRecRtInfoId_Detect;
+        }
+        else if (!strcmp((char *)argv[1], "fake"))
+        {
+            id = kFaceRecRtInfoId_Fake;
+        }
+        else if (!strcmp((char *)argv[1], "facerec"))
+        {
+            id = kFaceRecRtInfoId_FaceFecognize;
+        }
+        else
+        {
+            tmp = strtol(argv[1], &pEnd, 10);
+            if (argv[1] == pEnd)
+            {
+                SHELL_Printf(shellContextHandle, "\"%s\" invalid item id.\r\n", argv[1]);
+                return kStatus_SHELL_Error;
+            }
+
+            if ((tmp >= kFaceRecRtInfoId_Global) && (tmp < kFaceRecRtInfoId_Count))
+            {
+                id = (face_rec_rt_info_id_t)tmp;
+            }
+        }
+
+        /* check the item id */
+        if (id > kFaceRecRtInfoId_Count)
+        {
+            SHELL_Printf(shellContextHandle, "\"%s\" invalid item id.\r\n", argv[1]);
+            return kStatus_SHELL_Error;
+        }
+
+        tmp = strtol(argv[2], &pEnd, 10);
+        if ((argv[2] == pEnd) || ((tmp != 0) && (tmp != 1)))
+        {
+            SHELL_Printf(shellContextHandle, "\"%s\" invalid enable flag.\r\n", argv[2]);
+            return kStatus_SHELL_Error;
+        }
+        enable = (unsigned char)tmp;
+
+        if (argc == 4)
+        {
+            tmp = strtol(argv[3], &pEnd, 10);
+            if ((argv[3] == pEnd) || ((tmp != 0) && (tmp != 1) && (tmp != 2)))
+            {
+                SHELL_Printf(shellContextHandle, "\"%s\" invalid enable flag.\r\n", argv[3]);
+                return kStatus_SHELL_Error;
+            }
+            filter = tmp;
+        }
+
+        SHELL_Printf(shellContextHandle, "id:0x%02x enable:%d filter:%d\r\n", id, enable, filter);
+        FaceRecRtInfo_Filter(id, enable, filter);
+    }
+    else
+    {
+        SHELL_Printf(shellContextHandle, "Invalid # of parameters supplied\r\n");
+        return kStatus_SHELL_Error;
+    }
+
+    return kStatus_SHELL_Success;
 }
