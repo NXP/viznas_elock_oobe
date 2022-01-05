@@ -169,12 +169,16 @@ SHELL_COMMAND_DEFINE(wifi, (char *)"\r\n\"wifi <on|off>\":  Turn the Wi-Fi conne
         							  "\r\n\"wifi credentials SSID [PASSWORD]\": Set Wi-Fi credentials.\r\n"
                                       "\r\n\"wifi ip\": Get the ip address. \r\n"
                                       "\r\n\"wifi erase\": Erase the Wi-Fi credentials from flash\r\n", FFI_CLI_WiFiCommand, SHELL_IGNORE_PARAMETER_COUNT);
-SHELL_COMMAND_DEFINE(app_type, (char *)"\r\n\"app_type <0|1|2|3|4>\":\r\n "
-                                        "0 - Elock(light)\r\n"
-                                        "1 - Elock(heavy)\r\n"
-                                        "2 - Door access(light)\r\n"
-                                        "3 - Door access(heavy)\r\n"
-                                        "4 - Userid \r\n", FFI_CLI_AppCommand, SHELL_IGNORE_PARAMETER_COUNT);
+SHELL_COMMAND_DEFINE(app_type, (char *)"\r\n\"app_type <0|1|2|3|4|5|6|7|8>\":\r\n "
+                                        "0 - Elock(light)dual\r\n"
+                                        "1 - Elock(heavy)dual\r\n"
+                                        "2 - Door access(light)dual\r\n"
+                                        "3 - Door access(heavy)dual\r\n"
+                                        "4 - Elock(light)single\r\n"
+                                        "5 - Elock(heavy)single\r\n"
+                                        "6 - Door access(light)single\r\n"
+                                        "7 - Door access(heavy)single\r\n"
+                                        "8 - Userid \r\n", FFI_CLI_AppCommand, SHELL_IGNORE_PARAMETER_COUNT);
 SHELL_COMMAND_DEFINE(low_power, (char *)"\r\n\"low_power <on|off>\":  Turn low power mode on|off\r\n", FFI_CLI_LowPowerCommand, SHELL_IGNORE_PARAMETER_COUNT);
 SHELL_COMMAND_DEFINE(algo_start, (char *)"\r\n\"algo_start <auto|manual>\":  Set algo start mode auto|manual\r\n", FFI_CLI_AlgoStartCommand, SHELL_IGNORE_PARAMETER_COUNT);
 

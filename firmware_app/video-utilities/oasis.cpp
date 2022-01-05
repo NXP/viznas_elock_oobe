@@ -105,7 +105,7 @@ static QUIInfoMsg gui_info;
 static FaceRecBuffer s_FaceRecBuf = {NULL,NULL};
 static QueueHandle_t gFaceDetMsgQ = NULL;
 static OASISLTInitPara_t s_InitPara;
-static uint8_t s_lockstatus       = 1;
+static uint8_t s_lockstatus       = 0;
 static OasisState s_CurOasisState = OASIS_STATE_FACE_REC_START;
 static uint8_t s_appType;
 volatile int g_OASISLT_heap_debug;
@@ -736,15 +736,15 @@ static void AdjustBrightnessHandler(uint8_t frame_idx, uint8_t direction, void* 
 	UsbShell_DbgPrintf(VERBOSE_MODE_L2, "Adjust brightness, idx:%d dir:%d\r\n",frame_idx,direction);
     if (frame_idx == OASISLT_INT_FRAME_IDX_IR)
     {
-//        Oasis_LedControl(LED_IR,direction);
+        //Oasis_LedControl(LED_IR,direction);
         Camera_SetTargetY(IR_CAMERA,direction);
     }
     else
     {
         //There is a HW limitation to control LED_WHITE and LED_IR at the same time, so diable RGB part.
 #if RT106F_ELOCK_BOARD
-//    	Oasis_LedControl(LED_WHITE,direction);
-    	Camera_SetTargetY(COLOR_CAMERA,direction);
+        //Oasis_LedControl(LED_WHITE,direction);
+        Camera_SetTargetY(COLOR_CAMERA,direction);
 #endif
     }
 }
@@ -880,18 +880,6 @@ static void Oasis_Task(void *param)
                             OASISLT_run_extend(frames, run_flag, init_p->minFace, &gTimeStat);
                         }
                     }
-//                    run_flag &= ~(OASIS_REG_MODE);
-//                    reg_mode = (rxQMsg->msg.cmd.data.add_newface) ? OASIS_REG_MODE : 0;
-//                    run_flag |= reg_mode;
-//                    if (reg_mode == OASIS_REG_MODE)
-//                    {
-//                        Oasis_SetState(OASIS_STATE_FACE_REG_START);
-//                    }
-//                    else
-//                    {
-//                        Oasis_SetState(OASIS_STATE_FACE_REG_STOP);
-//                    }
-
                 }
                 break;
 
@@ -904,7 +892,7 @@ static void Oasis_Task(void *param)
                     {
                         Camera_QMsgSetPWM(LED_IR, 0);
                         Camera_QMsgSetPWM(LED_WHITE, 0);
-//                        Camera_SetRGBExposureMode(CAMERA_EXPOSURE_MODE_AUTO_LEVEL0);
+//                      Camera_SetRGBExposureMode(CAMERA_EXPOSURE_MODE_AUTO_LEVEL0);
                     }
                 }
                 break;
@@ -919,7 +907,6 @@ static void Oasis_Task(void *param)
                             uint8_t pwm  = 0;
                             VIZN_GetPulseWidth(NULL, LED_IR, &pwm);
                             Camera_QMsgSetPWM(LED_IR, pwm);
-
                         }
                         Camera_SetTargetY(IR_CAMERA,0xFF);
                         s_lockstatus = 1;
@@ -945,9 +932,17 @@ static int Oasis_SetImgType(OASISLTImageType_t *img_type)
     {
         *img_type = OASIS_IMG_TYPE_RGB_SINGLE;
     }
+    else if (s_appType == APP_TYPE_ELOCK_LIGHT_SINGLE || s_appType == APP_TYPE_ELOCK_HEAVY_SINGLE)
+    {
+        *img_type = OASIS_IMG_TYPE_IR_SINGLE;
+    }
     else if (s_appType == APP_TYPE_ELOCK_LIGHT || s_appType == APP_TYPE_ELOCK_HEAVY)
     {
         *img_type = OASIS_IMG_TYPE_IR_RGB_DUAL;
+    }
+    else if (s_appType == APP_TYPE_DOOR_ACCESS_LIGHT_SINGLE|| s_appType == APP_TYPE_DOOR_ACCESS_HEAVY_SINGLE)
+    {
+        *img_type = OASIS_IMG_TYPE_RGB_SINGLE;
     }
     else if (s_appType == APP_TYPE_DOOR_ACCESS_LIGHT || s_appType == APP_TYPE_DOOR_ACCESS_HEAVY)
     {
@@ -966,11 +961,13 @@ static int Oasis_SetModelClass(OASISLTModelClass_t *model_class)
     {
         *model_class = OASISLT_MODEL_CLASS_LIGHT;
     }
-    if (s_appType == APP_TYPE_ELOCK_LIGHT || s_appType == APP_TYPE_DOOR_ACCESS_LIGHT)
+    if (s_appType == APP_TYPE_ELOCK_LIGHT || s_appType == APP_TYPE_DOOR_ACCESS_LIGHT 
+        || s_appType == APP_TYPE_ELOCK_LIGHT_SINGLE || s_appType == APP_TYPE_DOOR_ACCESS_LIGHT_SINGLE)
     {
         *model_class = OASISLT_MODEL_CLASS_LIGHT;
     }
-    else if (s_appType == APP_TYPE_ELOCK_HEAVY || s_appType == APP_TYPE_DOOR_ACCESS_HEAVY)
+    else if (s_appType == APP_TYPE_ELOCK_HEAVY || s_appType == APP_TYPE_DOOR_ACCESS_HEAVY
+        || s_appType == APP_TYPE_ELOCK_HEAVY_SINGLE || s_appType == APP_TYPE_DOOR_ACCESS_HEAVY_SINGLE)
     {
         *model_class = OASISLT_MODEL_CLASS_HEAVY;
     }
@@ -998,26 +995,26 @@ int Oasis_Start()
     s_appType    = Cfg_AppDataGetApplicationType();
     int ret      = 0;
 
-    if (s_appType != APP_TYPE_USERID)
+    if ((s_appType != APP_TYPE_USERID) && (s_appType != APP_TYPE_DOOR_ACCESS_LIGHT_SINGLE) && (s_appType != APP_TYPE_DOOR_ACCESS_HEAVY_SINGLE))
     {
         s_FaceRecBuf.dataIR = (uint8_t *)pvPortMalloc(REC_RECT_WIDTH * REC_RECT_HEIGHT * 3);
         if (s_FaceRecBuf.dataIR == NULL)
         {
-        	ret = -1;
-        	goto error_cases;
+            ret = -1;
+            goto error_cases;
         }
     }
 
-    s_FaceRecBuf.dataRGB = (uint8_t *)pvPortMalloc(REC_RECT_WIDTH * REC_RECT_HEIGHT * 3);
-    if (s_FaceRecBuf.dataRGB == NULL)
+    if ((s_appType != APP_TYPE_ELOCK_LIGHT_SINGLE) && (s_appType != APP_TYPE_ELOCK_HEAVY_SINGLE))
     {
-        ret = -2;
-        goto error_cases;
+        s_FaceRecBuf.dataRGB = (uint8_t *)pvPortMalloc(REC_RECT_WIDTH * REC_RECT_HEIGHT * 3);
+        if (s_FaceRecBuf.dataRGB == NULL)
+        {
+            ret = -2;
+            goto error_cases;
+        }
     }
-
     memset(&s_InitPara, 0, sizeof(s_InitPara));
-
-    //s_InitPara.img_format = OASIS_IMG_FORMAT_BGR888;
 
     Oasis_SetImgType(&s_InitPara.imgType);
     Oasis_SetModelClass(&s_InitPara.modClass);

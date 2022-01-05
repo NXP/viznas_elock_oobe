@@ -640,6 +640,10 @@ void UIInfo_Update(uint16_t *pBufferAddr, QUIInfoMsg* infoMsg, uint8_t p_Display
         case APP_TYPE_ELOCK_HEAVY:
         case APP_TYPE_DOOR_ACCESS_LIGHT:
         case APP_TYPE_DOOR_ACCESS_HEAVY:
+        case APP_TYPE_ELOCK_LIGHT_SINGLE:
+        case APP_TYPE_ELOCK_HEAVY_SINGLE:
+        case APP_TYPE_DOOR_ACCESS_LIGHT_SINGLE:
+        case APP_TYPE_DOOR_ACCESS_HEAVY_SINGLE:
             UIInfo_Elock(pBufferAddr, infoMsg, p_DisplayInterfaceMode);
             break;
 

@@ -35,7 +35,11 @@ extern "C" {
 /* Frame buffer data alignment. */
 #define FRAME_BUFFER_ALIGN 64
 
+#if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
+#define APP_FRAME_BUFFER_COUNT 2
+#else
 #define APP_FRAME_BUFFER_COUNT 4
+#endif
 
 /* Pixel format RGB565, bytesPerPixel is 2. */
 #define APP_BPP 2

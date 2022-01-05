@@ -77,9 +77,9 @@ typedef enum _camera_device_cmd
 
     kCAMERA_DeviceBrightnessAdjust, /*Brightness adjust. */
 
-#define CAMERA_BRIGHTNESS_DECREASE -1
+#define CAMERA_BRIGHTNESS_DECREASE 0
 #define CAMERA_BRIGHTNESS_INCREASE 1
-#define	CAMERA_BRIGHTNESS_DEFAULT  0
+#define CAMERA_BRIGHTNESS_DEFAULT  0xFF
 
 } camera_device_cmd_t;
 

@@ -90,11 +90,15 @@ typedef enum _cfg_displayoutput
 
 typedef enum _cfg_apptype
 {
-    APP_TYPE_ELOCK_LIGHT       = 0, //eLock application use IR as face recognition, light calculation,fast speed, lower accuracy
-    APP_TYPE_ELOCK_HEAVY       = 1, //eLock application use IR as face recognition, heavy calculation,lower speed, higher accuracy
-    APP_TYPE_DOOR_ACCESS_LIGHT = 2, //door access application use RGB as face recognition, light calculation, fast speed, lower accuracy
-    APP_TYPE_DOOR_ACCESS_HEAVY = 3, //door access application use RGB as face recognition, heavy calculation, lower speed, higher accuracy
-    APP_TYPE_USERID            = 4, //single camera application using only the RGB as face tracking, face recognition, emotion detection
+    APP_TYPE_ELOCK_LIGHT              = 0, //eLock application use IR as face recognition, light calculation,fast speed, lower accuracy
+    APP_TYPE_ELOCK_HEAVY              = 1, //eLock application use IR as face recognition, heavy calculation,lower speed, higher accuracy
+    APP_TYPE_DOOR_ACCESS_LIGHT        = 2, //door access application use RGB as face recognition, light calculation, fast speed, lower accuracy
+    APP_TYPE_DOOR_ACCESS_HEAVY        = 3, //door access application use RGB as face recognition, heavy calculation, lower speed, higher accuracy
+    APP_TYPE_ELOCK_LIGHT_SINGLE       = 4, //single camera eLock application use IR as face recognition, light calculation,fast speed, lower accuracy
+    APP_TYPE_ELOCK_HEAVY_SINGLE       = 5, //single camera eLock application use IR as face recognition, heavy calculation,lower speed, higher accuracy
+    APP_TYPE_DOOR_ACCESS_LIGHT_SINGLE = 6, //single camera door access application use RGB as face recognition, light calculation, fast speed, lower accuracy
+    APP_TYPE_DOOR_ACCESS_HEAVY_SINGLE = 7, //single camera door access application use RGB as face recognition, heavy calculation, lower speed, higher accuracy
+    APP_TYPE_USERID                   = 8, //single camera application using only the RGB as face tracking, face recognition, emotion detection
     APP_TYPE_SUPPORT_LAST           //supported application type numbers
 } cfg_apptype_t;
 
