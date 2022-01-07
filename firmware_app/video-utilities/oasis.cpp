@@ -474,11 +474,14 @@ static void EvtHandler(ImageFrame_t *frames[], OASISLTEvt_t evt, OASISLTCbPara_t
 
         case OASISLT_EVT_REG_START:
         {
+        	 UsbShell_DbgPrintf(VERBOSE_MODE_L2, "Reg start\r\n");
         }
         break;
 
         case OASISLT_EVT_REG_IN_PROGRESS:
         	gui_info.OriExpected = para->faceOrientation;
+       	    UsbShell_DbgPrintf(VERBOSE_MODE_L2, "Reg in progress\r\n");
+
             break;
         case OASISLT_EVT_REG_COMPLETE:
         {
@@ -743,8 +746,8 @@ static void AdjustBrightnessHandler(uint8_t frame_idx, uint8_t direction, void* 
     {
         //There is a HW limitation to control LED_WHITE and LED_IR at the same time, so diable RGB part.
 #if RT106F_ELOCK_BOARD
-        //Oasis_LedControl(LED_WHITE,direction);
-        Camera_SetTargetY(COLOR_CAMERA,direction);
+    	Oasis_LedControl(LED_WHITE,direction);
+    	Camera_SetTargetY(COLOR_CAMERA,direction);
 #endif
     }
 }
@@ -863,6 +866,11 @@ static void Oasis_Task(void *param)
                     {
                         run_flag = OASIS_DET_REC_REG;
                         Oasis_SetState(OASIS_STATE_FACE_REG_START);
+						uint8_t pwm  = 0;
+						VIZN_GetPulseWidth(NULL, LED_IR, &pwm);
+						Camera_QMsgSetPWM(LED_IR, pwm);
+                        Camera_SetTargetY(IR_CAMERA,0xFF);
+                        Camera_SetTargetY(COLOR_CAMERA,0xFF);
 
                         memcpy(gTimeStat.new_name,
                                 rxQMsg->msg.cmd.data.add_face.new_face_name,
@@ -871,6 +879,8 @@ static void Oasis_Task(void *param)
                     {
                         run_flag = OASIS_DET_REC;
                         Oasis_SetState(OASIS_STATE_FACE_REG_STOP);
+                        Camera_QMsgSetPWM(LED_IR, 0);
+                        Camera_QMsgSetPWM(LED_WHITE, 0);
 
                         UsbShell_Printf("[oasis] stop_reg: %x\r\n", rxQMsg->msg.cmd.data.add_face.stop_reason);
 
@@ -887,13 +897,8 @@ static void Oasis_Task(void *param)
                 {
                     UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[OASIS]:QMSG_FACEREC_STOP!!!\r\n");
                     s_lockstatus = 0;
-
-                    if (Cfg_AppDataGetAlgoStartMode() == ALGO_START_MODE_MANUAL)
-                    {
-                        Camera_QMsgSetPWM(LED_IR, 0);
-                        Camera_QMsgSetPWM(LED_WHITE, 0);
-//                      Camera_SetRGBExposureMode(CAMERA_EXPOSURE_MODE_AUTO_LEVEL0);
-                    }
+                    Camera_QMsgSetPWM(LED_IR, 0);
+                    Camera_QMsgSetPWM(LED_WHITE, 0);
                 }
                 break;
 
@@ -902,13 +907,12 @@ static void Oasis_Task(void *param)
                     UsbShell_DbgPrintf(VERBOSE_MODE_L2, "[OASIS]:QMSG_FACEREC_START!\r\n");
                     if (s_lockstatus == 0)
                     {
-                        if (Cfg_AppDataGetAlgoStartMode() == ALGO_START_MODE_MANUAL)
-                        {
-                            uint8_t pwm  = 0;
-                            VIZN_GetPulseWidth(NULL, LED_IR, &pwm);
-                            Camera_QMsgSetPWM(LED_IR, pwm);
-                        }
+
+						uint8_t pwm  = 0;
+						VIZN_GetPulseWidth(NULL, LED_IR, &pwm);
+						Camera_QMsgSetPWM(LED_IR, pwm);
                         Camera_SetTargetY(IR_CAMERA,0xFF);
+                        Camera_SetTargetY(COLOR_CAMERA,0xFF);
                         s_lockstatus = 1;
                         clearFaceInfoMsg(&gui_info);
                         Oasis_SendFaceInfoMsg(gui_info);

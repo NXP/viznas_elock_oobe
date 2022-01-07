@@ -1211,7 +1211,6 @@ status_t GC0308_Control(camera_device_handle_t *handle, camera_device_cmd_t cmd,
         return kStatus_Success;
     }
     else if ( cmd == kCAMERA_DeviceExposureMode) {
-        uint8_t reg_value;
         GC0308_Write(handle, 0xfe, 1U, 0x00);/* set page0 */
         GC0308_Write(handle, 0xec, 1U, (arg<<4));
 
@@ -1238,6 +1237,7 @@ status_t GC0308_Control(camera_device_handle_t *handle, camera_device_cmd_t cmd,
        return kStatus_Success;
     }else if (cmd == kCAMERA_DeviceBrightnessAdjust)
     {
+#if 0
 //This steps can be tuned for different configuration: 
 // Sharing a common IIC for dual camera
 // Seperate IIC for each camera
@@ -1283,9 +1283,60 @@ status_t GC0308_Control(camera_device_handle_t *handle, camera_device_cmd_t cmd,
 			default:
 				break;
         }
-        //uint8_t updated_reg_value;
-        //GC0308_Read(handle, 0xD3, 1u, &updated_reg_value);
-        //UsbShell_Printf("[GC0308]:targetY:%d-->%d dir:%d\r\n", reg_value,updated_reg_value,arg);
+
+
+//        uint8_t updated_reg_value;
+//        GC0308_Read(handle, 0xD3, 1u, &updated_reg_value);
+        //UsbShell_Printf("[GC0308 0x%8x]:targetY:%d-->%d dir:%d\r\n", (uint32_t)handle,reg_value,updated_reg_value,arg);
+#else
+#define GC0308_BRIGHTNESS_EXPOSURE_DEFAULT 0x96
+#define GC0308_BRIGHTNESS_EXPOSURE_MAX ((1UL<<12) - 1)
+#define GC0308_BRIGHTNESS_EXPOSURE_INC_DEC_RATIO (0.25f)
+
+
+        //adjust brightness manually
+        //close AEC
+        GC0308_Write(handle, 0xd2, 1U, 0x10); /* close AEC */
+
+
+        uint8_t exposureH,exposureL;
+        GC0308_Read(handle, 0x3, 1u, &exposureH);
+        GC0308_Read(handle, 0x4, 1u, &exposureL);
+
+        uint16_t exposure = exposureH&0xF;
+        exposure = (exposure<<8)|exposureL;
+
+//        uint16_t exposure_copy = exposure;
+        switch(arg) {
+			case CAMERA_BRIGHTNESS_DECREASE:
+				exposure *= (1 - GC0308_BRIGHTNESS_EXPOSURE_INC_DEC_RATIO);
+				GC0308_Write(handle, 0x4, 1U, exposure&0xFF);
+				GC0308_Write(handle, 0x3, 1U, exposure>>8);
+			break;
+			case CAMERA_BRIGHTNESS_INCREASE:
+				exposure *= (1 + GC0308_BRIGHTNESS_EXPOSURE_INC_DEC_RATIO);
+				if (exposure >= GC0308_BRIGHTNESS_EXPOSURE_MAX)
+				{
+					exposure = GC0308_BRIGHTNESS_EXPOSURE_MAX;
+				}
+
+				GC0308_Write(handle, 0x4, 1U, exposure&0xFF);
+				GC0308_Write(handle, 0x3, 1U, exposure>>8);
+
+			break;
+			case CAMERA_BRIGHTNESS_DEFAULT:
+				GC0308_Write(handle, 0x4, 1U, GC0308_BRIGHTNESS_EXPOSURE_DEFAULT&0xFF);
+				GC0308_Write(handle, 0x3, 1U, GC0308_BRIGHTNESS_EXPOSURE_DEFAULT>>8);
+			break;
+
+			default:
+				break;
+        }
+        //UsbShell_Printf("[GC0308 0x%8x]:preGain:%d postGain:%d exposure:%d-->%d\r\n",(uint32_t)handle, preGain,postGain,exposure_copy,exposure);
+
+#endif
+
+        return kStatus_Success;
     }
     else
         return kStatus_InvalidArgument;

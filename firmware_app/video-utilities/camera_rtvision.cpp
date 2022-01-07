@@ -541,13 +541,16 @@ int Camera_SetTargetY(uint8_t whichCamera,uint8_t upOrDown)
 {
 #if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
 
-#if (CAMERA_DIFF_I2C_BUS) || ((s_appType >= APP_TYPE_ELOCK_LIGHT_SINGLE) && (s_appType <= APP_TYPE_USERID))
-    CAMERA_DEVICE_Control(&cameraDevice[whichCamera],  kCAMERA_DeviceBrightnessAdjust, upOrDown);
-#else
-    //delay to do so in Camera_RgbIrSwitch
-    gPendingTargetYSet[whichCamera] = 1;
-    gPendingTargetYValue[whichCamera] = upOrDown;
-#endif
+    if (CAMERA_DIFF_I2C_BUS || (s_appType >= APP_TYPE_ELOCK_LIGHT_SINGLE) && (s_appType <= APP_TYPE_USERID))
+    {
+    	CAMERA_DEVICE_Control(&cameraDevice[whichCamera],  kCAMERA_DeviceBrightnessAdjust, upOrDown);
+
+    }else
+    {
+		//delay to do so in Camera_RgbIrSwitch
+		gPendingTargetYSet[whichCamera] = 1;
+		gPendingTargetYValue[whichCamera] = upOrDown;
+    }
     UsbShell_DbgPrintf(VERBOSE_MODE_L2, "Camera_SetTargetY,id:%d upOrDown:%d \r\n",whichCamera,upOrDown);
 #endif
 	return 0;

@@ -13,7 +13,7 @@
 #include "stdint.h"
 
 #define VERSION_MAJOR 4
-#define VERSION_MINOR 76
+#define VERSION_MINOR 78
 /* This version number only used for hot fix on frozen release or branch */
 #define VERSION_HOTFIX 0
 
@@ -91,6 +91,7 @@ typedef enum {
     OASIS_REG_RESULT_DUP,
     OASIS_REG_RESULT_CANCELED,
     OASIS_REG_RESULT_DB_OP_FAILED,
+    OASIS_REG_RESULT_LOWER_COHESION,
     OASIS_REG_RESULT_INVALID = 0xFF
 } OASISLTRegisterRes_t;
 
