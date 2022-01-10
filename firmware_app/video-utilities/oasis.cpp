@@ -869,8 +869,8 @@ static void Oasis_Task(void *param)
 						uint8_t pwm  = 0;
 						VIZN_GetPulseWidth(NULL, LED_IR, &pwm);
 						Camera_QMsgSetPWM(LED_IR, pwm);
-                        Camera_SetTargetY(IR_CAMERA,0xFF);
-                        Camera_SetTargetY(COLOR_CAMERA,0xFF);
+						Camera_SetExposureMode(IR_CAMERA,0);
+						Camera_SetExposureMode(COLOR_CAMERA,0);
 
                         memcpy(gTimeStat.new_name,
                                 rxQMsg->msg.cmd.data.add_face.new_face_name,
@@ -881,6 +881,8 @@ static void Oasis_Task(void *param)
                         Oasis_SetState(OASIS_STATE_FACE_REG_STOP);
                         Camera_QMsgSetPWM(LED_IR, 0);
                         Camera_QMsgSetPWM(LED_WHITE, 0);
+						Camera_SetExposureMode(IR_CAMERA,0);
+						Camera_SetExposureMode(COLOR_CAMERA,0);
 
                         UsbShell_Printf("[oasis] stop_reg: %x\r\n", rxQMsg->msg.cmd.data.add_face.stop_reason);
 
@@ -899,6 +901,8 @@ static void Oasis_Task(void *param)
                     s_lockstatus = 0;
                     Camera_QMsgSetPWM(LED_IR, 0);
                     Camera_QMsgSetPWM(LED_WHITE, 0);
+					Camera_SetExposureMode(IR_CAMERA,0);
+					Camera_SetExposureMode(COLOR_CAMERA,0);
                 }
                 break;
 
@@ -911,8 +915,8 @@ static void Oasis_Task(void *param)
 						uint8_t pwm  = 0;
 						VIZN_GetPulseWidth(NULL, LED_IR, &pwm);
 						Camera_QMsgSetPWM(LED_IR, pwm);
-                        Camera_SetTargetY(IR_CAMERA,0xFF);
-                        Camera_SetTargetY(COLOR_CAMERA,0xFF);
+						Camera_SetExposureMode(IR_CAMERA,0);
+						Camera_SetExposureMode(COLOR_CAMERA,0);
                         s_lockstatus = 1;
                         clearFaceInfoMsg(&gui_info);
                         Oasis_SendFaceInfoMsg(gui_info);

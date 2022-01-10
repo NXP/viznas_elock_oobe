@@ -62,6 +62,7 @@ void Camera_GetPWM(uint8_t led, uint8_t *pulse_width);
 int Camera_SetMonoMode(uint8_t enable);
 int Camera_SetDispMode(uint8_t displayMode);
 int Camera_SetTargetY(uint8_t whichCamera,uint8_t upOrDown);
+int Camera_SetExposureMode(uint8_t whichCamera, uint8_t mode);
 int Camera_ChangeInterfaceMode(uint8_t mode);
 
 #ifdef __cplusplus

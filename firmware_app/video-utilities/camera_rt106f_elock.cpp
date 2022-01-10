@@ -135,11 +135,9 @@ static uint8_t sCurrentLedPwmValue[LED_NUM];
 
 #if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
 static int8_t s_CurrentCameraID = COLOR_CAMERA;
-static int8_t s_TargetCameraID  = IR_CAMERA;
 #endif
-static uint8_t s_CurRGBExposureMode = CAMERA_EXPOSURE_MODE_AUTO_LEVEL0;
-
-static uint8_t gPendingRGBExposureModeSet = 0;
+static uint8_t s_CurExposureMode[2];
+static uint8_t gPendingExposureModeSet[2];
 
 static uint8_t gPendingTargetYSet[2] = {0,0};
 // > 0: increase targetY; < 0 : decrease targetY; 0xFF: set to default Y
@@ -481,43 +479,32 @@ static void Camera_RgbIrSwitch(int8_t cameraID)
         return;
     last_id = cameraID;
 
-    if (cameraID == COLOR_CAMERA)
+    if (cameraID == COLOR_CAMERA || cameraID == IR_CAMERA)
     {
-        CAMERA_DEVICE_Stop(&cameraDevice[1]);
-        GPIO_PinWrite(BOARD_CAMERA_SWITCH_GPIO, BOARD_CAMERA_SWITCH_GPIO_PIN, 1);
-        CAMERA_DEVICE_Start(&cameraDevice[0]);
+        CAMERA_DEVICE_Stop(&cameraDevice[cameraID^1]);
+        GPIO_PinWrite(BOARD_CAMERA_SWITCH_GPIO, BOARD_CAMERA_SWITCH_GPIO_PIN, cameraID^1);
+        CAMERA_DEVICE_Start(&cameraDevice[cameraID]);
+
 #if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
         //only need do this if one IIC used for dual camera
-        if (gPendingRGBExposureModeSet)
+        if (gPendingExposureModeSet[cameraID])
         {
-            CAMERA_DEVICE_Control(&cameraDevice[0],  kCAMERA_DeviceExposureMode, s_CurRGBExposureMode);
-            gPendingRGBExposureModeSet = 0;
+            CAMERA_DEVICE_Control(&cameraDevice[cameraID],  kCAMERA_DeviceExposureMode, s_CurExposureMode[cameraID]);
+            gPendingExposureModeSet[cameraID] = 0;
         }
 
-        if (gPendingTargetYSet[COLOR_CAMERA])
+        if (gPendingTargetYSet[cameraID])
         {
-            CAMERA_DEVICE_Control(&cameraDevice[COLOR_CAMERA], kCAMERA_DeviceBrightnessAdjust, gPendingTargetYValue[COLOR_CAMERA]);
-            gPendingTargetYSet[COLOR_CAMERA] = 0;
+            CAMERA_DEVICE_Control(&cameraDevice[cameraID], kCAMERA_DeviceBrightnessAdjust, gPendingTargetYValue[cameraID]);
+            gPendingTargetYSet[cameraID] = 0;
         }
 #endif
-    }
-    else if (cameraID == IR_CAMERA)
-    {
-        CAMERA_DEVICE_Stop(&cameraDevice[0]);
-        GPIO_PinWrite(BOARD_CAMERA_SWITCH_GPIO, BOARD_CAMERA_SWITCH_GPIO_PIN, 0);
-        CAMERA_DEVICE_Start(&cameraDevice[1]);
-#if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
-        if (gPendingTargetYSet[IR_CAMERA])
-        {
-            CAMERA_DEVICE_Control(&cameraDevice[IR_CAMERA], kCAMERA_DeviceBrightnessAdjust, gPendingTargetYValue[IR_CAMERA]);
-            gPendingTargetYSet[IR_CAMERA] = 0;
-        }
-#endif
-    }
-    else
+
+    }else
     {
         CAMERA_DEVICE_Stop(&cameraDevice[0]);
         CAMERA_DEVICE_Stop(&cameraDevice[1]);
+
     }
 }
 
@@ -554,29 +541,24 @@ int Camera_SetDispMode(uint8_t displayMode)
 }
 
 
-uint8_t Camera_GetRGBExposureMode(void)
-{
-    return s_CurRGBExposureMode;
-}
+//uint8_t Camera_GetRGBExposureMode(void)
+//{
+//    return s_CurRGBExposureMode;
+//}
 
-int Camera_SetRGBExposureMode(uint8_t mode)
+int Camera_SetExposureMode(uint8_t whichCamera, uint8_t mode)
 {
 #if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
-	if (s_CurRGBExposureMode == mode)
-	{
-		return 0;
-	}else
-	{
-		s_CurRGBExposureMode = mode;
-		if (CAMERA_DIFF_I2C_BUS || (s_appType >= APP_TYPE_ELOCK_LIGHT_SINGLE) && (s_appType <= APP_TYPE_USERID))
+
+		if (CAMERA_DIFF_I2C_BUS || (s_appType >= APP_TYPE_ELOCK_LIGHT_SINGLE && s_appType <= APP_TYPE_USERID))
 		{
-			CAMERA_DEVICE_Control(&cameraDevice[0],  kCAMERA_DeviceExposureMode, mode);
+			CAMERA_DEVICE_Control(&cameraDevice[whichCamera],  kCAMERA_DeviceExposureMode, mode);
 
 		}else
 		{	//delay to do so in Camera_RgbIrSwitch
-			gPendingRGBExposureModeSet = 1;
+			s_CurExposureMode[whichCamera] = mode;
+			gPendingExposureModeSet[whichCamera] = 1;
 		}
-	}
 #endif
 	return 0;
 }
@@ -586,7 +568,7 @@ int Camera_SetRGBExposureMode(uint8_t mode)
 int Camera_SetTargetY(uint8_t whichCamera,uint8_t upOrDown)
 {
 #if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
-    if (CAMERA_DIFF_I2C_BUS || (s_appType >= APP_TYPE_ELOCK_LIGHT_SINGLE) && (s_appType <= APP_TYPE_USERID))
+    if (CAMERA_DIFF_I2C_BUS || (s_appType >= APP_TYPE_ELOCK_LIGHT_SINGLE && s_appType <= APP_TYPE_USERID))
     {
     	CAMERA_DEVICE_Control(&cameraDevice[whichCamera],  kCAMERA_DeviceBrightnessAdjust, upOrDown);
 
@@ -1041,8 +1023,7 @@ static void Camera_Task(void *param)
                             // need to switch to IR camera
                             if (pDetIR || (dispMode == DISPLAY_MODE_IR))
                             {
-                                s_TargetCameraID = IR_CAMERA;
-                                Camera_RgbIrSwitch(s_TargetCameraID);
+                                Camera_RgbIrSwitch(IR_CAMERA);
                                 s_CurrentCameraID = IR_CAMERA;
                             }
 #endif
@@ -1075,8 +1056,7 @@ static void Camera_Task(void *param)
                             // need to switch to RGB camera
                             if (pDetRGB || (dispMode == DISPLAY_MODE_RGB))
                             {
-                                s_TargetCameraID = COLOR_CAMERA;
-                                Camera_RgbIrSwitch(s_TargetCameraID);
+                                Camera_RgbIrSwitch(COLOR_CAMERA);
                                 s_CurrentCameraID = COLOR_CAMERA;
                             }
 #endif
@@ -1190,7 +1170,7 @@ static void Camera_Task(void *param)
                     }
                     else if(pQMsg->msg.cmd.id == QCMD_CHANGE_RGB_EXPOSURE_MODE)
                     {
-                        s_CurRGBExposureMode = pQMsg->msg.cmd.data.exposure_mode;
+                        s_CurExposureMode[COLOR_CAMERA] = pQMsg->msg.cmd.data.exposure_mode;
                     }
 					else if (pQMsg->msg.cmd.id == QCMD_CHANGE_INFO_DISP_MODE)
                     {

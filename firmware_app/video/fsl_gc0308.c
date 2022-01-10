@@ -1212,24 +1212,13 @@ status_t GC0308_Control(camera_device_handle_t *handle, camera_device_cmd_t cmd,
     }
     else if ( cmd == kCAMERA_DeviceExposureMode) {
         GC0308_Write(handle, 0xfe, 1U, 0x00);/* set page0 */
-        GC0308_Write(handle, 0xec, 1U, (arg<<4));
 
         switch(arg) {
-            case CAMERA_EXPOSURE_MODE_AUTO_LEVEL0:
-                GC0308_Write(handle, 0xee, 1U, 0x80); //post gain limit
-                GC0308_Write(handle, 0xef, 1U, 0x40); //pre gain limit
+            case CAMERA_EXPOSURE_MODE_AUTO:
+            	GC0308_Write(handle, 0xd2, 1U, 0x90); /* close AEC */
             break;
-            case CAMERA_EXPOSURE_MODE_AUTO_LEVEL1:
-                GC0308_Write(handle, 0xee, 1U, 0x80); //post gain limit
-                GC0308_Write(handle, 0xef, 1U, 0x80); //pre gain limit
-            break;
-            case CAMERA_EXPOSURE_MODE_AUTO_LEVEL2:
-                GC0308_Write(handle, 0xee, 1U, 0xa0); //post gain limit
-                GC0308_Write(handle, 0xef, 1U, 0x80); //pre gain limit
-            break;
-            case CAMERA_EXPOSURE_MODE_AUTO_LEVEL3:
-                GC0308_Write(handle, 0xee, 1U, 0xa0); //post gain limit
-                GC0308_Write(handle, 0xef, 1U, 0xa0); //pre gain limit
+            case CAMERA_EXPOSURE_MODE_MANU:
+            	GC0308_Write(handle, 0xd2, 1U, 0x10); /* close AEC */
             break;
             default:
                 break;
