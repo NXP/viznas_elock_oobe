@@ -28,50 +28,6 @@ size_t safe_strlen(const char *ptr, size_t max);
 void SLN_Flash_Init(void);
 
 /*!
- * @brief Memset function executing from RAM
- *
- * @param dst  Pointer to destination memory
- * @param data Data to set in destination memory
- * @param len  Lentght of Data to written to destination memory
- */
-void SLN_ram_memset(void *dst, uint8_t data, size_t len);
-
-/*!
- * @brief Memcpy function executing from RAM
- *
- * @param dst Pointer to destination memory
- * @param src Pointer to source memory
- * @param len Length of Data to copied to destination memory
- */
-void SLN_ram_memcpy(void *dst, void *src, size_t len);
-
-/*!
- * @brief Disable IRQ executing from RAM
- *
- * @returns Primask value
- */
-uint32_t SLN_ram_disable_irq(void);
-
-/*!
- * @brief Enable IRQ executing from RAM
- *
- * @param priMask Primask value returned from previous SLN_ram_disable_irq call
- */
-void SLN_ram_enable_irq(uint32_t priMask);
-
-/*!
- * @brief Disable data cache function executing from RAM
- *
- */
-void SLN_ram_disable_d_cache(void);
-
-/*!
- * @brief Enable data cache function executing from RAM
- *
- */
-void SLN_ram_enable_d_cache(void);
-
-/*!
  * @brief Write a page (512 bytes) to flash
  *
  * @param address The offset from the start of the flash

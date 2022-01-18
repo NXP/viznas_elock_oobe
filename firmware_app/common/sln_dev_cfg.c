@@ -110,7 +110,11 @@ void CfgData_GetDefault(sln_cfg_data_t *cfg)
             .liveness_mode              = LIVENESS_MODE_ON,
             .display_mode               = DISPLAY_MODE_RGB,
             .detect_resolution_mode     = DETECT_RESOLUTION_VGA,
+#if RTVISION_BOARD
+            .output_mode                = DISPLAY_USB,
+#elif RT106F_ELOCK_BOARD
             .output_mode                = DISPLAY_LCD,
+#endif
             .display_interface          = DISPLAY_INTERFACE_INFOBAR,
             .app_type                   = APP_TYPE_ELOCK_LIGHT,
             .audio_amp_calibration_state= 0,

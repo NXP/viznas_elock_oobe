@@ -1001,11 +1001,11 @@ int nvm_load_keys(wiced_bt_device_link_keys_t *keys, int key_len)
 {
     int32_t ret = 0;
 
-    SLN_ram_disable_d_cache();
+//    SLN_ram_disable_d_cache();
 
     ret = SLN_FLASH_MGMT_Read(BLE_LTK_FILE, (uint8_t *)keys, (uint32_t *)&key_len);
 
-    SLN_ram_enable_d_cache();
+//    SLN_ram_enable_d_cache();
 
     return ret;
 }
@@ -1016,7 +1016,7 @@ int nvm_save_keys(wiced_bt_device_link_keys_t *keys, int key_len)
 
     uint8_t *temp = NULL;
 
-    SLN_ram_disable_d_cache();
+//    SLN_ram_disable_d_cache();
 
     temp = (uint8_t *)pvPortMalloc(key_len);
 
@@ -1048,7 +1048,7 @@ int nvm_save_keys(wiced_bt_device_link_keys_t *keys, int key_len)
         temp = NULL;
     }
 
-    SLN_ram_enable_d_cache();
+//    SLN_ram_enable_d_cache();
 
     return ret;
 }

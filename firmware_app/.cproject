@@ -942,7 +942,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/lwip/src/include}&quot;"/>
 								</option>
 								<option id="gnu.c.compiler.option.include.files.1585178545" name="Include files (-include)" superClass="gnu.c.compiler.option.include.files" useByScannerDiscovery="false"/>
-								<option id="com.crt.advproject.gcc.exe.debug.option.optimization.level.1443967630" name="Optimization Level" superClass="com.crt.advproject.gcc.exe.debug.option.optimization.level" useByScannerDiscovery="true" value="gnu.c.optimization.level.most" valueType="enumerated"/>
+								<option id="com.crt.advproject.gcc.exe.debug.option.optimization.level.1443967630" name="Optimization Level" superClass="com.crt.advproject.gcc.exe.debug.option.optimization.level" useByScannerDiscovery="true" value="gnu.c.optimization.level.general" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.optimization.flags.94024225" name="Other optimization flags" superClass="gnu.c.compiler.option.optimization.flags" useByScannerDiscovery="false" value="-fno-common" valueType="string"/>
 								<option id="com.crt.advproject.gcc.exe.debug.option.debugging.level.70043862" name="Debug Level" superClass="com.crt.advproject.gcc.exe.debug.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.debugging.other.1824181908" name="Other debugging flags" superClass="gnu.c.compiler.option.debugging.other" useByScannerDiscovery="false"/>
@@ -1144,7 +1144,7 @@
 								<option id="com.crt.advproject.link.cpp.hdrlib.58399930" name="Library" superClass="com.crt.advproject.link.cpp.hdrlib" useByScannerDiscovery="false" value="com.crt.advproject.cpp.link.hdrlib.newlib.nohost" valueType="enumerated"/>
 								<option id="com.crt.advproject.link.cpp.nanofloat.2021998978" name="Enable printf float " superClass="com.crt.advproject.link.cpp.nanofloat" useByScannerDiscovery="false"/>
 								<option id="com.crt.advproject.link.cpp.nanofloat.scanf.405565781" name="Enable scanf float " superClass="com.crt.advproject.link.cpp.nanofloat.scanf" useByScannerDiscovery="false"/>
-								<option id="com.crt.advproject.link.cpp.toram.2078461718" name="Link application to RAM" superClass="com.crt.advproject.link.cpp.toram" useByScannerDiscovery="false"/>
+								<option id="com.crt.advproject.link.cpp.toram.2078461718" name="Link application to RAM" superClass="com.crt.advproject.link.cpp.toram" useByScannerDiscovery="false" value="false" valueType="boolean"/>
 								<option id="com.crt.advproject.link.cpp.stackOffset.1805029044" name="Stack offset" superClass="com.crt.advproject.link.cpp.stackOffset" useByScannerDiscovery="false"/>
 								<option id="com.crt.advproject.link.cpp.multicore.slave.2077250266" name="Multicore configuration" superClass="com.crt.advproject.link.cpp.multicore.slave" useByScannerDiscovery="false"/>
 								<option id="com.crt.advproject.link.cpp.multicore.master.723830877" name="Multicore master" superClass="com.crt.advproject.link.cpp.multicore.master" useByScannerDiscovery="false"/>
@@ -1286,14 +1286,13 @@
 &lt;vendor&gt;NXP&lt;/vendor&gt;
 &lt;memory can_program="true" id="Flash" is_ro="true" size="0" type="Flash"/&gt;
 &lt;memory id="RAM" size="1024" type="RAM"/&gt;
-&lt;memoryInstance derived_from="Flash" driver="MIMXRT1060_SFDP_QSPI.cfx" edited="true" id="BOARD_FLASH" location="0x60100000" size="0x600000"/&gt;
-&lt;memoryInstance derived_from="Flash" edited="true" id="BOARD_FLASH_BANK_B" location="0x60700000" size="0x400000"/&gt;
-&lt;memoryInstance derived_from="RAM" edited="true" id="BOARD_SDRAM" location="0x80000000" size="0x1600000"/&gt;
+&lt;memoryInstance derived_from="Flash" driver="MIMXRT1060_SFDP_QSPI.cfx" edited="true" id="BOARD_FLASH" location="0x60100000" size="0x500000"/&gt;
+&lt;memoryInstance derived_from="Flash" edited="true" id="BOARD_FLASH_BANK_B" location="0x60600000" size="0x500000"/&gt;
+&lt;memoryInstance derived_from="RAM" edited="true" id="BOARD_SDRAM" location="0x80000000" size="0x1800000"/&gt;
 &lt;memoryInstance derived_from="RAM" edited="true" id="SRAM_DTC" location="0x20000000" size="0x30000"/&gt;
 &lt;memoryInstance derived_from="RAM" edited="true" id="SRAM_ITC" location="0x0" size="0x8000"/&gt;
 &lt;memoryInstance derived_from="RAM" edited="true" id="SRAM_OC_NON_CACHEABLE" location="0x20200000" size="0x8000"/&gt;
 &lt;memoryInstance derived_from="RAM" edited="true" id="SRAM_OC_CACHEABLE" location="0x20208000" size="0xc0000"/&gt;
-&lt;memoryInstance derived_from="RAM" edited="true" id="BOARD_SDRAM_NONCACHEABLE" location="0x81600000" size="0x200000"/&gt;
 &lt;memoryInstance derived_from="RAM" edited="true" id="BOARD_SDRAM_RT_INFO" location="0x81800000" size="0x800000"/&gt;
 &lt;/chip&gt;
 &lt;processor&gt;

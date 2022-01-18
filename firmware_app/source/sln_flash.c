@@ -15,8 +15,17 @@
 #include "flexspi_qspi_flash_ops.h"
 #endif
 #include "fsl_flexspi.h"
+#include "FreeRTOS.h"
+#include "semphr.h"
+#include "task.h"
+
+#define ENABLE_NON_XIP 1
 
 extern const uint32_t customLUT[];
+
+#if ENABLE_NON_XIP
+static SemaphoreHandle_t s_fileLock = NULL;
+#endif
 
 #ifdef __REDLIB__
 size_t safe_strlen(const char *ptr, size_t max)
@@ -33,49 +42,62 @@ size_t safe_strlen(const char *ptr, size_t max)
 }
 #endif
 
-void SLN_ram_memset(void *dst, uint8_t data, size_t len)
+static void SLN_ram_memset(void *dst, uint8_t data, size_t len)
 {
-    uint8_t *ptr = (uint8_t *)dst;
-
-    while (len)
-    {
-        *ptr++ = data;
-        len--;
-    }
+	memset(dst,data,len);
 }
 
-void SLN_ram_memcpy(void *dst, void *src, size_t len)
+static void SLN_ram_memcpy(void *dst, void *src, size_t len)
 {
-    uint8_t *ptrDst = (uint8_t *)dst;
-    uint8_t *ptrSrc = (uint8_t *)src;
-
-    while (len)
-    {
-        *ptrDst++ = *ptrSrc++;
-        len--;
-    }
+    memcpy(dst,src,len);
 }
 
-uint32_t SLN_ram_disable_irq(void)
+static uint32_t SLN_ram_disable_irq(void)
 {
     uint32_t regPrimask = 0;
-
+#if !ENABLE_NON_XIP
     // Get primask
     __ASM volatile("MRS %0, primask" : "=r"(regPrimask)::"memory");
 
     // Disable irq
     __ASM volatile("cpsid i" : : : "memory");
+#else
+
+    if ( s_fileLock == NULL	|| __get_IPSR())
+    {
+
+    }else
+    {
+
+   		xSemaphoreTake(s_fileLock, portMAX_DELAY);
+    }
+#endif
 
     return regPrimask;
+
+
 }
 
-void SLN_ram_enable_irq(uint32_t priMask)
+static void SLN_ram_enable_irq(uint32_t priMask)
 {
+#if !ENABLE_NON_XIP
     __ASM volatile("MSR primask, %0" : : "r"(priMask) : "memory");
+#else
+    if ( s_fileLock == NULL	|| __get_IPSR())
+    {
+
+    }
+    else
+    {
+
+    	xSemaphoreGive(s_fileLock);
+    }
+#endif
 }
 
-void SLN_ram_disable_d_cache(void)
+static void SLN_ram_disable_d_cache(void)
 {
+#if !ENABLE_NON_XIP
 #if defined(__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
     register uint32_t ccsidr;
     register uint32_t sets;
@@ -107,10 +129,12 @@ void SLN_ram_disable_d_cache(void)
     __ASM volatile("dsb 0xF" ::: "memory");
     __ASM volatile("isb 0xF" ::: "memory");
 #endif
+#endif
 }
 
-void SLN_ram_enable_d_cache(void)
+static void SLN_ram_enable_d_cache(void)
 {
+#if !ENABLE_NON_XIP
 #if defined(__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
     uint32_t ccsidr;
     uint32_t sets;
@@ -142,11 +166,21 @@ void SLN_ram_enable_d_cache(void)
     __ASM volatile("dsb 0xF" ::: "memory");
     __ASM volatile("isb 0xF" ::: "memory");
 #endif
+#endif
 }
 
 void SLN_Flash_Init(void)
 {
     uint32_t irqState;
+
+#if ENABLE_NON_XIP
+    // Create a lock with priority inheritance
+    if (s_fileLock == NULL)
+    {
+		s_fileLock = xSemaphoreCreateMutex();
+		assert(s_fileLock != NULL);
+    }
+#endif
 
     irqState = SLN_ram_disable_irq();
 
@@ -187,6 +221,7 @@ status_t SLN_Write_Flash_Page(uint32_t address, uint8_t *data, uint32_t len)
 
     /* Program page. */
     status = flexspi_nor_flash_page_program_with_buffer(FLEXSPI, address, (void *)tempPage);
+    DCACHE_InvalidateByRange(SLN_Flash_Get_Read_Address(address),BOARD_FLASH_PAGE_SIZE);
 
     SLN_ram_enable_d_cache();
 
@@ -274,6 +309,8 @@ int32_t SLN_Write_Sector(uint32_t address, uint8_t *buf, uint32_t len)
         } while (--pageCount);
     }
 
+    DCACHE_InvalidateByRange(SLN_Flash_Get_Read_Address(address),BOARD_FLASH_SECTOR_SIZE);
+
     SLN_ram_enable_d_cache();
 
     SLN_ram_enable_irq(irqState);
@@ -295,6 +332,8 @@ status_t SLN_Erase_Sector(uint32_t address)
 
     /* Erase sectors. */
     status = flexspi_nor_flash_erase_sector(FLEXSPI, address);
+
+    DCACHE_InvalidateByRange(SLN_Flash_Get_Read_Address(address),BOARD_FLASH_SECTOR_SIZE);
 
     /* Do software reset. */
     FLEXSPI_SoftwareReset(FLEXSPI);
@@ -326,6 +365,8 @@ status_t SLN_Write_Flash_At_Address(uint32_t address, uint8_t *data)
 
     /*Program page. */
     status = flexspi_nor_flash_page_program_with_buffer(FLEXSPI, address, (void *)data);
+
+    DCACHE_InvalidateByRange(SLN_Flash_Get_Read_Address(address),BOARD_FLASH_PAGE_SIZE);
 
     SLN_ram_enable_d_cache();
 
