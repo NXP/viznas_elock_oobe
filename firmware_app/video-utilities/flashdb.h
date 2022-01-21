@@ -21,17 +21,17 @@ extern "C" {
 /*******************************************************************************
  * API
  *******************************************************************************/
-uint32_t Flash_FacerecFsEraseAllBlock(void);
-uint32_t Flash_FacerecFsEraseMapBlock(void);
-uint32_t Flash_FacerecFsEraseItemBlock(void);
+uint32_t Flash_FacerecFsInit(int itemHeaderSize, int itemSize, int itemSpaceSize);
 
-uint32_t Flash_FacerecFsUpdateMapMagic(int index, FeatureMap *pMap, bool needErase);
-uint32_t Flash_FacerecFsUpdateItem(int index, FeatureItem *pItem, bool needErase);
+uint32_t Flash_FacerecFsReadItemHeader(int index, void *pItemHeader);
+uint32_t Flash_FacerecFsWriteItemHeader(int index, void *pItemHeader);
+uint32_t Flash_FacerecFsReadItem(int index, void *pItem);
+uint32_t Flash_FacerecFsWriteItem(int index, void *pItem);
+uint32_t Flash_FacerecFsReadSector(int index, uint8_t *pBuff);
+uint32_t Flash_FacerecFsWriteSector(int index, uint8_t *pBuff);
+uint32_t Flash_FacerecFsEraseSector(int index);
 
-uint32_t Flash_FacerecFsReadMapMagic(FeatureMap *pMap);
-uint32_t Flash_FacerecFsReadItem(int index, FeatureItem *pItem);
-uint32_t Flash_FacerecFsReadItemHeader(int index, FeatureItem *pItem);
-uint32_t Flash_FacerecFsReadIDFeaturePointer(int index, uint16_t *id, void** featurePointer);
+uint32_t Flash_FacerecFsGetFeatureAddress(int index, void** featurePointer);
 
 #ifdef __cplusplus
 }

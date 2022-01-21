@@ -20,9 +20,132 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-
 #define PAGE_ADDR(x)   ((x)*FACEREC_FS_FLASH_PAGE_SIZE)
 #define SECTOR_ADDR(x) ((x)*FLASH_SECTOR_SIZE)
+
+static uint32_t s_itemHeaderSize = 0;
+static uint32_t s_itemSize       = 0;
+static uint32_t s_itemSpaceSize       = 0;
+
+uint32_t Flash_FacerecFsReadItemHeader(int index, void *pItemHeader)
+{
+    status_t status;
+
+    status = SLN_Read_Flash_At_Address(FACEREC_FS_ITEM_ADDR + s_itemSpaceSize*index, (uint8_t *)pItemHeader,
+    		s_itemHeaderSize);
+
+    return status;
+}
+
+uint32_t Flash_FacerecFsWriteItemHeader(int index, void *pItemHeader)
+{
+    status_t status;
+
+	status = SLN_Write_Flash_Page(FACEREC_FS_ITEM_ADDR + s_itemSpaceSize*index,
+										 (uint8_t *)pItemHeader,
+										 s_itemHeaderSize);
+	if (status != kStatus_Success)
+	{
+		return FLASH_ERR;
+	}
+
+	return FLASH_OK;
+}
+
+
+
+uint32_t Flash_FacerecFsReadItem(int index, void *pItem)
+{
+    status_t status;
+
+    status = SLN_Read_Flash_At_Address(FACEREC_FS_ITEM_ADDR + s_itemSpaceSize*index, (uint8_t *)pItem,
+    		s_itemSize);
+    if (status != FLASH_OK)
+    {
+        return FLASH_ERR;
+    }
+
+    return FLASH_OK;
+}
+
+uint32_t Flash_FacerecFsWriteItem(int index, void *pItem)
+{
+    status_t status;
+
+    int size_page = (s_itemSize % FACEREC_FS_FLASH_PAGE_SIZE) ?
+                        (s_itemSize / FACEREC_FS_FLASH_PAGE_SIZE + 1) :
+                        (s_itemSize / FACEREC_FS_FLASH_PAGE_SIZE);
+
+	for( int i = 0 ; i < size_page; i++ )
+	{
+		status = SLN_Write_Flash_Page(FACEREC_FS_ITEM_ADDR + s_itemSpaceSize*index + PAGE_ADDR(i),
+	                                         (uint8_t *)pItem + PAGE_ADDR(i),
+	                                         FACEREC_FS_FLASH_PAGE_SIZE);
+	    if (status != FLASH_OK)
+	    {
+	        return FLASH_ERR;
+	    }
+	}
+
+	return FLASH_OK;
+}
+
+uint32_t Flash_FacerecFsReadSector(int index, uint8_t *pBuff)
+{
+    status_t status;
+
+    status = SLN_Read_Flash_At_Address(FACEREC_FS_ITEM_ADDR + SECTOR_ADDR(index), (uint8_t *)pBuff,
+            FLASH_SECTOR_SIZE);
+    if (status != FLASH_OK)
+    {
+        return FLASH_ERR;
+    }
+
+    return FLASH_OK;
+
+}
+
+uint32_t Flash_FacerecFsWriteSector(int index, uint8_t *pBuff)
+{
+    status_t status;
+
+    status = SLN_Write_Sector(FACEREC_FS_ITEM_ADDR + SECTOR_ADDR(index),pBuff,FLASH_SECTOR_SIZE);
+
+    return (kStatus_Success != status);
+}
+
+uint32_t Flash_FacerecFsEraseSector(int index)
+{
+	status_t status;
+
+	status = SLN_Erase_Sector(FACEREC_FS_ITEM_ADDR + SECTOR_ADDR(index));
+    if (status != FLASH_OK)
+    {
+        return FLASH_ERR;
+    }
+
+	return FLASH_OK;
+}
+
+uint32_t Flash_FacerecFsGetFeatureAddress(int index, void** featurePointer)
+{
+
+    *featurePointer =
+               (void *)SLN_Flash_Get_Read_Address(FACEREC_FS_ITEM_ADDR + s_itemSpaceSize*index + offsetof(FeatureItem,feature));
+
+    return FLASH_OK;
+}
+
+uint32_t Flash_FacerecFsInit(int itemHeaderSize, int itemSize, int itemSpaceSize)
+{
+    s_itemHeaderSize = itemHeaderSize;
+    s_itemSize = itemSize;
+    s_itemSpaceSize = itemSpaceSize;
+
+    return FLASH_OK;
+}
+
+#if 0
 
 /*******************************************************************************
  * Variables
@@ -245,3 +368,4 @@ uint32_t Flash_FacerecFsUpdateItem(int index, FeatureItem *pItem, bool needErase
     }
     return FLASH_OK;
 }
+#endif

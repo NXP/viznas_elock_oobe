@@ -286,19 +286,8 @@ typedef struct
 
 //Waste space between 0xb00000 and 0xb40000 for hyper flash
 //Waste space between 0xb20000 and 0xb40000 for QSPI flash
-#define FACEREC_FS_MAP_ADDR (0xB40000U)
-//#if FLASH_TYPE == HYPER_FLASH
-//#define FACEREC_FS_MAP_ADDR  (0xB00000U)
-//#else
-////0xB00000 to 0xB20000 are used by configuration file
-//#define FACEREC_FS_MAP_ADDR  (0xB20000U)
-//#endif
+#define FACEREC_FS_ITEM_ADDR (0xB40000U)
 
-//For both Hyper and Qspi flash, FS ITEM and FS MAP distance is the (0x40000)
-#define FACEREC_FS_ITEM_ADDR  (FACEREC_FS_MAP_ADDR + MAX(FLASH_SECTOR_SIZE,BOARD_HYPER_FLASH_SECTOR_SIZE))
-#define FACEREC_FS_FIRST_SECTOR ((FACEREC_FS_MAP_ADDR) / (FLASH_SECTOR_SIZE))
-
-#define FEATUREDATA_FLASH_PAGE_SIZE FACEREC_FS_FLASH_PAGE_SIZE
 
 #define FEATUREDATA_MAGIC_UNUSE 0xFF
 #define FEATUREDATA_MAGIC_VALID 0x79
@@ -309,14 +298,11 @@ typedef struct
 
 /********************************************************
  * item        |  address   |  size/sector |
- * FeatureMap  | 0x60B00000 |      1       |
  * FeatureItem | 0x60B40000 |      1       |
  */
 /********************************************************
- * item        |  address   |  size/sector | for RT106F_ELOCK_BOARD
- * FeatureMap  | 0x60B20000 |      1      |
- * FeatureItem | 0x60B21000~0x60B3A000 |      25*(4096)    |   for 1kB feature size
- * FeatureItem | 0x60B21000~0x60B53000 |       50*(4096)    |   for 2kB feature size
+ * item        |  address   |  size/pages | for RT106F_ELOCK_BOARD
+ * FeatureItem  | 0x60B20000 |      2/4/8      |
  */
 typedef struct
 {
@@ -329,43 +315,10 @@ typedef struct
     uint16_t pad;
     /*put feature in the last so, we can take it as dynamic, size limitation:
      * (FEATUREDATA_FLASH_PAGE_SIZE * 2 - 1 - FEATUREDATA_NAME_MAX_LEN - 4 - 4)/4*/
-    float feature[0];
+    float feature[];
 } FeatureItemHeader;
 
-typedef union
-{
-    struct
-    {
-        /*put char/unsigned char together to avoid padding*/
-        unsigned char magic;
-        char name[FEATUREDATA_NAME_MAX_LEN];
-        int index;
-        // this id identify a feature uniquely,we should use it as a handler for feature add/del/update/rename
-        uint16_t id;
-        uint16_t pad;
-        /*put feature in the last so, we can take it as dynamic, size limitation:
-         * (FEATUREDATA_FLASH_PAGE_SIZE * 2 - 1 - FEATUREDATA_NAME_MAX_LEN - 4 - 4)/4*/
-        float feature[0];
-    };
-//#if FLASH_TYPE == HYPER_FLASH
-//    unsigned char raw[FEATUREDATA_FLASH_PAGE_SIZE * 4]; // 2-->4
-//#else
-//    unsigned char raw[FEATUREDATA_FLASH_PAGE_SIZE * 4]; // 4-->8
-//#endif
-    unsigned char raw[1024];
-} FeatureItem; // 1kB
-
-#define FACEREC_FS_SECTORS (((FEATUREDATA_MAX_COUNT * sizeof(FeatureItem))+ (FLASH_SECTOR_SIZE -1)) / (FLASH_SECTOR_SIZE))
-
-typedef union
-{
-    struct
-    {
-        char magic[FEATUREDATA_MAX_COUNT];
-    };
-    unsigned char raw[((FEATUREDATA_MAX_COUNT + (FEATUREDATA_FLASH_PAGE_SIZE - 1)) / FEATUREDATA_FLASH_PAGE_SIZE)
-                      * FEATUREDATA_FLASH_PAGE_SIZE];
-} FeatureMap;
+typedef FeatureItemHeader FeatureItem;
 
 
 /* BLE/Network remote operation command definition */

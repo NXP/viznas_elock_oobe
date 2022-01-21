@@ -500,7 +500,8 @@ void UsbShell_CmdProcess_Task(void *arg)
             uint32_t namescount;
 
             //get user name, maximum is 100
-            VIZN_GetRegisteredUsers(&VIZN_API_CLIENT(Shell), &names, 100);
+            names.reserve(100);
+            VIZN_GetRegisteredUsers(&VIZN_API_CLIENT(Shell), names, names.capacity());
             namescount = names.size();
 
             SHELL_Printf(shellContextHandle, "Registered users count:%d\r\n", namescount);

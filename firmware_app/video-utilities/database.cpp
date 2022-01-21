@@ -99,20 +99,6 @@ void DB_Exit()
     }
 }
 
-int DB_Del(uint16_t id, std::string name)
-{
-    int ret = DB_MGMT_FAILED;
-
-    ret = DB_Lock();
-    if (DB_MGMT_OK == ret)
-    {
-        ret = s_DB->del_feature(id, name);
-        DB_UnLock();
-    }
-
-    return ret;
-}
-
 int DB_Del(std::string name)
 {
     int ret = DB_MGMT_FAILED;
@@ -169,14 +155,14 @@ int DB_GetFree(int &index)
     return ret;
 }
 
-int DB_GetNames(std::vector<std::string> *names, int count)
+int DB_GetNames(std::vector<std::string> &names, int count)
 {
     int ret = DB_MGMT_FAILED;
 
     ret = DB_Lock();
     if (DB_MGMT_OK == ret)
     {
-        *names = s_DB->get_names(count);
+        s_DB->get_names(names,count);
         DB_UnLock();
     }
 
@@ -190,7 +176,7 @@ int DB_Count(int *count)
     ret = DB_Lock();
     if (DB_MGMT_OK == ret)
     {
-        *count = s_DB->feature_count();
+        *count = s_DB->get_count();
         DB_UnLock();
     }
 
@@ -205,7 +191,7 @@ int DB_Save(int count)
     if (DB_MGMT_OK == ret)
     {
         if (count == 0)
-            count = s_DB->feature_count();
+            count = s_DB->get_count();
 
         ret = s_DB->database_save(count);
         DB_UnLock();
@@ -289,7 +275,7 @@ int DB_GetIDs(std::vector<uint16_t> &ids)
     ret = DB_Lock();
     if (DB_MGMT_OK == ret)
     {
-        ids = s_DB->get_ids();
+        ret = s_DB->get_ids(ids);
         DB_UnLock();
     }
 
@@ -329,22 +315,20 @@ int DB_GetName(uint16_t id, std::string &name)
 int DB_GenID(uint16_t *id)
 {
     int ret = DB_MGMT_FAILED;
-    std::vector<std::uint16_t> ids;
+    int newID;
     ret = DB_Lock();
     if (DB_MGMT_OK == ret)
     {
-        ids = s_DB->get_ids();
+        //ids = s_DB->get_ids();
+        ret = s_DB->get_free(newID);
         DB_UnLock();
     }
-    if (ids.size() == 0)
+    if (!ret)
     {
-        *id = 1;
+    	*id = newID;
+
     }
-    else
-    {
-        std::vector<std::uint16_t>::iterator biggest = std::max_element(ids.begin(), ids.end());
-        *id                                          = *biggest + 1;
-    }
+
     return ret;
 }
 

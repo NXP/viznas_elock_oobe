@@ -219,6 +219,9 @@ status_t SLN_Write_Flash_Page(uint32_t address, uint8_t *data, uint32_t len)
 
     SLN_ram_memcpy(tempPage, data, len);
 
+    /* Do software reset, Don't move this line, it is a must*/
+    FLEXSPI_SoftwareReset(FLEXSPI);
+
     /* Program page. */
     status = flexspi_nor_flash_page_program_with_buffer(FLEXSPI, address, (void *)tempPage);
     DCACHE_InvalidateByRange(SLN_Flash_Get_Read_Address(address),BOARD_FLASH_PAGE_SIZE);

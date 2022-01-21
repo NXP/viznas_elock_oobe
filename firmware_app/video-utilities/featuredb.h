@@ -34,20 +34,28 @@ class FeatureDB
     int del_feature(uint16_t id, std::string name);
     int del_feature(const std::string name);
     int del_feature_all();
-    std::vector<std::string> get_names(int count);
+    int get_names(std::vector<std::string> &names,int count);
     int get_name(uint16_t id, std::string &name);
-    std::vector<uint16_t> get_ids();
+    int get_ids(std::vector<uint16_t> &ids);
     int ren_name(const std::string oldname, const std::string newname);
-    int feature_count();
     int get_free(int &index);
     int database_save(int count);
     int get_feature(uint16_t id, float *feature);
     void set_autosave(bool auto_save);
     bool get_autosave();
+    int get_count();
     int get_ID_featurePointers(uint16_t* ids, void**featureP, int num);
 
    private:
     bool auto_save;
+    int  itemSize ;   /*Actual size of face item */
+    int  itemSpaceSize ; /*Space size reserved for each face item, it must be page aligned */
+    void* itemBuff;
+    int count;
+    void clear_item(void);
+    int feature_count();
+    int get_idxById(int id, int &index);
+    int get_idxByName(const std::string name, int &index);
     int load_feature();
     int erase_feature(int index);
     int save_feature(int index = 0);
