@@ -30,7 +30,7 @@ class FeatureDB
     FeatureDB();
     ~FeatureDB();
     int add_feature(uint16_t id, const std::string name, float *feature);
-    int update_feature(uint16_t id, const std::string name, float *feature);
+    int update_feature(uint16_t id,float *feature);
     int del_feature(uint16_t id, std::string name);
     int del_feature(const std::string name);
     int del_feature_all();

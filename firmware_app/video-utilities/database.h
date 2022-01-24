@@ -42,7 +42,7 @@ int DB_Del(uint16_t id, std::string name);
 int DB_Del(string name);
 int DB_DelAll();
 int DB_Ren(const std::string oldname, const std::string newname);
-int DB_GetFree(int &index);
+//int DB_GetFree(int &index);
 int DB_GetNames(std::vector<std::string> &names, int count);
 int DB_Count(int *count);
 int DB_Save(int count);

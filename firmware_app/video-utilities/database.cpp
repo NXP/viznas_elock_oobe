@@ -141,19 +141,19 @@ int DB_Ren(const std::string oldname, const std::string newname)
     return ret;
 }
 
-int DB_GetFree(int &index)
-{
-    int ret = DB_MGMT_FAILED;
-
-    ret = DB_Lock();
-    if (DB_MGMT_OK == ret)
-    {
-        ret = s_DB->get_free(index);
-        DB_UnLock();
-    }
-
-    return ret;
-}
+//int DB_GetFree(int &index)
+//{
+//    int ret = DB_MGMT_FAILED;
+//
+//    ret = DB_Lock();
+//    if (DB_MGMT_OK == ret)
+//    {
+//        ret = s_DB->get_free(index);
+//        DB_UnLock();
+//    }
+//
+//    return ret;
+//}
 
 int DB_GetNames(std::vector<std::string> &names, int count)
 {
@@ -259,9 +259,9 @@ int DB_Update(uint16_t id, float *feature)
     ret = DB_Lock();
     if (DB_MGMT_OK == ret)
     {
-        std::string name;
-        ret = s_DB->get_name(id, name);
-        ret = s_DB->update_feature(id, name, feature);
+//        std::string name;
+//        ret = s_DB->get_name(id, name);
+        ret = s_DB->update_feature(id, feature);
         DB_UnLock();
     }
 
