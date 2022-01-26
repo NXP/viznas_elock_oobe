@@ -46,7 +46,7 @@ typedef enum __shell_event
 } shell_event_t;
 
 shell_status_t RegisterFFICmds(shell_handle_t shellContextHandle);
-void UsbShell_CmdProcess_Task(void *arg);
+void Shell_CmdProcess_Task(void *arg);
 
 #ifdef __cplusplus
 }

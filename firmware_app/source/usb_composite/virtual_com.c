@@ -365,7 +365,9 @@ usb_status_t USB_DeviceCdcVcomInit(usb_device_composite_struct_t *deviceComposit
     status_t status = 0;
     serial_manager_config_t serialConfig;
     s_deviceComposite = deviceComposite;
+#if (defined(SERIAL_PORT_TYPE_USBCDC) && (SERIAL_PORT_TYPE_USBCDC > 0U))
     serial_port_usb_cdc_config_t usbCdcConfig;
+#endif
     for (uint8_t i = 0; i < USB_DEVICE_CONFIG_CDC_ACM; i++)
     {
         s_deviceComposite->cdcVcom[i].lineCoding    = (uint8_t *)&s_lineCoding[i];
@@ -374,7 +376,7 @@ usb_status_t USB_DeviceCdcVcomInit(usb_device_composite_struct_t *deviceComposit
         s_deviceComposite->cdcVcom[i].usbCdcAcmInfo = &s_usbCdcAcmInfo[i];
         s_deviceComposite->cdcVcom[i].speed         = USB_SPEED_FULL;
         s_deviceComposite->cdcVcom[i].instance      = CONTROLLER_ID;
-
+#if (defined(SERIAL_PORT_TYPE_USBCDC) && (SERIAL_PORT_TYPE_USBCDC > 0U))
         /* Init Serial Manager for USB CDC */
         serialConfig.type = kSerialPort_UsbCdc;
 #if (defined(SERIAL_MANAGER_NON_BLOCKING_MODE) && (SERIAL_MANAGER_NON_BLOCKING_MODE > 0U))
@@ -388,10 +390,12 @@ usb_status_t USB_DeviceCdcVcomInit(usb_device_composite_struct_t *deviceComposit
         {
             return (int32_t)status;
         }
+#endif
     }
     return kStatus_USB_Success;
 }
 
+#if (defined(SERIAL_PORT_TYPE_USBCDC) && (SERIAL_PORT_TYPE_USBCDC > 0U))
 serial_manager_status_t Serial_UsbCdcInit(serial_handle_t serialHandle, void *serialConfig)
 {
 #if (defined(FSL_FEATURE_SOC_SYSMPU_COUNT) && (FSL_FEATURE_SOC_SYSMPU_COUNT > 0U))
@@ -610,3 +614,4 @@ void Serial_UsbCdcIsrFunction(serial_handle_t serialHandle)
     EnableIRQ((IRQn_Type)serialUsbCdc->irqNumber);
 #endif
 }
+#endif

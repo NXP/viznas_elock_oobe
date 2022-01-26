@@ -28,6 +28,26 @@
 #define NonCachedNonInit __attribute__((section("NonCacheable, \"aw\", %nobits @")))
 #define NonCached        __attribute__((section("NonCacheable.init")))
 
+/*! @brief USB interrupt priority*/
+#if defined(__GIC_PRIO_BITS)
+#ifndef USB_DEVICE_INTERRUPT_PRIORITY
+#define USB_DEVICE_INTERRUPT_PRIORITY (25U)
+#endif
+#else
+#if defined(configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY)
+#ifndef USB_DEVICE_INTERRUPT_PRIORITY
+#define USB_DEVICE_INTERRUPT_PRIORITY (3)
+#endif
+#else
+/* The default value 3 is used to support different ARM Core, such as CM0P, CM4, CM7, and CM33, etc.
+ * The minimum number of priority bits implemented in the NVIC is 2 on these SOCs. The value of mininum
+ * priority is 3 (2^2 - 1). So, the default value is 3.
+ */
+#ifndef USB_DEVICE_INTERRUPT_PRIORITY
+#define USB_DEVICE_INTERRUPT_PRIORITY (3U)
+#endif
+#endif
+#endif
 /*******************************************************************************
  * Prototypes
  ******************************************************************************/
@@ -35,6 +55,7 @@
 static usb_status_t USB_DeviceCallback(usb_device_handle handle, uint32_t event, void *param);
 extern void USB_DeviceClockInit(void);
 extern usb_status_t USB_DeviceCdcVcomInit(usb_device_composite_struct_t *deviceComposite);
+
 /*******************************************************************************
  * Variables
  ******************************************************************************/
@@ -48,11 +69,13 @@ extern usb_device_class_struct_t g_UsbDeviceVideoCameraConfig[USB_DEVICE_CONFIG_
 
 /* USB device class information */
 usb_device_class_config_struct_t g_CompositeClassConfig[USB_DEVICE_CONFIG_TOTAL] = {
+#if SERIAL_PORT_TYPE_USBCDC
     {
         USB_DeviceCdcVcomCallback,
         (class_handle_t)NULL,
         &g_UsbDeviceCdcVcomConfig[0],
     },
+#endif
     {
         USB_DeviceVideoCallback,
         (class_handle_t)NULL,
@@ -83,7 +106,7 @@ void USB_OTG2_IRQHandler(void)
 void USB_DeviceIsrEnable()
 {
     uint8_t usbDeviceEhciIrq[] = USBHS_IRQS;
-    g_composite.irqNumber      = usbDeviceEhciIrq[g_composite.instance - kSerialManager_UsbControllerEhci0];
+    g_composite.irqNumber      = usbDeviceEhciIrq[g_composite.instance - kUSB_ControllerEhci0];
 
     /* Install isr, set priority, and enable IRQ. */
     NVIC_SetPriority((IRQn_Type)g_composite.irqNumber, USB_DEVICE_INTERRUPT_PRIORITY);
@@ -93,7 +116,7 @@ void USB_DeviceIsrEnable()
 void USB_DeviceIsrDisable()
 {
     uint8_t usbDeviceEhciIrq[] = USBHS_IRQS;
-    g_composite.irqNumber      = usbDeviceEhciIrq[g_composite.instance - kSerialManager_UsbControllerEhci0];
+    g_composite.irqNumber      = usbDeviceEhciIrq[g_composite.instance - kUSB_ControllerEhci0];
 
     /* Install isr, set priority, and enable IRQ. */
     DisableIRQ((IRQn_Type)g_composite.irqNumber);
@@ -112,16 +135,16 @@ void USB_DeviceIsrDisable()
  */
 static usb_status_t USB_DeviceCallback(usb_device_handle handle, uint32_t event, void *param)
 {
-    usb_status_t error = kStatus_USB_Error;
+    usb_status_t error = kStatus_USB_Success;
     uint16_t *temp16   = (uint16_t *)param;
     uint8_t *temp8     = (uint8_t *)param;
+
     switch (event)
     {
         case kUSB_DeviceEventBusReset:
         {
             g_composite.attach               = 0;
             g_composite.currentConfiguration = 0U;
-            error                            = kStatus_USB_Success;
             for (uint8_t i = 0; i < USB_DEVICE_CONFIG_CDC_ACM; i++)
             {
                 g_composite.cdcVcom[i].tx.length = 0;
@@ -183,8 +206,9 @@ static usb_status_t USB_DeviceCallback(usb_device_handle handle, uint32_t event,
             else if (USB_COMPOSITE_CONFIGURE_INDEX == (*temp8))
             {
                 g_composite.attach = 1;
-
+#if SERIAL_PORT_TYPE_USBCDC
                 USB_DeviceCdcVcomSetConfigure(g_composite.cdcVcom[0].cdcAcmHandle, *temp8);
+#endif
                 g_composite.currentConfiguration = *temp8;
                 error                            = kStatus_USB_Success;
                 if (Cfg_AppDataGetOutputMode() == DISPLAY_USB)
@@ -214,7 +238,6 @@ static usb_status_t USB_DeviceCallback(usb_device_handle handle, uint32_t event,
                                                           g_composite.g_UsbDeviceVideoCamera.imageBufferLength);
                         }
                     }
-
                     g_composite.currentInterfaceAlternateSetting[interface] = alternateSetting;
                 }
             }
@@ -280,8 +303,12 @@ static usb_status_t USB_DeviceCallback(usb_device_handle handle, uint32_t event,
 void USB_DeviceApplicationInit(void)
 {
     USB_DeviceClockInit();
-    USB_DeviceSetConfigurationDescriptor((Cfg_AppDataGetOutputMode() == DISPLAY_USB) ? UVC_CDC_CONFIGURE_DESCRIPTOR :
-                                                                                       CDC_CONFIGURE_DESCRIPTOR);
+#if SERIAL_PORT_TYPE_USBCDC
+    USB_DeviceSetConfigurationDescriptor((Cfg_AppDataGetOutputMode() == DISPLAY_USB) ? UVC_CDC_CONFIGURE_DESCRIPTOR : CDC_CONFIGURE_DESCRIPTOR);
+#else
+    USB_DeviceSetConfigurationDescriptor((Cfg_AppDataGetOutputMode() == DISPLAY_USB) ? UVC_CONFIGURE_DESCRIPTOR : CDC_CONFIGURE_DESCRIPTOR);
+#endif
+
 #if (defined(FSL_FEATURE_SOC_SYSMPU_COUNT) && (FSL_FEATURE_SOC_SYSMPU_COUNT > 0U))
     SYSMPU_Enable(SYSMPU, 0);
 #endif /* FSL_FEATURE_SOC_SYSMPU_COUNT */
@@ -303,14 +330,19 @@ void USB_DeviceApplicationInit(void)
     else
     {
         usb_echo("USB device composite demo\r\n");
+#if SERIAL_PORT_TYPE_USBCDC
         /*Init classhandle in cdc instance*/
         g_composite.cdcVcom[0].cdcAcmHandle = g_UsbDeviceCompositeConfigList.config[0].classHandle;
         g_composite.cdcVcom[0].deviceHandle = g_composite.deviceHandle;
         USB_DeviceCdcVcomInit(&g_composite);
-
+#endif
         if (Cfg_AppDataGetOutputMode() == DISPLAY_USB)
         {
+#if SERIAL_PORT_TYPE_USBCDC
             g_composite.g_UsbDeviceVideoCamera.videoHandle  = g_UsbDeviceCompositeConfigList.config[1].classHandle;
+#else
+            g_composite.g_UsbDeviceVideoCamera.videoHandle  = g_UsbDeviceCompositeConfigList.config[0].classHandle;
+#endif
             g_composite.g_UsbDeviceVideoCamera.deviceHandle = g_composite.deviceHandle;
         }
     }

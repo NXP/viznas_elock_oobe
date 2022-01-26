@@ -242,7 +242,7 @@ typedef struct
 
 /*Some DB operation need much more stack size*/
 #define UARTTASK_STACKSIZE (1024*4)
-#define USBTASK_STACKSIZE  (1024*4)
+#define SHELLTASK_STACKSIZE  (1024*4)
 
 #define TCPTASK_PRIORITY  (configMAX_PRIORITIES - 2UL)
 #define TCPTASK_STACKSIZE 2 * 1024

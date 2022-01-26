@@ -15,7 +15,6 @@
 
 #include "usb_device_class.h"
 
-#if USB_DEVICE_CONFIG_CDC_ACM
 #include "usb_device_cdc_acm.h"
 
 /*******************************************************************************
@@ -874,5 +873,3 @@ usb_status_t USB_DeviceCdcAcmRecv(class_handle_t handle, uint8_t ep, uint8_t *bu
     }
     return status;
 }
-
-#endif /* USB_DEVICE_CONFIG_CDC_ACM */

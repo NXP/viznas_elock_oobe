@@ -24,26 +24,6 @@
 /*! @brief serial port usb handle size*/
 #define SERIAL_PORT_USB_CDC_HANDLE_SIZE (72)
 
-/*! @brief USB interrupt priority*/
-#if defined(__GIC_PRIO_BITS)
-#ifndef USB_DEVICE_INTERRUPT_PRIORITY
-#define USB_DEVICE_INTERRUPT_PRIORITY (25U)
-#endif
-#else
-#if defined(configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY)
-#ifndef USB_DEVICE_INTERRUPT_PRIORITY
-#define USB_DEVICE_INTERRUPT_PRIORITY (configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY)
-#endif
-#else
-/* The default value 3 is used to support different ARM Core, such as CM0P, CM4, CM7, and CM33, etc.
- * The minimum number of priority bits implemented in the NVIC is 2 on these SOCs. The value of mininum
- * priority is 3 (2^2 - 1). So, the default value is 3.
- */
-#ifndef USB_DEVICE_INTERRUPT_PRIORITY
-#define USB_DEVICE_INTERRUPT_PRIORITY (3U)
-#endif
-#endif
-#endif
 
 /*! @brief USB controller ID */
 typedef enum _serial_port_usb_cdc_controller_index

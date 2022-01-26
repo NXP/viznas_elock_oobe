@@ -230,11 +230,10 @@ uint8_t g_UsbDeviceDescriptor[] = {
     /* Maximum packet size for endpoint zero (only 8, 16, 32, or 64 are valid) */
     USB_CONTROL_MAX_PACKET_SIZE,
     /* Vendor ID (assigned by the USB-IF) */
-    0xC9U,
-    0x1FU,
-    /* Product ID (assigned by the manufacturer) */
-    0xA3,
-    0x00,
+    USB_SHORT_GET_LOW(USB_DEVICE_VID),
+    USB_SHORT_GET_HIGH(USB_DEVICE_VID), /* Vendor ID (assigned by the USB-IF) */
+    USB_SHORT_GET_LOW(USB_DEVICE_PID),
+    USB_SHORT_GET_HIGH(USB_DEVICE_PID), /* Product ID (assigned by the manufacturer) */
     /* Device release number in binary-coded decimal */
     USB_SHORT_GET_LOW(USB_DEVICE_DEMO_BCD_VERSION),
     USB_SHORT_GET_HIGH(USB_DEVICE_DEMO_BCD_VERSION),
@@ -250,6 +249,293 @@ uint8_t g_UsbDeviceDescriptor[] = {
 
 uint8_t *g_UsbDeviceConfigurationDescriptor;
 uint16_t g_UsbDeviceConfigurationLength;
+
+USB_DMA_INIT_DATA_ALIGN(USB_DATA_ALIGN_SIZE)
+uint8_t g_UsbDeviceConfigurationDescriptor_UVC[] = {
+    /* Configuration Descriptor Size*/
+    USB_DESCRIPTOR_LENGTH_CONFIGURE,
+    /* CONFIGURATION Descriptor Type */
+    USB_DESCRIPTOR_TYPE_CONFIGURE,
+    USB_SHORT_GET_LOW(
+	                  USB_DESCRIPTOR_LENGTH_CONFIGURE + USB_DESCRIPTOR_LENGTH_INTERFACE_ASSOCIATION +
+                      USB_DESCRIPTOR_LENGTH_INTERFACE + USB_VIDEO_VIRTUAL_CAMERA_VC_INTERFACE_HEADER_LENGTH +
+                      USB_VIDEO_VIRTUAL_CAMERA_VC_INPUT_TERMINAL_LENGTH +
+                      USB_VIDEO_VIRTUAL_CAMERA_VC_OUTPUT_TERMINAL_LENGTH +
+                      USB_VIDEO_VIRTUAL_CAMERA_VC_PROCESSING_UNIT_LENGTH + USB_DESCRIPTOR_LENGTH_ENDPOINT +
+                      USB_DESCRIPTOR_LENGTH_INTERFACE + USB_VIDEO_VIRTUAL_CAMERA_VS_INTERFACE_HEADER_LENGTH +
+                      USB_VIDEO_MJPEG_FORMAT_DESCRIPTOR_LENGTH + USB_VIDEO_MJPEG_FRAME_DESCRIPTOR_LENGTH +
+                      USB_VIDEO_MJPEG_FRAME_STILL_DESCRIPTOR_LENGTH + USB_DESCRIPTOR_LENGTH_INTERFACE +
+                      USB_DESCRIPTOR_LENGTH_ENDPOINT),
+    USB_SHORT_GET_HIGH(USB_DESCRIPTOR_LENGTH_CONFIGURE + USB_DESCRIPTOR_LENGTH_INTERFACE_ASSOCIATION +
+                       USB_DESCRIPTOR_LENGTH_INTERFACE + USB_VIDEO_VIRTUAL_CAMERA_VC_INTERFACE_HEADER_LENGTH +
+                       USB_VIDEO_VIRTUAL_CAMERA_VC_INPUT_TERMINAL_LENGTH +
+                       USB_VIDEO_VIRTUAL_CAMERA_VC_OUTPUT_TERMINAL_LENGTH +
+                       USB_VIDEO_VIRTUAL_CAMERA_VC_PROCESSING_UNIT_LENGTH + USB_DESCRIPTOR_LENGTH_ENDPOINT +
+                       USB_DESCRIPTOR_LENGTH_INTERFACE + USB_VIDEO_VIRTUAL_CAMERA_VS_INTERFACE_HEADER_LENGTH +
+                       USB_VIDEO_MJPEG_FORMAT_DESCRIPTOR_LENGTH + USB_VIDEO_MJPEG_FRAME_DESCRIPTOR_LENGTH +
+                       USB_VIDEO_MJPEG_FRAME_STILL_DESCRIPTOR_LENGTH + USB_DESCRIPTOR_LENGTH_INTERFACE +
+                       USB_DESCRIPTOR_LENGTH_ENDPOINT), /* Total length of data returned for this configuration. */
+    /* Number of interfaces supported by this configuration */
+    USB_INTERFACE_COUNT_USB,           /* Number of interfaces supported by this configuration */
+    /* Value to use as an argument to the SetConfiguration() request to select this configuration */
+    USB_COMPOSITE_CONFIGURE_INDEX,           /* Value to use as an argument to the
+    /* Index of string descriptor describing this configuration */
+    0,
+    (USB_DESCRIPTOR_CONFIGURE_ATTRIBUTE_D7_MASK) |
+        (USB_DEVICE_CONFIG_SELF_POWER << USB_DESCRIPTOR_CONFIGURE_ATTRIBUTE_SELF_POWERED_SHIFT) |
+        (USB_DEVICE_CONFIG_REMOTE_WAKEUP << USB_DESCRIPTOR_CONFIGURE_ATTRIBUTE_REMOTE_WAKEUP_SHIFT),
+    /* Configuration characteristics
+        D7: Reserved (set to one)
+        D6: Self-powered
+        D5: Remote Wakeup
+        D4...0: Reserved (reset to zero)
+     */
+    USB_DEVICE_MAX_POWER, /* Maximum power consumption of the USB
+                           * device from the bus in this specific
+                           * configuration when the device is fully
+                           * operational. Expressed in 2 mA units
+                           *  (i.e., 50 = 100 mA).
+                           */
+    /* Interface Association Descriptor */
+    USB_DESCRIPTOR_LENGTH_INTERFACE_ASSOCIATION,      /* size of the IAD */
+    USB_DESCRIPTOR_TYPE_INTERFACE_ASSOCIATION,        /* INTERFACE ASSOCIATION Descriptor */
+    USB_VIDEO_VIRTUAL_CAMERA_CONTROL_INTERFACE_INDEX, /* Interface number of the first VideoControl
+                                                         interface that is associated with this function. */
+    USB_VIDEO_VIRTUAL_CAMERA_INTERFACE_COUNT,         /* Number of contiguous VideoStreaming interfaces that are
+                                                         associated with this function.
+                                                         The count includes the first VideoControl interface and all
+                                                         its associated VideoStreaming interfaces.
+                                                      */
+    USB_DEVICE_VIDEO_CC_VIDEO,                        /* CC_VIDEO, Video Interface Class code */
+    USB_DEVICE_VIDEO_SC_VIDEO_INTERFACE_COLLECTION,   /* SC_VIDEO_INTERFACE_COLLECTION. Video Interface
+                                                         Subclass code */
+    USB_DEVICE_VIDEO_PC_PROTOCOL_UNDEFINED,           /* Not used, Must be set to PC_PROTOCOL_UNDEFINED */
+    0x06U,                                            /* Index of a string descriptor */
+
+    /* Standard VC Interface Descriptor */
+    USB_DESCRIPTOR_LENGTH_INTERFACE,                  /* Size of this descriptor */
+    USB_DESCRIPTOR_TYPE_INTERFACE,                    /* INTERFACE Descriptor */
+    USB_VIDEO_VIRTUAL_CAMERA_CONTROL_INTERFACE_INDEX, /* Index of control interface */
+    0x00U,                                            /* Index of the interface setting */
+    USB_VIDEO_VIRTUAL_CAMERA_CONTROL_ENDPOINT_COUNT,  /* One endpoint of control pipe */
+    USB_DEVICE_VIDEO_CC_VIDEO,                        /* CC_VIDEO */
+    USB_DEVICE_VIDEO_SC_VIDEOCONTROL,                 /* SC_VIDEOCONTROL */
+    USB_DEVICE_VIDEO_VIRTUAL_CAMERA_PROTOCOL,         /* Protocol */
+    0x00U,                                            /* Index of this string descriptor */
+
+    /* Class-Specific VC Interface header Descriptor */
+    USB_VIDEO_VIRTUAL_CAMERA_VC_INTERFACE_HEADER_LENGTH, /* Size of this descriptor, 12+n */
+    USB_DESCRIPTOR_TYPE_VIDEO_CS_INTERFACE,              /* CS_INTERFACE, descriptor type */
+    USB_DESCRIPTOR_SUBTYPE_VIDEO_VC_HEADER,              /* VC_HEADER, descriptor subtype */
+    USB_SHORT_GET_LOW(USB_DEVICE_VIDEO_SPECIFIC_BCD_VERSION), USB_SHORT_GET_HIGH(USB_DEVICE_VIDEO_SPECIFIC_BCD_VERSION),
+    /* bcdUVC */
+    USB_SHORT_GET_LOW(USB_VIDEO_VIRTUAL_CAMERA_VC_INTERFACE_TOTAL_LENGTH),
+    USB_SHORT_GET_HIGH(USB_VIDEO_VIRTUAL_CAMERA_VC_INTERFACE_TOTAL_LENGTH),
+    /* Total number of bytes returned for the class-specific VideoControl interface descriptor.
+       Includes the combined length of this descriptor header and all Unit and Terminal descriptors. */
+    USB_LONG_GET_BYTE0(USB_VIDEO_VIRTUAL_CAMERA_CLOCK_FREQUENCY),
+    USB_LONG_GET_BYTE1(USB_VIDEO_VIRTUAL_CAMERA_CLOCK_FREQUENCY),
+    USB_LONG_GET_BYTE2(USB_VIDEO_VIRTUAL_CAMERA_CLOCK_FREQUENCY),
+    USB_LONG_GET_BYTE3(USB_VIDEO_VIRTUAL_CAMERA_CLOCK_FREQUENCY),
+    /* Use of this field has been deprecated. */
+    USB_VIDEO_VIRTUAL_CAMERA_STREAM_INTERFACE_COUNT, /* The number of VideoStreaming interfaces in the Video
+                                                        Interface Collection to which this VideoControl
+                                                        interface belongs: n */
+    USB_VIDEO_VIRTUAL_CAMERA_STREAM_INTERFACE_INDEX, /* Interface number of the first VideoStreaming
+                                                        interface in the Collection */
+
+    /* Input Terminal Descriptor (Camera) */
+    USB_VIDEO_VIRTUAL_CAMERA_VC_INPUT_TERMINAL_LENGTH, /* Size of this descriptor, 15+n */
+    USB_DESCRIPTOR_TYPE_VIDEO_CS_INTERFACE,            /* CS_INTERFACE, descriptor type */
+    USB_DESCRIPTOR_SUBTYPE_VIDEO_VC_INPUT_TERMINAL,    /* VC_INPUT_TERMINAL, descriptor subtype */
+    USB_VIDEO_VIRTUAL_CAMERA_VC_INPUT_TERMINAL_ID,     /* A non-zero constant that uniquely identifies the
+                                                          Terminal within the video function. This value is used
+                                                          in all requests to address this Terminal. */
+    USB_SHORT_GET_LOW(USB_VIDEO_VIRTUAL_CAMERA_VC_INPUT_TERMINAL_TYPE),
+    USB_SHORT_GET_HIGH(USB_VIDEO_VIRTUAL_CAMERA_VC_INPUT_TERMINAL_TYPE),
+    /* ITT_CAMERA, Constant that characterizes the type of Terminal */
+    0x00U,               /* ID of the Output Terminal to which this Input Terminal is associated */
+    0x00U,               /* Index of a string descriptor */
+    0x00U, 0x00U,        /* The value of Lmin, unsupported */
+    0x00U, 0x00U,        /* The value of Lmax, unsupported */
+    0x00U, 0x00U,        /* The value of Locular, unsupported */
+    0x03U,               /* Size in bytes of the bmControls field: n */
+    0x00U, 0x00U, 0x00U, /* Not control supported */
+
+    /* Output Terminal Descriptor */
+    USB_VIDEO_VIRTUAL_CAMERA_VC_OUTPUT_TERMINAL_LENGTH, /* Size of this descriptor, 9+n */
+    USB_DESCRIPTOR_TYPE_VIDEO_CS_INTERFACE,             /* CS_INTERFACE, descriptor type */
+    USB_DESCRIPTOR_SUBTYPE_VIDEO_VC_OUTPUT_TERMINAL,    /* VC_OUTPUT_TERMINAL, descriptor subtype */
+    USB_VIDEO_VIRTUAL_CAMERA_VC_OUTPUT_TERMINAL_ID,     /* A non-zero constant that uniquely identifies the
+                                                           Terminal within the video function. This value is
+                                                           used in all requests to address this Terminal. */
+    USB_SHORT_GET_LOW(USB_DEVICE_VIDEO_TT_STREAMING), USB_SHORT_GET_HIGH(USB_DEVICE_VIDEO_TT_STREAMING),
+    /* TT_STREAMING, Constant that characterizes the type of Terminal */
+    0x00U, /* ID of the Input Terminal to which this Output Terminal is associated */
+    USB_VIDEO_VIRTUAL_CAMERA_VC_INPUT_TERMINAL_ID, /* ID of the Unit or Terminal to which this Terminal is
+                                                      connected */
+    0x00U,                                         /* Index of a string descriptor */
+
+    /* Processing Unit Descriptor */
+    USB_VIDEO_VIRTUAL_CAMERA_VC_PROCESSING_UNIT_LENGTH, /* Size of this descriptor, 10+n */
+    USB_DESCRIPTOR_TYPE_VIDEO_CS_INTERFACE,             /* CS_INTERFACE, descriptor type */
+    USB_DESCRIPTOR_SUBTYPE_VIDEO_VC_PROCESSING_UNIT,    /* VC_PROCESSING_UNIT, descriptor subtype */
+    USB_VIDEO_VIRTUAL_CAMERA_VC_PROCESSING_UNIT_ID,     /* A non-zero constant that uniquely identifies the
+                                                           Terminal within the video function. This value is
+                                                           used in all requests to address this Terminal. */
+    USB_VIDEO_VIRTUAL_CAMERA_VC_INPUT_TERMINAL_ID,      /* ID of the Unit or Terminal to which this Terminal is
+                                                           connected */
+    0x00U, 0x00U, /* This field indicates the maximum digital magnification, multiplied by 100U */
+#if defined(USB_DEVICE_VIDEO_CLASS_VERSION_1_5) && (USB_DEVICE_VIDEO_CLASS_VERSION_1_5 > 0U)
+    0x03U,               /* Size of the bmControls field, in bytes: n */
+    0x00U, 0x00U, 0x00U, /* Not control supported */
+#else
+    0x02U,        /* Size of the bmControls field, in bytes: n */
+    0x00U, 0x00U, /* Not control supported */
+#endif     /* USB_DEVICE_VIDEO_CLASS_VERSION_1_5 */
+    0x00U, /* Index of a string descriptor */
+#if defined(USB_DEVICE_VIDEO_CLASS_VERSION_1_1) && (USB_DEVICE_VIDEO_CLASS_VERSION_1_1 > 0U) || \
+    defined(USB_DEVICE_VIDEO_CLASS_VERSION_1_5) && (USB_DEVICE_VIDEO_CLASS_VERSION_1_5 > 0U)
+    0x00U, /* A bitmap of all analog video standards supported by the Processing Unit */
+#endif     /* USB_DEVICE_VIDEO_CLASS_VERSION_1_1 || USB_DEVICE_VIDEO_CLASS_VERSION_1_5 */
+    /* Standard VC Interrupt Endpoint Descriptor */
+    USB_DESCRIPTOR_LENGTH_ENDPOINT, /* Size of this descriptor, in bytes: 7U */
+    USB_DESCRIPTOR_TYPE_ENDPOINT,   /* ENDPOINT descriptor type */
+    USB_VIDEO_VIRTUAL_CAMERA_CONTROL_ENDPOINT |
+        (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT), /* Endpoint address */
+    USB_ENDPOINT_INTERRUPT,                                          /* Transfer type */
+    USB_SHORT_GET_LOW(FS_INTERRUPT_IN_PACKET_SIZE), USB_SHORT_GET_HIGH(FS_INTERRUPT_IN_PACKET_SIZE),
+    /* Max Packet Size */
+    FS_INTERRUPT_IN_INTERVAL, /* Interval */
+
+    /* Standard VS Interface Descriptor */
+    USB_DESCRIPTOR_LENGTH_INTERFACE,                 /* Size of this descriptor */
+    USB_DESCRIPTOR_TYPE_INTERFACE,                   /* INTERFACE Descriptor */
+    USB_VIDEO_VIRTUAL_CAMERA_STREAM_INTERFACE_INDEX, /* Index of stream interface */
+    0x00U,                                           /* Index of the interface setting */
+    0U,                                              /* No endpoint of stream pipe */
+    USB_DEVICE_VIDEO_CC_VIDEO,                       /* CC_VIDEO */
+    USB_DEVICE_VIDEO_SC_VIDEOSTREAMING,              /* SC_VIDEOSTREAMING */
+    USB_DEVICE_VIDEO_VIRTUAL_CAMERA_PROTOCOL,        /* Protocol */
+    0x00U,                                           /* Index of this string descriptor */
+
+    /* VS Specific Input Header Descriptor */
+    USB_VIDEO_VIRTUAL_CAMERA_VS_INTERFACE_HEADER_LENGTH, /* Size of this descriptor, in bytes: 13+(p*n) */
+    USB_DESCRIPTOR_TYPE_VIDEO_CS_INTERFACE,              /* CS_INTERFACE descriptor type */
+    USB_DESCRIPTOR_SUBTYPE_VIDEO_VS_INPUT_HEADER,        /* VS_INPUT_HEADER descriptor subtype */
+    USB_VIDEO_VIRTUAL_CAMERA_FORMAT_COUNT,               /* One format (p = 1U)*/
+    USB_SHORT_GET_LOW(USB_VIDEO_VIRTUAL_CAMERA_VS_INTERFACE_TOTAL_LENGTH),
+    USB_SHORT_GET_HIGH(USB_VIDEO_VIRTUAL_CAMERA_VS_INTERFACE_TOTAL_LENGTH),
+    /* Total number of bytes returned for the class-specific VideoStreaming interface descriptors including
+       this header descriptor */
+    USB_VIDEO_VIRTUAL_CAMERA_STREAM_ENDPOINT_IN | (USB_IN << 0x07U),
+    /* The address of the isochronous or bulk endpoint used for video data */
+    0x00U,                                                /* Dynamic Format Change unsupported */
+    USB_VIDEO_VIRTUAL_CAMERA_VC_OUTPUT_TERMINAL_ID,       /* The terminal ID of the Output Terminal to which the
+                                                             video endpoint of this interface is connected */
+    USB_VIDEO_VIRTUAL_CAMERA_STREAM_STILL_CAPTURE_METHOD, /* Method 2U, still image capture supported */
+    USB_VIDEO_VIRTUAL_CAMERA_STREAM_STILL_CAPTURE_TRIGGER_SUPPOTED,
+    /* Unsupported hardware trigger */
+    0x00U, /* Specifies how the host software shall respond to a hardware trigger interrupt event from this
+             interface */
+    0x01U, /* Size of each bmaControl(x) field */
+    0x00U, /* Not used */
+
+    /* Motion-JPEG Video Format Descriptor */
+    USB_VIDEO_MJPEG_FORMAT_DESCRIPTOR_LENGTH,     /* Size of this Descriptor, in bytes: 11U */
+    USB_DESCRIPTOR_TYPE_VIDEO_CS_INTERFACE,       /* CS_INTERFACE descriptor type */
+    USB_DESCRIPTOR_SUBTYPE_VIDEO_VS_FORMAT_MJPEG, /* VS_FORMAT_MJPEG descriptor subtype */
+    USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FORMAT_INDEX,  /* Index of this Format Descriptor */
+    USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_COUNT,   /* Number of Frame Descriptors following that correspond to
+                                                     this format */
+    0x01U,                                        /* Specifies characteristics of this format */
+    0x01U,                                        /* Optimum Frame Index */
+    0x00U,                                        /* The X dimension of the picture aspect ratio */
+    0x00U,                                        /* The Y dimension of the picture aspect ratio */
+    0x00U,                                        /* Specifies interlace information */
+    0x00U,                                        /* Not used */
+
+    /* Motion-JPEG Video Frame Descriptor */
+    USB_VIDEO_MJPEG_FRAME_DESCRIPTOR_LENGTH,     /* Size of this Descriptor */
+    USB_DESCRIPTOR_TYPE_VIDEO_CS_INTERFACE,      /* CS_INTERFACE descriptor type */
+    USB_DESCRIPTOR_SUBTYPE_VIDEO_VS_FRAME_MJPEG, /* VS_FRAME_MJPEG descriptor subtype */
+    USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_INDEX,  /* First frame */
+    0x00U,                                       /* D0, Only for still capture method 1U
+                                                   D1, Fixed frame-rate */
+    USB_SHORT_GET_LOW(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_WIDTH),
+    USB_SHORT_GET_HIGH(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_WIDTH),
+    /* Width */
+    USB_SHORT_GET_LOW(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_HEIGHT),
+    USB_SHORT_GET_HIGH(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_HEIGHT),
+    /* Height */
+    USB_LONG_GET_BYTE0(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_MIN_BIT_RATE),
+    USB_LONG_GET_BYTE1(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_MIN_BIT_RATE),
+    USB_LONG_GET_BYTE2(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_MIN_BIT_RATE),
+    USB_LONG_GET_BYTE3(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_MIN_BIT_RATE),
+    /* Min bit Rate */
+    USB_LONG_GET_BYTE0(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_MAX_BIT_RATE),
+    USB_LONG_GET_BYTE1(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_MAX_BIT_RATE),
+    USB_LONG_GET_BYTE2(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_MAX_BIT_RATE),
+    USB_LONG_GET_BYTE3(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_MAX_BIT_RATE),
+    /* Max bit Rate */
+    USB_LONG_GET_BYTE0(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_MAX_FRAME_SIZE),
+    USB_LONG_GET_BYTE1(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_MAX_FRAME_SIZE),
+    USB_LONG_GET_BYTE2(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_MAX_FRAME_SIZE),
+    USB_LONG_GET_BYTE3(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_MAX_FRAME_SIZE),
+    /* Max Frame buffer size */
+    USB_LONG_GET_BYTE0(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_DEFAULT_INTERVAL),
+    USB_LONG_GET_BYTE1(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_DEFAULT_INTERVAL),
+    USB_LONG_GET_BYTE2(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_DEFAULT_INTERVAL),
+    USB_LONG_GET_BYTE3(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_DEFAULT_INTERVAL),
+    /* Default Frame interval */
+    USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_INTERVAL_TYPE, /* frame interval type */
+    USB_LONG_GET_BYTE0(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_INTERVAL_15FPS),
+    USB_LONG_GET_BYTE1(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_INTERVAL_15FPS),
+    USB_LONG_GET_BYTE2(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_INTERVAL_15FPS),
+    USB_LONG_GET_BYTE3(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_INTERVAL_15FPS),
+    /* 15fps */
+    USB_LONG_GET_BYTE0(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_INTERVAL_10FPS),
+    USB_LONG_GET_BYTE1(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_INTERVAL_10FPS),
+    USB_LONG_GET_BYTE2(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_INTERVAL_10FPS),
+    USB_LONG_GET_BYTE3(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_INTERVAL_10FPS),
+    /* 10fps */
+
+    /* Still Image Frame Descriptor */
+    USB_VIDEO_MJPEG_FRAME_STILL_DESCRIPTOR_LENGTH,     /* Size of this descriptor */
+    USB_DESCRIPTOR_TYPE_VIDEO_CS_INTERFACE,            /* CS_INTERFACE descriptor type */
+    USB_DESCRIPTOR_SUBTYPE_VIDEO_VS_STILL_IMAGE_FRAME, /* VS_STILL_IMAGE_FRAME descriptor subtype */
+    0x00U,                                             /* If method 3U of still image capture is used,
+                                                         this contains the address of the bulk endpoint
+                                                         used for still image capture */
+    0x01U,                                             /* Number of Image Size patterns of this format: n */
+    USB_SHORT_GET_LOW(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_WIDTH),
+    USB_SHORT_GET_HIGH(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_WIDTH),
+    /* Width */
+    USB_SHORT_GET_LOW(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_HEIGHT),
+    USB_SHORT_GET_HIGH(USB_VIDEO_VIRTUAL_CAMERA_MJPEG_FRAME_HEIGHT),
+    /* Height */
+    0x00U, /* Compression of the still image in pattern */
+
+    /* Standard VS Interface Descriptor */
+    USB_DESCRIPTOR_LENGTH_INTERFACE,                 /* Size of this descriptor */
+    USB_DESCRIPTOR_TYPE_INTERFACE,                   /* INTERFACE Descriptor */
+    USB_VIDEO_VIRTUAL_CAMERA_STREAM_INTERFACE_INDEX, /* Index of stream interface */
+    0x01U,                                           /* Index of the interface setting */
+    USB_VIDEO_VIRTUAL_CAMERA_STREAM_ENDPOINT_COUNT,  /* One endpoint of stream pipe */
+    USB_DEVICE_VIDEO_CC_VIDEO,                       /* CC_VIDEO */
+    USB_DEVICE_VIDEO_SC_VIDEOSTREAMING,              /* SC_VIDEOSTREAMING */
+    USB_DEVICE_VIDEO_VIRTUAL_CAMERA_PROTOCOL,        /* Protocol */
+    0x00U,                                           /* Index of this string descriptor */
+
+    /*Endpoint descriptor */
+    USB_DESCRIPTOR_LENGTH_ENDPOINT, /* Size of this descriptor */
+    USB_DESCRIPTOR_TYPE_ENDPOINT,   /* ENDPOINT Descriptor */
+    USB_VIDEO_VIRTUAL_CAMERA_STREAM_ENDPOINT_IN | (USB_IN << USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_SHIFT),
+    USB_ENDPOINT_ISOCHRONOUS | USB_DESCRIPTOR_ENDPOINT_ATTRIBUTE_SYNC_TYPE_ASYNC,
+    USB_SHORT_GET_LOW(FS_STREAM_IN_PACKET_SIZE), USB_SHORT_GET_HIGH(FS_STREAM_IN_PACKET_SIZE),
+    /* Max Packet Size */
+    FS_STREAM_IN_INTERVAL, /* Interval */
+};
 
 USB_DMA_INIT_DATA_ALIGN(USB_DATA_ALIGN_SIZE)
 uint8_t g_UsbDeviceConfigurationDescriptor_CDC[] = {
@@ -327,8 +613,9 @@ uint8_t g_UsbDeviceConfigurationDescriptor_CDC[] = {
 
     USB_DESCRIPTOR_LENGTH_CDC_UNION_FUNC, /* Size of this descriptor in bytes */
     USB_DESCRIPTOR_TYPE_CDC_CS_INTERFACE, /* CS_INTERFACE Descriptor Type */
-    USB_CDC_UNION_FUNC_DESC, 0x00,        /* The interface number of the Communications or Data Class interface  */
-    0x01,                                 /* Interface number of subordinate interface in the Union  */
+    USB_CDC_UNION_FUNC_DESC,
+    USB_CDC_VCOM_CIC_INTERFACE_INDEX, /* The interface number of the Communications or Data Class interface  */
+    USB_CDC_VCOM_DIC_INTERFACE_INDEX, /* Interface number of subordinate interface in the Union  */
 
     /*Notification Endpoint descriptor */
     USB_DESCRIPTOR_LENGTH_ENDPOINT, USB_DESCRIPTOR_TYPE_ENDPOINT,
@@ -944,6 +1231,11 @@ usb_status_t USB_DeviceSetConfigurationDescriptor(usb_device_configuration_descr
         g_UsbDeviceConfigurationDescriptor = g_UsbDeviceConfigurationDescriptor_CDC;
         g_UsbDeviceConfigurationLength     = sizeof(g_UsbDeviceConfigurationDescriptor_CDC);
     }
+    else if (p_device_configuration == UVC_CONFIGURE_DESCRIPTOR)
+    {
+        g_UsbDeviceConfigurationDescriptor = g_UsbDeviceConfigurationDescriptor_UVC;
+        g_UsbDeviceConfigurationLength     = sizeof(g_UsbDeviceConfigurationDescriptor_UVC);
+    }
     return kStatus_USB_Success;
 }
 
@@ -1023,6 +1315,7 @@ usb_status_t USB_DeviceSetSpeed(usb_device_handle handle, uint8_t speed)
         {
             if (USB_SPEED_HIGH == speed)
             {
+#if SERIAL_PORT_TYPE_USBCDC
                 if ((USB_CDC_VCOM_CIC_INTERRUPT_IN_ENDPOINT ==
                      (ptr1->endpoint.bEndpointAddress & USB_ENDPOINT_NUMBER_MASK)) &&
                     ((ptr1->endpoint.bEndpointAddress & USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_MASK) ==
@@ -1045,8 +1338,9 @@ usb_status_t USB_DeviceSetSpeed(usb_device_handle handle, uint8_t speed)
                           USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_OUT))
                 {
                     USB_SHORT_TO_LITTLE_ENDIAN_ADDRESS(HS_CDC_VCOM_BULK_OUT_PACKET_SIZE, ptr1->endpoint.wMaxPacketSize);
-                }
-                else if (USB_VIDEO_VIRTUAL_CAMERA_STREAM_ENDPOINT_IN ==
+                }else
+#endif
+                if (USB_VIDEO_VIRTUAL_CAMERA_STREAM_ENDPOINT_IN ==
                          (ptr1->endpoint.bEndpointAddress & USB_ENDPOINT_NUMBER_MASK))
                 {
                     ptr1->endpoint.bInterval = HS_STREAM_IN_INTERVAL;
@@ -1063,6 +1357,7 @@ usb_status_t USB_DeviceSetSpeed(usb_device_handle handle, uint8_t speed)
             }
             else
             {
+#if SERIAL_PORT_TYPE_USBCDC
                 if ((USB_CDC_VCOM_CIC_INTERRUPT_IN_ENDPOINT ==
                      (ptr1->endpoint.bEndpointAddress & USB_ENDPOINT_NUMBER_MASK)) &&
                     ((ptr1->endpoint.bEndpointAddress & USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_MASK) ==
@@ -1085,9 +1380,9 @@ usb_status_t USB_DeviceSetSpeed(usb_device_handle handle, uint8_t speed)
                           USB_DESCRIPTOR_ENDPOINT_ADDRESS_DIRECTION_OUT))
                 {
                     USB_SHORT_TO_LITTLE_ENDIAN_ADDRESS(FS_CDC_VCOM_BULK_OUT_PACKET_SIZE, ptr1->endpoint.wMaxPacketSize);
-                }
-
-                else if (USB_VIDEO_VIRTUAL_CAMERA_STREAM_ENDPOINT_IN ==
+                } else
+#endif
+                if (USB_VIDEO_VIRTUAL_CAMERA_STREAM_ENDPOINT_IN ==
                          (ptr1->endpoint.bEndpointAddress & USB_ENDPOINT_NUMBER_MASK))
                 {
                     ptr1->endpoint.bInterval = FS_STREAM_IN_INTERVAL;

@@ -55,10 +55,17 @@
 /*! @brief DFU instance count */
 #define USB_DEVICE_CONFIG_DFU (0U)
 
+#if SERIAL_PORT_TYPE_USBCDC
 #define USB_DEVICE_CONFIG_TOTAL                                                                                 \
     USB_DEVICE_CONFIG_HID + USB_DEVICE_CONFIG_CDC_ACM + USB_DEVICE_CONFIG_MSC + USB_DEVICE_CONFIG_AUDIO +       \
         USB_DEVICE_CONFIG_PHDC + USB_DEVICE_CONFIG_VIDEO + USB_DEVICE_CONFIG_CCID + USB_DEVICE_CONFIG_PRINTER + \
         USB_DEVICE_CONFIG_DFU
+#else
+#define USB_DEVICE_CONFIG_TOTAL                                                                                 \
+    USB_DEVICE_CONFIG_HID + USB_DEVICE_CONFIG_MSC + USB_DEVICE_CONFIG_AUDIO +                                   \
+        USB_DEVICE_CONFIG_PHDC + USB_DEVICE_CONFIG_VIDEO + USB_DEVICE_CONFIG_CCID + USB_DEVICE_CONFIG_PRINTER + \
+        USB_DEVICE_CONFIG_DFU
+#endif
 /* @} */
 
 /*! @brief Whether device is self power. 1U supported, 0U not supported */

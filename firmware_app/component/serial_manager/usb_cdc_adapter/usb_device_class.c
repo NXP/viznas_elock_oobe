@@ -75,8 +75,10 @@ static const usb_device_class_map_t s_UsbDeviceClassInterfaceMap[] = {
     {USB_DeviceHidInit, USB_DeviceHidDeinit, USB_DeviceHidEvent, kUSB_DeviceClassTypeHid},
 #endif
 
+#if SERIAL_PORT_TYPE_USBCDC
 #if ((defined(USB_DEVICE_CONFIG_CDC_ACM)) && (USB_DEVICE_CONFIG_CDC_ACM > 0U))
     {USB_DeviceCdcAcmInit, USB_DeviceCdcAcmDeinit, USB_DeviceCdcAcmEvent, kUSB_DeviceClassTypeCdc},
+#endif
 #endif
 
 #if ((defined(USB_DEVICE_CONFIG_MSC)) && (USB_DEVICE_CONFIG_MSC > 0U))

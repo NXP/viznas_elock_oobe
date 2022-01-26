@@ -48,23 +48,24 @@
  * GLobal  Declarations
  ******************************************************************************/
 SDK_ALIGN(static uint8_t uart_shellHandleBuffer[SHELL_HANDLE_SIZE], 4);
-shell_handle_t ble_shellHandle;
+shell_handle_t uart_shellHandle;
 extern serial_handle_t g_serialHandle;
 
 NonCachedNonInit static uint8_t usb_shellHandleBuffer_1[SHELL_HANDLE_SIZE];
+
 NonCached /*static*/ shell_handle_t usb_shellHandle[USB_DEVICE_CONFIG_CDC_ACM] = {&usb_shellHandleBuffer_1};
 
 extern uint8_t usb_serialHandleBuffer[USB_DEVICE_CONFIG_CDC_ACM][SERIAL_MANAGER_HANDLE_SIZE];
 extern serial_handle_t usb_serialHandle[USB_DEVICE_CONFIG_CDC_ACM];
 
-QueueHandle_t g_UsbShellQueue;
+QueueHandle_t g_ShellQueue;
 
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
 //Put these in SDRAM instead of DTC because no more free space in DTC
 static StackType_t s_UartTaskStack[UARTTASK_STACKSIZE];
 static StaticTask_t s_UartTaskTCB;
-static StackType_t s_USBTaskStack[USBTASK_STACKSIZE];
-static StaticTask_t s_USBTaskTCB;
+static StackType_t s_ShellTaskStack[SHELLTASK_STACKSIZE];
+static StaticTask_t s_ShellTaskTCB;
 #endif
 
 /*******************************************************************************
@@ -97,23 +98,23 @@ static void USB_DeviceClockInit(void)
 #if !(defined(SHELL_NON_BLOCKING_MODE) && (SHELL_NON_BLOCKING_MODE > 0U))
 static void uart_shell_task(void *args)
 {
-    SHELL_Printf(ble_shellHandle, "UART Shell started\r\n");
-    SHELL_Printf(ble_shellHandle, SHELL_PROMPT);
+    SHELL_Printf(uart_shellHandle, "UART Shell started\r\n");
+    SHELL_Printf(uart_shellHandle, SHELL_PROMPT);
 
-    SHELL_Task(ble_shellHandle);
+    SHELL_Task(uart_shellHandle);
 
-    SHELL_Printf(ble_shellHandle, "UART Shell stopped\r\n");
+    SHELL_Printf(uart_shellHandle, "UART Shell stopped\r\n");
     vTaskDelete(NULL);
 }
 #endif
 
 static void uart_shell_init_task(void *arg)
 {
-    ble_shellHandle = &uart_shellHandleBuffer[0];
+    uart_shellHandle = &uart_shellHandleBuffer[0];
 
     DbgConsole_Flush();
-    SHELL_Init(ble_shellHandle, g_serialHandle, (char *)SHELL_PROMPT);
-    RegisterFFICmds(ble_shellHandle);
+    SHELL_Init(uart_shellHandle, g_serialHandle, (char *)SHELL_PROMPT);
+    RegisterFFICmds(uart_shellHandle);
 
 #if !(defined(SHELL_NON_BLOCKING_MODE) && (SHELL_NON_BLOCKING_MODE > 0U))
     xTaskCreate(uart_shell_task, "UART_Shell_Task", 512, NULL, tskIDLE_PRIORITY + 1, NULL);
@@ -144,17 +145,17 @@ void usb_shell_init(void)
     SHELL_Init(usb_shellHandle[0], usb_serialHandle[0], (char *)USB_SHELL_PROMPT);
     RegisterFFICmds(usb_shellHandle[0]);
     /* Init SHELL command processor */
-    g_UsbShellQueue = xQueueCreate(USB_SHELL_CMDQUEUE_SIZE, sizeof(UsbShellCmdQueue_t));
+    g_ShellQueue = xQueueCreate(SHELL_CMDQUEUE_SIZE, sizeof(ShellCmdQueue_t));
 
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
-    if (NULL == xTaskCreateStatic(UsbShell_CmdProcess_Task, "UsbShell_CmdProcess_Task", USBTASK_STACKSIZE, NULL,
-                                  tskIDLE_PRIORITY + 1, s_USBTaskStack, &s_USBTaskTCB))
+    if (NULL == xTaskCreateStatic(Shell_CmdProcess_Task, "Shell_CmdProcess_Task", SHELLTASK_STACKSIZE, NULL,
+                                  tskIDLE_PRIORITY + 1, s_ShellTaskStack, &s_ShellTaskTCB))
 #else
-    if (xTaskCreate(UsbShell_CmdProcess_Task, "UsbShell_CmdProcess_Task", USBTASK_STACKSIZE, NULL, tskIDLE_PRIORITY + 1,
+    if (xTaskCreate(Shell_CmdProcess_Task, "Shell_CmdProcess_Task", SHELLTASK_STACKSIZE, NULL, tskIDLE_PRIORITY + 1,
                     NULL))
 #endif
     {
-        LOGE("[ERROR]:USB_CmdProcess Task created failed\r\n");
+        LOGE("[ERROR]:Shell_CmdProcess_Task created failed\r\n");
 
         while (1)
             ;

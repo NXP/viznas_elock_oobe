@@ -184,7 +184,7 @@ SHELL_COMMAND_DEFINE(algo_start, (char *)"\r\n\"algo_start <auto|manual>\":  Set
 
 SHELL_COMMAND_DEFINE(rtinfo, (char *)"\r\n\"rtinfo\": runtime information filter\r\n", _RtInfoCommand, SHELL_IGNORE_PARAMETER_COUNT);
 
-extern QueueHandle_t g_UsbShellQueue;
+extern QueueHandle_t g_ShellQueue;
 extern VIZN_api_handle_t gApiHandle;
 extern VIZN_api_client_t VIZN_API_CLIENT(Shell);
 //extern std::string g_AddNewFaceName;
@@ -217,14 +217,14 @@ shell_status_t RegisterFFICmds(shell_handle_t shellContextHandle)
     return kStatus_SHELL_Success;
 }
 
-static shell_status_t UsbShell_QueueSendFromISR(shell_handle_t shellContextHandle,
+static shell_status_t Shell_QueueSendFromISR(shell_handle_t shellContextHandle,
                                                 int32_t argc,
                                                 char **argv,
                                                 char shellCommand)
 {
-    UsbShellCmdQueue_t queueMsg;
+    ShellCmdQueue_t queueMsg;
 
-    if (argc > USB_SHELL_PARAMS_COUNT)
+    if (argc > SHELL_PARAMS_COUNT)
     {
         SHELL_Printf(shellContextHandle, "Parameters count overflow\r\n");
         return kStatus_SHELL_Error;
@@ -232,7 +232,7 @@ static shell_status_t UsbShell_QueueSendFromISR(shell_handle_t shellContextHandl
 
     for (int i = 0; i < argc; i++)
     {
-        if (strlen(argv[i]) < USB_SHELL_PARAMS_SIZE)
+        if (strlen(argv[i]) < SHELL_PARAMS_SIZE)
         {
             strcpy(queueMsg.argv[i], argv[i]);
         }
@@ -246,7 +246,7 @@ static shell_status_t UsbShell_QueueSendFromISR(shell_handle_t shellContextHandl
     queueMsg.shellContextHandle = shellContextHandle;
     queueMsg.shellCommand       = shellCommand;
 
-    if (pdTRUE != xQueueSendFromISR(g_UsbShellQueue, (void *)&queueMsg, NULL))
+    if (pdTRUE != xQueueSendFromISR(g_ShellQueue, (void *)&queueMsg, NULL))
     {
         SHELL_Printf(shellContextHandle, "ERROR: Cannot send command to shell processing queue\r\n");
         return kStatus_SHELL_Error;
@@ -263,7 +263,7 @@ static shell_status_t FFI_CLI_ListCommand(shell_handle_t shellContextHandle, int
         return kStatus_SHELL_Error;
     }
 
-    return UsbShell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_LIST);
+    return Shell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_LIST);
 }
 
 static shell_status_t FFI_CLI_AddCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv)
@@ -274,7 +274,7 @@ static shell_status_t FFI_CLI_AddCommand(shell_handle_t shellContextHandle, int3
         return kStatus_SHELL_Error;
     }
 
-    return UsbShell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_ADD);
+    return Shell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_ADD);
 }
 
 static shell_status_t FFI_CLI_DelCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv)
@@ -285,7 +285,7 @@ static shell_status_t FFI_CLI_DelCommand(shell_handle_t shellContextHandle, int3
         return kStatus_SHELL_Error;
     }
 
-    return UsbShell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_DEL);
+    return Shell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_DEL);
 }
 
 static shell_status_t FFI_CLI_RenCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv)
@@ -296,7 +296,7 @@ static shell_status_t FFI_CLI_RenCommand(shell_handle_t shellContextHandle, int3
         return kStatus_SHELL_Error;
     }
 
-    return UsbShell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_RENAME);
+    return Shell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_RENAME);
 }
 
 static shell_status_t FFI_CLI_Verbose(shell_handle_t shellContextHandle, int32_t argc, char **argv)
@@ -315,7 +315,7 @@ static shell_status_t FFI_CLI_Verbose(shell_handle_t shellContextHandle, int32_t
     }
     else
     {
-        return UsbShell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_VERBOSE);
+        return Shell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_VERBOSE);
     }
 }
 
@@ -327,12 +327,12 @@ static shell_status_t FFI_CLI_SaveCommand(shell_handle_t shellContextHandle, int
         return kStatus_SHELL_Error;
     }
 
-    return UsbShell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_SAVE);
+    return Shell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_SAVE);
 }
 
 static shell_status_t FFI_CLI_ResetCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv)
 {
-    return UsbShell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_RESET);
+    return Shell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_RESET);
 }
 
 static shell_status_t FFI_CLI_DetResolutionCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv)
@@ -351,13 +351,13 @@ static shell_status_t FFI_CLI_DetResolutionCommand(shell_handle_t shellContextHa
     }
     else
     {
-        return UsbShell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_DET_RESOLUTION);
+        return Shell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_DET_RESOLUTION);
     }
 }
 
 static shell_status_t FFI_CLI_CameraCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv)
 {
-    return UsbShell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_CAMERA);
+    return Shell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_CAMERA);
 }
 
 static shell_status_t FFI_CLI_VersionCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv)
@@ -367,22 +367,22 @@ static shell_status_t FFI_CLI_VersionCommand(shell_handle_t shellContextHandle, 
         SHELL_Printf(shellContextHandle, "Version command has no arguments\r\n");
         return kStatus_SHELL_Error;
     }
-    return UsbShell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_VERSION);
+    return Shell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_VERSION);
 }
 
 static shell_status_t FFI_CLI_FwUpdateOTW(shell_handle_t shellContextHandle, int32_t argc, char **argv)
 {
-    return UsbShell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_FWUPDATE_OTW);
+    return Shell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_FWUPDATE_OTW);
 }
 
 static shell_status_t FFI_CLI_EmotionTypes(shell_handle_t shellContextHandle, int32_t argc, char **argv)
 {
-    return UsbShell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_EMOTION_TYPES);
+    return Shell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_EMOTION_TYPES);
 }
 
 static shell_status_t FFI_CLI_LivenessCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv)
 {
-    return UsbShell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_LIVENESS);
+    return Shell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_LIVENESS);
 }
 
 static shell_status_t FFI_CLI_DisplayCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv)
@@ -414,7 +414,7 @@ static shell_status_t FFI_CLI_DisplayCommand(shell_handle_t shellContextHandle, 
             return kStatus_SHELL_Success;
         }
     }
-    return UsbShell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_DISPLAY);
+    return Shell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_DISPLAY);
 }
 
 
@@ -429,7 +429,7 @@ static shell_status_t FFI_CLI_WiFiCommand(shell_handle_t shellContextHandle, int
     if (argc == 2)
     {
         if (!strcmp((char *)argv[1], "credentials"))
-            return UsbShell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_WIFI_CREDENTIALS);
+            return Shell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_WIFI_CREDENTIALS);
 
         if (!strcmp((char *)argv[1], "ip"))
         {
@@ -441,10 +441,10 @@ static shell_status_t FFI_CLI_WiFiCommand(shell_handle_t shellContextHandle, int
             return kStatus_SHELL_Error;
         }
         if (!strcmp((char *)argv[1], "erase"))
-            return UsbShell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_WIFI_ERASE);
+            return Shell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_WIFI_ERASE);
 
         if (!strcmp((char *)argv[1], "on") || !strcmp((char *)argv[1], "off") || !strcmp((char *)argv[1], "reset"))
-            return UsbShell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_WIFI);
+            return Shell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_WIFI);
     }
 
     if (!strcmp((char *)argv[1], "credentials") && argc != 4)
@@ -454,7 +454,7 @@ static shell_status_t FFI_CLI_WiFiCommand(shell_handle_t shellContextHandle, int
     }
     else if (!strcmp((char *)argv[1], "credentials"))
     {
-        return UsbShell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_WIFI_CREDENTIALS);
+        return Shell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_WIFI_CREDENTIALS);
     }
 
     SHELL_Printf(shellContextHandle, "Wrong command for wi-fi\r\n");
@@ -463,25 +463,25 @@ static shell_status_t FFI_CLI_WiFiCommand(shell_handle_t shellContextHandle, int
 
 static shell_status_t FFI_CLI_AppCommand(shell_handle_t shellContextHandle, int32_t argc, char **argv)
 {
-    return UsbShell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_APP);
+    return Shell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_APP);
 }
 
 static shell_status_t FFI_CLI_LowPowerCommand(shell_handle_t shellContextHandle,
                                         int32_t argc,
                                         char **argv)
 {
-    return UsbShell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_LOW_POWER);
+    return Shell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_LOW_POWER);
 }
 
 static shell_status_t FFI_CLI_AlgoStartCommand(shell_handle_t shellContextHandle,
                                         int32_t argc,
                                         char **argv)
 {
-    return UsbShell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_ALGO_START);
+    return Shell_QueueSendFromISR(shellContextHandle, argc, argv, SHELL_EV_FFI_CLI_ALGO_START);
 }
 
 
-void UsbShell_CmdProcess_Task(void *arg)
+void Shell_CmdProcess_Task(void *arg)
 {
     vTaskDelay(portTICK_PERIOD_MS * 1000);
     SHELL_Printf(usb_shellHandle[USB_SHELL_PROMPT_INDEX], "Type \"help\" to see what this shell can do!\r\n");
@@ -490,8 +490,8 @@ void UsbShell_CmdProcess_Task(void *arg)
     while (1)
     {
         vizn_api_status_t status;
-        UsbShellCmdQueue_t queueMsg;
-        xQueueReceive(g_UsbShellQueue, &queueMsg, portMAX_DELAY);
+        ShellCmdQueue_t queueMsg;
+        xQueueReceive(g_ShellQueue, &queueMsg, portMAX_DELAY);
 
         shell_handle_t shellContextHandle = queueMsg.shellContextHandle;
         if (queueMsg.shellCommand == SHELL_EV_FFI_CLI_LIST)

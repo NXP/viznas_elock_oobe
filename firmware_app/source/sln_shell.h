@@ -12,6 +12,7 @@
 
 #include "fsl_shell.h"
 #include "sln_dev_cfg.h"
+#include "fsl_debug_console.h"
 
 /*******************************************************************************
  * Defines
@@ -26,13 +27,14 @@
 #define NonCached        __attribute__((section("NonCacheable.init")))
 
 /* The maximum number of shell parameters processed by Shell Command Processing Task */
-#define USB_SHELL_PARAMS_COUNT 4
+#define SHELL_PARAMS_COUNT 4
 /* The maximum shell parameters length processed by Shell Command Processing Task */
-#define USB_SHELL_PARAMS_SIZE 24
+#define SHELL_PARAMS_SIZE 24
 /* The Queue Length used by the Shell Command Processing Task */
-#define USB_SHELL_CMDQUEUE_SIZE 10
+#define SHELL_CMDQUEUE_SIZE 10
 
 /* Filter by verbosity level and print the log messages to the USB shell debug */
+#if SERIAL_PORT_TYPE_USBCDC
 #define UsbShell_DbgPrintf(dbgLvl, formatString, ...)                                                                  \
     do                                                                                                                 \
     {                                                                                                                  \
@@ -44,7 +46,20 @@
             SHELL_Printf(usb_shellHandle[USB_SHELL_PROMPT_DEBUG_INDEX], formatString, ##__VA_ARGS__);                  \
         }                                                                                                              \
     } while (0)
+#else
+#define UsbShell_DbgPrintf(dbgLvl, formatString, ...)                                                                  \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        uint8_t verbLvl = Cfg_AppDataGetVerbosity();                                                                   \
+        if (dbgLvl != 0 && dbgLvl <= verbLvl)                                                                          \
+        {                                                                                                              \
+            uint32_t t = Time_Current();                                                                               \
+            PRINTF("[%7d.%3d][L%d]", t / 1000, t % 1000);                                                              \
+            PRINTF(formatString, ##__VA_ARGS__);                                                                       \
+        }                                                                                                              \
+    } while (0)
 
+#endif
 /* Print the log message to the USB shell debug using the verbosity level 1 */
 #define UsbShell_Printf(formatString, ...) UsbShell_DbgPrintf(VERBOSE_MODE_L1, formatString, ##__VA_ARGS__)
 
@@ -52,13 +67,13 @@
  * GLobal  Declarations
  ******************************************************************************/
 /* The Queue Message processed by Shell Command Processing Task */
-typedef struct UsbShellCmdQueue
+typedef struct ShellCmdQueue
 {
     char shellCommand;                                        /* The shell command to be processed */
     shell_handle_t shellContextHandle;                        /* The current shell handle */
-    char argv[USB_SHELL_PARAMS_COUNT][USB_SHELL_PARAMS_SIZE]; /* The shell command parameters */
+    char argv[SHELL_PARAMS_COUNT][SHELL_PARAMS_SIZE]; /* The shell command parameters */
     int argc;                                                 /* The shell command number of paramters */
-} UsbShellCmdQueue_t;
+} ShellCmdQueue_t;
 
 extern shell_handle_t usb_shellHandle[];
 
