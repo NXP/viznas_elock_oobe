@@ -678,7 +678,7 @@ void PIR_EnterSuspend(void)
     GPIO_ClearPinsInterruptFlags(LPM_PIR_INT_PORT, 1U << LPM_PIR_INT_PIN);
     /* Enable GPIO pin interrupt */
     GPIO_EnableInterrupts(LPM_PIR_INT_PORT, 1U << LPM_PIR_INT_PIN);
-    NVIC_SetPriority(LPM_PIR_INT_IRQ, configMAX_SYSCALL_INTERRUPT_PRIORITY + 2);
+    NVIC_SetPriority(LPM_PIR_INT_IRQ, LIB_LPM_PIR_INT_PRI);
     /* Enable the Interrupt */
     EnableIRQ(LPM_PIR_INT_IRQ);
     /* Enable GPC interrupt */
@@ -691,7 +691,7 @@ void PIR_EnterSuspend(void)
     GPIO_DisableInterrupts(SW1_GPIO, 1 << SW1_GPIO_PIN);
     /* Enable PACL INT pin interrupt */
     GPIO_EnableInterrupts(PCAL_INT_GPIO, 1U << PCAL_INT_GPIO_PIN);
-    NVIC_SetPriority(BOARD_USER_BUTTON_IRQ, configMAX_SYSCALL_INTERRUPT_PRIORITY + 2);
+    NVIC_SetPriority(BOARD_USER_BUTTON_IRQ, LIB_BOARD_USER_BUTTON_WKUP_PRI);
     /* Enable the Interrupt */
     EnableIRQ(BOARD_USER_BUTTON_IRQ);
     /* Enable GPC interrupt */

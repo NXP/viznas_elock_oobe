@@ -124,7 +124,7 @@ static void initDisplayLPSPI(uint32_t maxclk)
     LPSPI_MasterInit(DISP_LPSPI_MASTER_BASEADDR, &masterConfig, srcClock_Hz);
 #else
     LPSPI_RTOS_Init(&g_rv_disp_spi_handle, DISP_LPSPI_MASTER_BASEADDR, &masterConfig, srcClock_Hz);
-    NVIC_SetPriority(s_lpspiIRQ[LPSPI_GetInstance(DISP_LPSPI_MASTER_BASEADDR)],2);
+    NVIC_SetPriority(s_lpspiIRQ[LPSPI_GetInstance(DISP_LPSPI_MASTER_BASEADDR)],LIB_DISP_LPSPI_MASTER_PRI);
 #endif
 
 #ifdef DISP_USE_SPI_DMA
@@ -148,7 +148,7 @@ static void initDisplayLPSPI(uint32_t maxclk)
     LPSPI_MasterTransferCreateHandleEDMA(DISP_LPSPI_MASTER_BASEADDR, &g_lpspiDispMasterEdmaHandle,
                                         DISP_LPSPI_CallbackEDMA, NULL, &g_lpspiDispTxEdmaHandle, &g_lpspiDispTxEdmaHandle);
 
-    NVIC_SetPriority(DISP_LPSPI_TX_IRQn, 2);
+    NVIC_SetPriority(DISP_LPSPI_TX_IRQn, LIB_DISP_LPSPI_TX_PRI);
 #endif
 }
 

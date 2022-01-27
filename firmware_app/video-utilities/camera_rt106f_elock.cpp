@@ -803,7 +803,7 @@ static void Camera_Init_Task(void *param)
 #else
     cameraConfig.framePerSec = 15;
 #endif
-    NVIC_SetPriority(CSI_IRQn, configMAX_SYSCALL_INTERRUPT_PRIORITY - 1);
+    NVIC_SetPriority(CSI_IRQn, LIB_CSI_PRI);
     CAMERA_RECEIVER_Init(&cameraReceiver, &cameraConfig, Camera_Callback, NULL);
 #if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
     CAMERA_RECEIVER_SwapBytes(&cameraReceiver);

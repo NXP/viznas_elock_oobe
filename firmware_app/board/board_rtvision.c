@@ -195,7 +195,7 @@ void BOARD_LPI2C_Init(LPI2C_Type *base, uint32_t clkSrc_Hz)
 #else
     LPI2C_MasterInit(base, &lpi2cConfig, clkSrc_Hz);
 #endif
-    NVIC_SetPriority(LPI2C_GetIRQn(i2cInstance), configMAX_SYSCALL_INTERRUPT_PRIORITY - 1);
+    NVIC_SetPriority(LPI2C_GetIRQn(i2cInstance), LIB_I2CMASTER_INT_PRI);
 }
 
 status_t BOARD_LPI2C_Send(LPI2C_Type *base,
@@ -440,7 +440,7 @@ void BOARD_SAI_Init(sai_init_handle_t saiInitHandle)
     SAI_TxEnableInterrupts(BOARD_AMP_SAI, kSAI_FIFOErrorInterruptEnable);
     //    SAI_RxEnableInterrupts(BOARD_AMP_SAI, kSAI_FIFOErrorInterruptEnable);
 
-    NVIC_SetPriority(BOARD_AMP_SAI_EDMA_TX_IRQ, configMAX_SYSCALL_INTERRUPT_PRIORITY - 1);
+    NVIC_SetPriority(BOARD_AMP_SAI_EDMA_TX_IRQ, LIB_BOARD_AMP_SAI_EDMA_TX_PRI);
     //    NVIC_SetPriority(BOARD_AMP_SAI_EDMA_RX_IRQ, configMAX_SYSCALL_INTERRUPT_PRIORITY - 1);
 
     EnableIRQ(BOARD_AMP_SAI_IRQ);

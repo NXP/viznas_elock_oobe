@@ -136,6 +136,29 @@ to all Cortex-M ports, and do not rely on any particular library functions. */
 See http://www.FreeRTOS.org/RTOS-Cortex-M3-M4.html. */
 #define configMAX_SYSCALL_INTERRUPT_PRIORITY (configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY << (8 - configPRIO_BITS))
 
+/* added by NN for the wrong parameter for "priority" input to NVIC_SetPriority() and
+ * unifying the definitions of all the interrupt priorities */
+typedef enum _cfglib_int_pri
+{
+	LIB_BOARD_AMP_SAI_EDMA_TX_PRI = configLIBRARY_LOWEST_INTERRUPT_PRIORITY,
+	LIB_I2CMASTER_INT_PRI = configLIBRARY_LOWEST_INTERRUPT_PRIORITY,
+	LIB_HAL_UART_PRI = configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY,
+	LIB_BOARD_USER_BUTTON_WKUP_PRI = configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY,
+	LIB_LPM_PIR_INT_PRI	= configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY,
+	LIB_PIT_SYSSTATE_PRI = configLIBRARY_LOWEST_INTERRUPT_PRIORITY,
+	LIB_BOARD_USER_SWITCH_PRI = configLIBRARY_LOWEST_INTERRUPT_PRIORITY,
+	LIB_CSI_PRI = configLIBRARY_LOWEST_INTERRUPT_PRIORITY,
+	LIB_PXP_PRI = configLIBRARY_LOWEST_INTERRUPT_PRIORITY,
+	LIB_BOARD_SDMMC_SD_CD_PRI = 6U,
+	LIB_BOARD_SDMMC_SDIO_HOST_PRI = 5U,
+	LIB_BOARD_SDMMC_SD_HOST_PRI = 5U,/* reserved */
+	LIB_BOARD_SDMMC_MMC_HOST_PRI = 5U, /* reserved */
+	LIB_DISP_LPSPI_MASTER_PRI = 2U,
+	LIB_DISP_LPSPI_TX_PRI = 2U,
+	LIB_USB_DEVICE_INTERRUPT_PRI = configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY,
+	LIB_BOARD_BT_UART_PRI = 7U,
+}cfglib_int_pri_t;
+
 /* Definitions that map the FreeRTOS port interrupt handlers to their CMSIS
 standard names. */
 #define vPortSVCHandler SVC_Handler

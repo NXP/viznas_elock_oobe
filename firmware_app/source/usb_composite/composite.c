@@ -36,7 +36,7 @@
 #else
 #if defined(configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY)
 #ifndef USB_DEVICE_INTERRUPT_PRIORITY
-#define USB_DEVICE_INTERRUPT_PRIORITY (3)
+#define USB_DEVICE_INTERRUPT_PRIORITY (LIB_USB_DEVICE_INTERRUPT_PRI)
 #endif
 #else
 /* The default value 3 is used to support different ARM Core, such as CM0P, CM4, CM7, and CM33, etc.

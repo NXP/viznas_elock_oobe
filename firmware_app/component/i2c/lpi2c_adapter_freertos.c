@@ -113,7 +113,7 @@ hal_i2c_status_t HAL_I2cMasterInit_FreeRTOS(hal_i2c_master_handle_t handle, cons
     if(NULL == s_i2cHandle[i2cMasterHandle->instance].base)
     {
 		LPI2C_RTOS_Init(&s_i2cHandle[i2cMasterHandle->instance], s_i2cBases[i2cMasterHandle->instance], &i2cConfig, config->srcClock_Hz);
-		NVIC_SetPriority(s_i2cIRQs[i2cMasterHandle->instance], configMAX_SYSCALL_INTERRUPT_PRIORITY - 1);
+		NVIC_SetPriority(s_i2cIRQs[i2cMasterHandle->instance], LIB_I2CMASTER_INT_PRI);
     }
     return kStatus_HAL_I2cSuccess;
 }

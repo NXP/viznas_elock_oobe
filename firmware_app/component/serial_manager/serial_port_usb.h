@@ -24,7 +24,6 @@
 /*! @brief serial port usb handle size*/
 #define SERIAL_PORT_USB_CDC_HANDLE_SIZE (72)
 
-
 /*! @brief USB controller ID */
 typedef enum _serial_port_usb_cdc_controller_index
 {

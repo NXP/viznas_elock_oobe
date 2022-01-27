@@ -47,7 +47,7 @@
 #else
 #if defined(configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY)
 #ifndef HAL_UART_ISR_PRIORITY
-#define HAL_UART_ISR_PRIORITY (configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY)
+#define HAL_UART_ISR_PRIORITY (LIB_HAL_UART_PRI)
 #endif
 #else
 /* The default value 3 is used to support different ARM Core, such as CM0P, CM4, CM7, and CM33, etc.

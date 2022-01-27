@@ -38,7 +38,7 @@
 /* @brief card detect configuration */
 #define BOARD_SDMMC_SD_CD_GPIO_BASE                  GPIO2
 #define BOARD_SDMMC_SD_CD_GPIO_PIN                   28u
-#define BOARD_SDMMC_SD_CD_IRQ_PRIORITY               6U
+#define BOARD_SDMMC_SD_CD_IRQ_PRIORITY               LIB_BOARD_SDMMC_SD_CD_PRI
 #define BOARD_SDMMC_SD_CD_IRQ                        GPIO2_Combined_16_31_IRQn
 #define BOARD_SDMMC_SD_CD_INTTERUPT_TYPE             kGPIO_IntRisingOrFallingEdge
 #define BOARD_SDMMC_SD_CD_INSERT_LEVEL               (0U)

@@ -1295,7 +1295,7 @@ status_t GC0308_Control(camera_device_handle_t *handle, camera_device_cmd_t cmd,
         uint16_t exposure = exposureH&0xF;
         exposure = (exposure<<8)|exposureL;
 
-//        uint16_t exposure_copy = exposure;
+        uint16_t exposure_copy = exposure;
         switch(arg) {
 			case CAMERA_BRIGHTNESS_DECREASE:
 				exposure *= (1 - GC0308_BRIGHTNESS_EXPOSURE_INC_DEC_RATIO);
@@ -1321,7 +1321,7 @@ status_t GC0308_Control(camera_device_handle_t *handle, camera_device_cmd_t cmd,
 			default:
 				break;
         }
-        //UsbShell_Printf("[GC0308 0x%8x]:preGain:%d postGain:%d exposure:%d-->%d\r\n",(uint32_t)handle, preGain,postGain,exposure_copy,exposure);
+        //UsbShell_Printf("[GC0308 0x%8x]:exposure:%d-->%d\r\n",(uint32_t)handle,exposure_copy,exposure);
 
 #endif
 

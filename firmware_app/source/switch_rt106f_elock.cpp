@@ -128,7 +128,7 @@ static void Switch_Task(void *param)
     {
         /* Enable GPIO pin interrupt */
 
-        NVIC_SetPriority(BOARD_USER_SWITCH_IRQ, configMAX_SYSCALL_INTERRUPT_PRIORITY - 1);
+        NVIC_SetPriority(BOARD_USER_SWITCH_IRQ, LIB_BOARD_USER_SWITCH_PRI);
         EnableIRQ(BOARD_USER_SWITCH_IRQ);
         Switch_EnableInterrupts();
     }

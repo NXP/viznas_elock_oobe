@@ -116,7 +116,7 @@ void APP_PXPInit()
     PXP_Init(APP_PXP);
     PXP_EnableInterrupts(APP_PXP, kPXP_CompleteInterruptEnable);
     EnableIRQ(PXP_IRQn);
-    NVIC_SetPriority(PXP_IRQn, configMAX_SYSCALL_INTERRUPT_PRIORITY - 1);
+    NVIC_SetPriority(PXP_IRQn, LIB_PXP_PRI);
 
     /* PS configure. */
     s_PsBufferConfig.pixelFormat = kPXP_PsPixelFormatUYVY1P422;

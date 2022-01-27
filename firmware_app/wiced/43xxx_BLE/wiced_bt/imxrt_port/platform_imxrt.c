@@ -103,7 +103,7 @@ void ble_pwr_off(void)
 
 int imxrt_bt_uart_init(void)
 {
-    NVIC_SetPriority(BOARD_BT_UART_IRQ, 7U);
+    NVIC_SetPriority(BOARD_BT_UART_IRQ, LIB_BOARD_BT_UART_PRI);
 
     lpuart_config.srcclk = BOARD_BT_UART_CLK_FREQ;
     lpuart_config.base   = BOARD_BT_UART_BASEADDR;

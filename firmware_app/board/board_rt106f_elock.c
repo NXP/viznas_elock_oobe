@@ -120,7 +120,7 @@ void BOARD_InitDebugConsole(void)
 {
     uint32_t uartClkSrcFreq = BOARD_DebugConsoleSrcFreq();
     //added by Raymond to solve UART crash issue because of priority is not set (0 by default)
-    NVIC_SetPriority(BOARD_UART_IRQ, configMAX_SYSCALL_INTERRUPT_PRIORITY - 1);
+    NVIC_SetPriority(BOARD_UART_IRQ, LIB_HAL_UART_PRI);
     DbgConsole_Init(BOARD_DEBUG_UART_INSTANCE, BOARD_DEBUG_UART_BAUDRATE, BOARD_DEBUG_UART_TYPE, uartClkSrcFreq);
 }
 
@@ -162,7 +162,7 @@ void BOARD_LPI2C_Init(LPI2C_Type *base, uint32_t clkSrc_Hz)
 #else
     LPI2C_MasterInit(base, &lpi2cConfig, clkSrc_Hz);
 #endif
-    NVIC_SetPriority(LPI2C_GetIRQn(i2cInstance), configMAX_SYSCALL_INTERRUPT_PRIORITY - 1);
+    NVIC_SetPriority(LPI2C_GetIRQn(i2cInstance), LIB_I2CMASTER_INT_PRI);
 }
 
 status_t BOARD_LPI2C_Send(LPI2C_Type *base,

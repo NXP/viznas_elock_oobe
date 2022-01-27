@@ -176,7 +176,7 @@ wwd_result_t host_platform_bus_init( void )
 
     WPRINT_WWD_DEBUG(("Source Clk: %d\n",g_sdio.host->hostController.sourceClock_Hz ));
 
-    BOARD_SDIO_Config(&g_sdio, SDIOCARD_DetectCallBack, 5U, host_platform_sdio_irq_callback);
+    BOARD_SDIO_Config(&g_sdio, SDIOCARD_DetectCallBack, LIB_BOARD_SDMMC_SDIO_HOST_PRI, host_platform_sdio_irq_callback);
 
     /* SDIO host init function */
     err = SDIO_HostInit(&g_sdio);
