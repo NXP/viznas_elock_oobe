@@ -86,7 +86,7 @@ int FeatureDB::get_idxByName(const std::string name, int &index)
         Flash_FacerecFsReadItemHeader(i, pItemHeader);
         if(pItemHeader->magic == FEATUREDATA_MAGIC_VALID)
         {
-            if (memcmp(pItemHeader->name, name.c_str(), strlen(pItemHeader->name)) == 0)
+            if (strcmp(pItemHeader->name, name.c_str()) == 0)
             {
                 index = i;
                 break;

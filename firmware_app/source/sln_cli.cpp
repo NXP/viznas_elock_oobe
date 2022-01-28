@@ -772,7 +772,7 @@ void Shell_CmdProcess_Task(void *arg)
         else if (queueMsg.shellCommand == SHELL_EV_FFI_CLI_VERSION)
         {
             SHELL_Printf(shellContextHandle, "Firmware Version:%d.%d.%d Bank:%s\r\n", APP_MAJ_VER, APP_MIN_VER, APP_BLD_VER, getAppBank());
-            SHELL_Printf(shellContextHandle, "OASIS LITE:v%d.%d.%d\r\n", OASISLT_VERSION_MAJOR, OASISLT_VERSION_MINOR, OASISLT_VERSION_HOTFIX);
+            SHELL_Printf(shellContextHandle, "OASIS LITE:v%d.%d.%d\r\n", VERSION_MAJOR, VERSION_MINOR, VERSION_HOTFIX);
         }
         else if (queueMsg.shellCommand == SHELL_EV_FFI_CLI_FWUPDATE_OTW)
         {

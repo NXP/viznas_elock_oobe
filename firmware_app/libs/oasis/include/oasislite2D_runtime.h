@@ -12,10 +12,10 @@
 #include "stdbool.h"
 #include "stdint.h"
 
-#define OASISLT_VERSION_MAJOR 4
-#define OASISLT_VERSION_MINOR 79
+#define VERSION_MAJOR 4
+#define VERSION_MINOR 78
 /* This version number only used for hot fix on frozen release or branch */
-#define OASISLT_VERSION_HOTFIX 0
+#define VERSION_HOTFIX 0
 
 /* Face ID is a UINT16, 0xFFFFUL indicates a invalid face ID */
 #define INVALID_FACE_ID (0xFFFFUL)
