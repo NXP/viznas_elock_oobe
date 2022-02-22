@@ -43,6 +43,7 @@
 #include "font.h"
 #include "display.h"
 
+#include "sln_shell.h"
 #include "sln_dev_cfg.h"
 #include "sln_api.h"
 #include "sln_pcal.h"
@@ -441,7 +442,7 @@ static void Camera_RgbIrSwitch(int8_t cameraID)
         set_iox_port_pin(BOARD_CAMERA_SWITCH_GPIO, BOARD_CAMERA_SWITCH_GPIO_PIN, cameraID);
         CAMERA_DEVICE_Start(&cameraDevice[cameraID]);
 
-#if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
+#if ((APP_CAMERA_TYPE == APP_CAMERA_GC0308) || (APP_CAMERA_TYPE == APP_CAMERA_MT9M114))
         //only need do this if one IIC used for dual camera
         if (gPendingExposureModeSet[cameraID])
         {
@@ -499,7 +500,7 @@ int Camera_SetDispMode(uint8_t displayMode)
 
 int Camera_SetExposureMode(uint8_t whichCamera, uint8_t mode)
 {
-#if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
+#if ((APP_CAMERA_TYPE == APP_CAMERA_GC0308) || (APP_CAMERA_TYPE == APP_CAMERA_MT9M114))
 
 		if (CAMERA_DIFF_I2C_BUS || (s_appType >= APP_TYPE_ELOCK_LIGHT_SINGLE && s_appType <= APP_TYPE_USERID))
 		{
@@ -519,9 +520,9 @@ int Camera_SetExposureMode(uint8_t whichCamera, uint8_t mode)
 //upOrDown, 0 indicate down, 1 indicate up, 0xFF indicate to default value
 int Camera_SetTargetY(uint8_t whichCamera,uint8_t upOrDown)
 {
-#if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
+#if ((APP_CAMERA_TYPE == APP_CAMERA_GC0308) || (APP_CAMERA_TYPE == APP_CAMERA_MT9M114))
 
-    if (CAMERA_DIFF_I2C_BUS || (s_appType >= APP_TYPE_ELOCK_LIGHT_SINGLE) && (s_appType <= APP_TYPE_USERID))
+    if (CAMERA_DIFF_I2C_BUS || ((s_appType >= APP_TYPE_ELOCK_LIGHT_SINGLE) && (s_appType <= APP_TYPE_USERID)))
     {
     	CAMERA_DEVICE_Control(&cameraDevice[whichCamera],  kCAMERA_DeviceBrightnessAdjust, upOrDown);
 

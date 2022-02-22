@@ -709,6 +709,80 @@ status_t MT9M114_Control(camera_device_handle_t *handle, camera_device_cmd_t cmd
         MT9M114_EnableMono(handle, (bool)arg);
         return kStatus_Success;
     }
+    else if ( cmd == kCAMERA_DeviceExposureMode) {
+           uint8_t ae_mode;
+           MT9M114_Read(handle, MT9M114_VAR_UVC_AE_MODE_CONTROL, 1U, &ae_mode);
+
+           switch(arg) {
+               case CAMERA_EXPOSURE_MODE_AUTO:
+            	   	ae_mode &= ~(1<<0);/* disable manual mode */
+            	    ae_mode |= (1<<1);/* enable auto mode */
+               break;
+               case CAMERA_EXPOSURE_MODE_MANU:
+            	   ae_mode &= ~(1<<1);/* disable auto mode */
+            	   ae_mode |= (1<<0);/* enable manual mode */
+               break;
+               default:
+                   break;
+          }
+          MT9M114_Write(handle, MT9M114_VAR_UVC_AE_MODE_CONTROL, 1U, ae_mode);
+          return kStatus_Success;
+    }
+    else if (cmd == kCAMERA_DeviceBrightnessAdjust)
+    {
+#define MT9M114_EXPOSURE_INC_RATIO (0.10f)
+#define MT9M114_EXPOSURE_DEC_RATIO (0.10f)
+
+    	/* adjust brightness manually */
+        /* disable auto exposure mode and enable manual mode */
+    	uint8_t ae_mode;
+    	MT9M114_Read(handle, MT9M114_VAR_UVC_AE_MODE_CONTROL, 1U, &ae_mode);
+    	if((ae_mode & 0x01) == 0)
+    	{
+			ae_mode &= ~(1<<1);/* disable auto mode */
+			ae_mode |= (1<<0);/* enable manual mode */
+			MT9M114_Write(handle, MT9M114_VAR_UVC_AE_MODE_CONTROL, 1U, ae_mode);
+    	}
+
+        /* disable fixed frame interval */
+    	uint8_t me_cfg;
+    	MT9M114_Read(handle, MT9M114_VAR_UVC_MANUAL_EXPOSURE_CONFIGURATION, 1U, &me_cfg);
+    	if((me_cfg & 0x01) == 0)
+    	{
+    		me_cfg |= (1<<0);
+    		MT9M114_Write(handle, MT9M114_VAR_UVC_MANUAL_EXPOSURE_CONFIGURATION, 1U, me_cfg);
+    	}
+
+        /* adjust manually exposure time */
+    	uint32_t exposure;
+        MT9M114_Read(handle, MT9M114_VAR_UVC_EXPOSURE_TIME_ABSOLUTE_CONTROL, 4U, &exposure);
+
+        switch(arg) {
+			case CAMERA_BRIGHTNESS_DECREASE:
+				exposure *= (1 - MT9M114_EXPOSURE_DEC_RATIO);
+				MT9M114_Write(handle, MT9M114_VAR_UVC_EXPOSURE_TIME_ABSOLUTE_CONTROL, 4U, exposure);
+			break;
+			case CAMERA_BRIGHTNESS_INCREASE:
+				exposure *= (1 + MT9M114_EXPOSURE_INC_RATIO);
+
+#define	MT9M114_EXPOSURE_TIME_MAX (3000U)
+				if(exposure >= MT9M114_EXPOSURE_TIME_MAX)
+				{
+					exposure = MT9M114_EXPOSURE_TIME_MAX;
+				}
+
+				MT9M114_Write(handle, MT9M114_VAR_UVC_EXPOSURE_TIME_ABSOLUTE_CONTROL, 4U, exposure);
+			break;
+			case CAMERA_BRIGHTNESS_DEFAULT:
+
+			break;
+
+			default:
+				break;
+        }
+
+        return kStatus_Success;
+    }
     else
         return kStatus_InvalidArgument;
 }
