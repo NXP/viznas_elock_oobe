@@ -748,6 +748,8 @@ static void AdjustBrightnessHandler(uint8_t frame_idx, uint8_t direction, void* 
 #if RT106F_ELOCK_BOARD
     	Oasis_LedControl(LED_WHITE,direction);
     	Camera_SetTargetY(COLOR_CAMERA,direction);
+#elif RTVISION_BOARD
+    	Camera_SetTargetY(COLOR_CAMERA,direction);
 #endif
     }
 }

@@ -43,6 +43,7 @@
 #include "font.h"
 #include "display.h"
 
+#include "sln_shell.h"
 #include "sln_dev_cfg.h"
 #include "sln_api.h"
 #include "sln_pcal.h"
@@ -441,7 +442,6 @@ static void Camera_RgbIrSwitch(int8_t cameraID)
         set_iox_port_pin(BOARD_CAMERA_SWITCH_GPIO, BOARD_CAMERA_SWITCH_GPIO_PIN, cameraID);
         CAMERA_DEVICE_Start(&cameraDevice[cameraID]);
 
-#if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
         //only need do this if one IIC used for dual camera
         if (gPendingExposureModeSet[cameraID])
         {
@@ -454,8 +454,6 @@ static void Camera_RgbIrSwitch(int8_t cameraID)
             CAMERA_DEVICE_Control(&cameraDevice[cameraID], kCAMERA_DeviceBrightnessAdjust, gPendingTargetYValue[cameraID]);
             gPendingTargetYSet[cameraID] = 0;
         }
-#endif
-
     }else
     {
         CAMERA_DEVICE_Stop(&cameraDevice[0]);
@@ -499,18 +497,15 @@ int Camera_SetDispMode(uint8_t displayMode)
 
 int Camera_SetExposureMode(uint8_t whichCamera, uint8_t mode)
 {
-#if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
+	if (CAMERA_DIFF_I2C_BUS || (s_appType >= APP_TYPE_ELOCK_LIGHT_SINGLE && s_appType <= APP_TYPE_USERID))
+	{
+		CAMERA_DEVICE_Control(&cameraDevice[whichCamera],  kCAMERA_DeviceExposureMode, mode);
 
-		if (CAMERA_DIFF_I2C_BUS || (s_appType >= APP_TYPE_ELOCK_LIGHT_SINGLE && s_appType <= APP_TYPE_USERID))
-		{
-			CAMERA_DEVICE_Control(&cameraDevice[whichCamera],  kCAMERA_DeviceExposureMode, mode);
-
-		}else
-		{	//delay to do so in Camera_RgbIrSwitch
-			s_CurExposureMode[whichCamera] = mode;
-			gPendingExposureModeSet[whichCamera] = 1;
-		}
-#endif
+	}else
+	{	//delay to do so in Camera_RgbIrSwitch
+		s_CurExposureMode[whichCamera] = mode;
+		gPendingExposureModeSet[whichCamera] = 1;
+	}
 	return 0;
 }
 
@@ -519,9 +514,7 @@ int Camera_SetExposureMode(uint8_t whichCamera, uint8_t mode)
 //upOrDown, 0 indicate down, 1 indicate up, 0xFF indicate to default value
 int Camera_SetTargetY(uint8_t whichCamera,uint8_t upOrDown)
 {
-#if (APP_CAMERA_TYPE == APP_CAMERA_GC0308)
-
-    if (CAMERA_DIFF_I2C_BUS || (s_appType >= APP_TYPE_ELOCK_LIGHT_SINGLE) && (s_appType <= APP_TYPE_USERID))
+    if (CAMERA_DIFF_I2C_BUS || ((s_appType >= APP_TYPE_ELOCK_LIGHT_SINGLE) && (s_appType <= APP_TYPE_USERID)))
     {
     	CAMERA_DEVICE_Control(&cameraDevice[whichCamera],  kCAMERA_DeviceBrightnessAdjust, upOrDown);
 
@@ -532,7 +525,7 @@ int Camera_SetTargetY(uint8_t whichCamera,uint8_t upOrDown)
 		gPendingTargetYValue[whichCamera] = upOrDown;
     }
     UsbShell_DbgPrintf(VERBOSE_MODE_L2, "Camera_SetTargetY,id:%d upOrDown:%d \r\n",whichCamera,upOrDown);
-#endif
+
 	return 0;
 }
 

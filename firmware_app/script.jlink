@@ -1,7 +1,7 @@
 ExitOnError 1
 r
-exec EnableEraseAllFlashBanks
-erase
+h
+loadfile "C:\work\xpresso_wk\viznas\sln_viznas_iot_elock_oobe\VIZN2_board\sln_viznas_iot_elock_oobe.hex"
 qc
 
 qc
