@@ -26,8 +26,6 @@ FeatureDB::FeatureDB()
 	page_cnt = 1<<(int)ceil(log2(page_cnt));
 
 	this->itemSpaceSize = page_cnt*FACEREC_FS_FLASH_PAGE_SIZE;
-	this->itemBuff = pvPortMalloc(itemSpaceSize);
-
 	Flash_FacerecFsInit(sizeof(FeatureItemHeader), this->itemSize, this->itemSpaceSize);
 
 	//This line must below Flash_FacerecFsInit
@@ -38,22 +36,25 @@ FeatureDB::~FeatureDB()
 {
     this->itemSize = 0;
     this->itemSpaceSize = 0;
-
-    if (this->itemBuff != NULL)
-    {
-        vPortFree(this->itemBuff);
-    }
 }
 
-void FeatureDB::clear_item(void)
+
+
+void* FeatureDB::mallocate(unsigned int size)
 {
-    memset(this->itemBuff, 0x00, this->itemSize);
+	return pvPortMalloc(size);
+}
+
+void FeatureDB::mfree(void* p)
+{
+	vPortFree(p);
 }
 
 int FeatureDB::get_idxById(int id, int &index)
 {
 	int i;
-    FeatureItemHeader *pItemHeader = (FeatureItemHeader *)this->itemBuff;
+	FeatureItemHeader tmpHeader;
+    FeatureItemHeader *pItemHeader = &tmpHeader;
     for (i = 0; i < FEATUREDATA_MAX_COUNT; i++)
     {
 
@@ -79,7 +80,8 @@ int FeatureDB::get_idxById(int id, int &index)
 int FeatureDB::get_idxByName(const std::string name, int &index)
 {
     int i;
-    FeatureItemHeader *pItemHeader = (FeatureItemHeader *)this->itemBuff;
+    FeatureItemHeader tmpHeader;
+    FeatureItemHeader *pItemHeader = &tmpHeader;
     for (i = 0; i < FEATUREDATA_MAX_COUNT; i++)
     {
 
@@ -106,7 +108,8 @@ int FeatureDB::get_free(int &index)
 {
 	int idx_first_deleted = -1;
 	int i;
-    FeatureItemHeader *pItemHeader = (FeatureItemHeader *)this->itemBuff;
+	FeatureItemHeader tmpHeader;
+    FeatureItemHeader *pItemHeader = &tmpHeader;
     for (i = 0; i < FEATUREDATA_MAX_COUNT; i++)
     {
 
@@ -153,8 +156,8 @@ int FeatureDB::add_feature(uint16_t id, const std::string name, float *feature)
         return -1;
     }
 
-    clear_item();
-    FeatureItem *pItem = (FeatureItem *)this->itemBuff;
+
+    FeatureItem *pItem = (FeatureItem *)mallocate(this->itemSize);
     pItem->magic = FEATUREDATA_MAGIC_VALID;
     pItem->id = id;
     pItem->index = index;
@@ -163,9 +166,11 @@ int FeatureDB::add_feature(uint16_t id, const std::string name, float *feature)
 
     if (Flash_FacerecFsWriteItem(index, pItem) != FLASH_OK)
     {
+    	mfree(pItem);
         return -2;
     }
 
+    mfree(pItem);
     this->count++;
 
     return 0;
@@ -179,7 +184,8 @@ int FeatureDB::del_feature(const std::string name)
         return -1;
     }
 
-    FeatureItemHeader *pItemHeader = (FeatureItemHeader *)this->itemBuff;
+    FeatureItemHeader tmpHeader;
+    FeatureItemHeader *pItemHeader = &tmpHeader;
     if (Flash_FacerecFsReadItemHeader(index, pItemHeader) != FLASH_OK)
     {
         return -2;
@@ -200,7 +206,8 @@ int FeatureDB::del_feature(const std::string name)
 
 int FeatureDB::del_feature_all()
 {
-    FeatureItemHeader *pItemHeader = (FeatureItemHeader *)this->itemBuff;
+    FeatureItemHeader tmpHeader;
+    FeatureItemHeader *pItemHeader = &tmpHeader;
     for (int i = 0; i < FEATUREDATA_MAX_COUNT; i++)
     {
 
@@ -235,9 +242,10 @@ int FeatureDB::update_feature(uint16_t id, float *feature)
         return -1;
     }
 
-    FeatureItem *pItem = (FeatureItem *)this->itemBuff;
+    FeatureItem *pItem = (FeatureItem *)mallocate(this->itemSize);
     if (Flash_FacerecFsReadItem(indexId, pItem) != FLASH_OK)
     {
+    	mfree(pItem);
         return -3;
     }
 
@@ -245,6 +253,7 @@ int FeatureDB::update_feature(uint16_t id, float *feature)
     pItem->magic = FEATUREDATA_MAGIC_DELET;
     if (Flash_FacerecFsWriteItemHeader(indexId, pItem) != FLASH_OK)
     {
+    	mfree(pItem);
         return -4;
     }
 
@@ -252,6 +261,7 @@ int FeatureDB::update_feature(uint16_t id, float *feature)
     int indexFree = -1;
     if (get_free(indexFree))
     {
+    	mfree(pItem);
         return -2;
     }
 
@@ -260,16 +270,19 @@ int FeatureDB::update_feature(uint16_t id, float *feature)
     memcpy(pItem->feature, feature, OASISLT_getFaceItemSize());
     if (Flash_FacerecFsWriteItem(indexFree, pItem) != FLASH_OK)
     {
+    	mfree(pItem);
         return -5;
     }
 
+    mfree(pItem);
     return 0;
 }
 
 int FeatureDB::get_names(std::vector<std::string> &names,int count)
 {
 
-    FeatureItemHeader * pItemHeader = (FeatureItemHeader *)this->itemBuff;
+    FeatureItemHeader tmpHeader;
+    FeatureItemHeader *pItemHeader = &tmpHeader;
     for (int i = 0; i < FEATUREDATA_MAX_COUNT; i++)
     {
 
@@ -295,7 +308,8 @@ int FeatureDB::get_names(std::vector<std::string> &names,int count)
 
 int FeatureDB::get_name(uint16_t id, std::string &name)
 {
-    FeatureItemHeader * pItemHeader = (FeatureItemHeader *)this->itemBuff;
+    FeatureItemHeader tmpHeader;
+    FeatureItemHeader *pItemHeader = &tmpHeader;
     for (int i = 0; i < FEATUREDATA_MAX_COUNT; i++)
     {
 
@@ -319,7 +333,8 @@ int FeatureDB::get_name(uint16_t id, std::string &name)
 
 int FeatureDB::get_ids(std::vector<uint16_t> &ids)
 {
-    FeatureItemHeader * pItemHeader = (FeatureItemHeader *)this->itemBuff;
+    FeatureItemHeader tmpHeader;
+    FeatureItemHeader *pItemHeader = &tmpHeader;
 	ids.clear();
     for (int i = 0; i < FEATUREDATA_MAX_COUNT; i++)
     {
@@ -352,20 +367,23 @@ int FeatureDB::ren_name(const std::string oldname, const std::string newname)
         return -2;
     }
 
-    FeatureItem *pItem = (FeatureItem *)this->itemBuff;
+    FeatureItem *pItem = (FeatureItem *)mallocate(this->itemSize);
     if (Flash_FacerecFsReadItem(indexOld, pItem) != FLASH_OK)
     {
+    	mfree(pItem);
         return -4;
     }
 
     pItem->magic = FEATUREDATA_MAGIC_DELET;
     if (Flash_FacerecFsWriteItemHeader(indexOld, pItem) != FLASH_OK)
     {
+    	mfree(pItem);
         return -5;
     }
 
     if (get_free(indexNew))
     {
+    	mfree(pItem);
         return -3;
     }
 
@@ -374,9 +392,10 @@ int FeatureDB::ren_name(const std::string oldname, const std::string newname)
     memcpy(pItem->name, newname.c_str(), sizeof(pItem->name));
     if (Flash_FacerecFsWriteItem(indexNew, pItem) != FLASH_OK)
     {
+    	mfree(pItem);
         return -5;
     }
-
+    mfree(pItem);
     return 0;
 }
 
@@ -388,7 +407,8 @@ int FeatureDB::get_count()
 int FeatureDB::feature_count()
 {
     int count = 0;
-    FeatureItemHeader * pItemHeader = (FeatureItemHeader *)this->itemBuff;
+    FeatureItemHeader tmpHeader;
+    FeatureItemHeader *pItemHeader = &tmpHeader;
     for (int i = 0; i < FEATUREDATA_MAX_COUNT; i++)
     {
 
@@ -408,12 +428,13 @@ int FeatureDB::feature_count()
 
 int FeatureDB::get_feature(uint16_t id, float *feature)
 {
-    FeatureItem *pItem = (FeatureItem *)this->itemBuff;
+    FeatureItem *pItem = (FeatureItem *)mallocate(this->itemSize);
     for (int i = 0; i < FEATUREDATA_MAX_COUNT; i++)
     {
 
         if (Flash_FacerecFsReadItem(i, pItem) != FLASH_OK)
         {
+        	mfree(pItem);
             return -1;
         }
 
@@ -422,11 +443,12 @@ int FeatureDB::get_feature(uint16_t id, float *feature)
             if (pItem->id == id)
             {
                 memcpy(feature, pItem->feature, OASISLT_getFaceItemSize());
+                mfree(pItem);
                 return 0;
             }
         }
     }
-
+    mfree(pItem);
     return -1;
 }
 
@@ -444,7 +466,7 @@ int FeatureDB::reassign_feature()
             (FEATUREDATA_MAX_COUNT / itemsPerSector + 1) :
             (FEATUREDATA_MAX_COUNT / itemsPerSector);
 
-    FeatureItem *pItem = (FeatureItem *)this->itemBuff;
+    FeatureItem *pItem = (FeatureItem *)mallocate(this->itemSize);
 
     for (int i = 0; i < sectors; i++)
     {
@@ -454,6 +476,7 @@ int FeatureDB::reassign_feature()
 
         if (Flash_FacerecFsReadSector(i , s_DataCache) != FLASH_OK)
         {
+        	mfree(pItem);
             return -1;
         }
 
@@ -469,6 +492,7 @@ int FeatureDB::reassign_feature()
 
             if (Flash_FacerecFsReadItem(index, pItem) != FLASH_OK)
             {
+            	mfree(pItem);
                 return -2;
             }
 
@@ -496,6 +520,7 @@ int FeatureDB::reassign_feature()
         	//erase only
             if (Flash_FacerecFsEraseSector(i) != FLASH_OK)
             {
+            	mfree(pItem);
                 return -3;
             }
         }else
@@ -503,12 +528,13 @@ int FeatureDB::reassign_feature()
         	//erase and write
             if (Flash_FacerecFsWriteSector(i, s_DataCache) != FLASH_OK)
             {
+            	mfree(pItem);
                 return -4;
             }
         }
 
     }
-
+    mfree(pItem);
     return 0;
 }
 
@@ -540,7 +566,8 @@ bool FeatureDB::get_autosave()
 int FeatureDB::get_ID_featurePointers(uint16_t* ids, void**featureP, int num)
 {
     int index = 0;
-    FeatureItemHeader *pItemHeader = (FeatureItemHeader *)this->itemBuff;
+    FeatureItemHeader tmpHeader;
+    FeatureItemHeader *pItemHeader = &tmpHeader;
     for (int i = 0; i < FEATUREDATA_MAX_COUNT; i++)
     {
         if (index >= num)

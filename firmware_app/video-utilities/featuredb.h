@@ -50,9 +50,11 @@ class FeatureDB
     bool auto_save;
     int  itemSize ;   /*Actual size of face item */
     int  itemSpaceSize ; /*Space size reserved for each face item, it must be page aligned */
-    void* itemBuff;
+//    void* itemBuff;
     int count;
-    void clear_item(void);
+    void* mallocate(unsigned int size);
+    void mfree(void* p);
+//    void clear_item(void);
     int feature_count();
     int get_idxById(int id, int &index);
     int get_idxByName(const std::string name, int &index);

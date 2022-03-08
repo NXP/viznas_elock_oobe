@@ -478,7 +478,7 @@
 								<option id="gnu.cpp.link.option.nostdlibs.856358376" name="No startup or default libs (-nostdlib)" superClass="gnu.cpp.link.option.nostdlibs" useByScannerDiscovery="false" value="true" valueType="boolean"/>
 								<option id="gnu.cpp.link.option.strip.2106928848" name="Omit all symbol information (-s)" superClass="gnu.cpp.link.option.strip" useByScannerDiscovery="false"/>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.cpp.link.option.libs.1420923933" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" useByScannerDiscovery="false" valueType="libs">
-									<listOptionValue builtIn="false" value="oasis_lite2D_ELOCK_106f_ae"/>
+									<listOptionValue builtIn="false" value="oasis_lite_debug"/>
 									<listOptionValue builtIn="false" value="FaceRecRtInfo_m7"/>
 									<listOptionValue builtIn="false" value="wicedble"/>
 								</option>
@@ -1286,7 +1286,7 @@
 &lt;vendor&gt;NXP&lt;/vendor&gt;
 &lt;memory can_program="true" id="Flash" is_ro="true" size="0" type="Flash"/&gt;
 &lt;memory id="RAM" size="1024" type="RAM"/&gt;
-&lt;memoryInstance derived_from="Flash" driver="MIMXRT1060_SFDP_QSPI.cfx" edited="true" id="BOARD_FLASH" location="0x60100000" size="0x500000"/&gt;
+&lt;memoryInstance derived_from="Flash" driver="MIMXRT1060_SFDP_QSPI.cfx" edited="true" id="BOARD_FLASH" location="0x60000000" size="0x600000"/&gt;
 &lt;memoryInstance derived_from="Flash" edited="true" id="BOARD_FLASH_BANK_B" location="0x60600000" size="0x500000"/&gt;
 &lt;memoryInstance derived_from="RAM" edited="true" id="BOARD_SDRAM" location="0x80000000" size="0x1800000"/&gt;
 &lt;memoryInstance derived_from="RAM" edited="true" id="SRAM_DTC" location="0x20000000" size="0x30000"/&gt;

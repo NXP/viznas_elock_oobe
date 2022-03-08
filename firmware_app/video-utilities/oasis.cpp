@@ -1044,7 +1044,7 @@ int Oasis_Start()
     s_InitPara.enableFlags = 0;
     if (s_appType != APP_TYPE_USERID)
     {
-        s_InitPara.enableFlags |= OASIS_ENABLE_DUP_FACE_REGISTRATION;//OASIS_ENABLE_FACE_REC_BRIGHTNESS_CHECK;
+        s_InitPara.enableFlags |= OASIS_ENABLE_FACE_FEA_SMART_LEARNING;//OASIS_ENABLE_FACE_REC_BRIGHTNESS_CHECK;
     }
     s_InitPara.falseAcceptRate = OASIS_FAR_1_1000000;
     s_InitPara.enableFlags |= (Cfg_AppDataGetLivenessMode() == LIVENESS_MODE_ON) ? OASIS_ENABLE_LIVENESS : 0;
@@ -1054,6 +1054,8 @@ int Oasis_Start()
     s_InitPara.width  = REC_RECT_WIDTH;
     s_InitPara.fastMemSize = DTC_OPTIMIZE_BUFFER_SIZE;
     s_InitPara.fastMemBuf  = s_DTCOPBuf;
+    //s_InitPara.runtimePara.recogTH = 0.75f;
+
 
     ret = OASISLT_init(&s_InitPara);
 

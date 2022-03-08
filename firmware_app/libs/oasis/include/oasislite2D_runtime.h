@@ -13,7 +13,7 @@
 #include "stdint.h"
 
 #define VERSION_MAJOR 4
-#define VERSION_MINOR 78
+#define VERSION_MINOR 82
 /* This version number only used for hot fix on frozen release or branch */
 #define VERSION_HOTFIX 0
 
